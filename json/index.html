@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Output</title>
+    <style>
+        body {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background-color: #292929;
+            color: #eeccdd;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        async function fetchUserInfo() {
+            const userInfo = {};
+            try {
+                // URL (success)
+                userInfo.url = "localhost.beer/json";
+
+                // Basic details
+                const response = await fetch('https://httpbin.org/get');
+                const data = await response.json();
+                userInfo.ip = data.origin;
+                userInfo.userAgent = data.headers['User-Agent'];
+                userInfo.browserLanguage = navigator.language || navigator.userLanguage;
+                userInfo.operatingSystem = navigator.platform;
+                userInfo.screenResolution = `${window.screen.width}x${window.screen.height}`;
+                userInfo.devicePixelRatio = window.devicePixelRatio;
+                userInfo.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                userInfo.localTime = new Date().toISOString();
+                userInfo.cpuCores = navigator.hardwareConcurrency || 'Unknown';
+                userInfo.memory = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown';
+
+                // Connection details
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (connection) {
+                    userInfo.connection = {
+                        type: connection.effectiveType,
+                        downlink: connection.downlink + ' Mbps',
+                        rtt: connection.rtt + ' ms'
+                    };
+                }
+    
+                document.body.textContent = JSON.stringify(userInfo, null, 2);
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                document.body.textContent = JSON.stringify({ error: "Failed to fetch user info" }, null, 2);
+            }
+        }
+    
+        fetchUserInfo();
+    </script>
+    
+</body>
+</html>
