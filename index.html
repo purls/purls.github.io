@@ -3,9 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>localhost</title>
+    <title>localhost.beer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .info-box {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .info-item {
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+    <script>
+        async function fetchInfo() {
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+
+            document.getElementById('ip-address').textContent = ipData.ip;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('language').textContent = navigator.language;
+            document.getElementById('platform').textContent = navigator.platform;
+        }
+
+        window.onload = fetchInfo;
+    </script>
 </head>
 <body>
-    <h1>localhost.beer</h1>
+    <h1>Welcome to localhost.beer</h1>
+    <div class="info-box">
+        <div class="info-item">Your IP Address: <span id="ip-address">Loading...</span></div>
+        <div class="info-item">User Agent: <span id="user-agent">Loading...</span></div>
+        <div class="info-item">Browser Language: <span id="language">Loading...</span></div>
+        <div class="info-item">Operating System: <span id="platform">Loading...</span></div>
+    </div>
+    <footer>
+        Hosted on <a href="https://github.io" target="_blank">GitHub Pages</a>.
+    </footer>
 </body>
 </html>
