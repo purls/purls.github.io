@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 5px;
+      resize: vertical;
+      font-family: 'JetBrains Mono', monospace;
+      field-sizing: content;
+    }
+    button {
+      padding: 10px;
+      background-color: #244444;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #255555;
+    }
+    h1, h2, h3 {
+      color: #e0e0e0;
+    }
+    p {
+      color: #b0b0b0;
+    }
+    a {
+      color: #80cccc;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #60aaaa;
+      text-decoration: underline;
+    }
+    textarea:focus, button:focus {
+      outline: 2px solid #4cafac;
+    }
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #4a4a4a;
+      border-radius: 6px;
+      border: 3px solid #1e1e1e;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #5a5a5a;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clipboard Analyzer</h1>
+  
+  <p>Copy some text or content to your clipboard, then click "Analyze Clipboard" to inspect its contents.</p>
+  
+  <button id="analyzeClipboard" aria-label="Analyze Clipboard">Analyze Clipboard</button>
+  
+  <h2>Outputs:</h2>
+  <div>
+    <h3>Plain Text:</h3>
+    <textarea id="plainTextOutput" rows="1" readonly></textarea>
+  </div>
+  <div>
+    <h3>HTML Content:</h3>
+    <textarea id="htmlOutput" rows="1" readonly></textarea>
+  </div>
+  <div>
+    <h3>Additional Info:</h3>
+    <textarea id="additionalInfoOutput" rows="1" readonly></textarea>
+  </div>
+<hr>
+<p>For additional unicode text analysis, use <a href="https://www.fontspace.com/unicode/analyzer" target="_blank" rel="noopener noreferrer">this tool</a>.</p>
+
+  <script>
+    async function analyzeClipboard() {
+      const plainTextOutput = document.getElementById('plainTextOutput');
+      const htmlOutput = document.getElementById('htmlOutput');
+      const additionalInfoOutput = document.getElementById('additionalInfoOutput');
+
+      function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        //textarea.style.height = (textarea.scrollHeight - textarea.offsetHeight + textarea.clientHeight) + 'px';
+        textarea.style.height = textarea.scrollHeight + 'px';
+      }
+
+      plainTextOutput.value = '';
+      htmlOutput.value = '';
+      additionalInfoOutput.value = '';
+
+      try {
+        // Read clipboard items
+        const clipboardItems = await navigator.clipboard.read();
+
+        let additionalInfo = '';
+        for (const item of clipboardItems) {
+          for (const type of item.types) {
+            const blob = await item.getType(type);
+
+            if (type === 'text/plain') {
+              const plainText = await blob.text();
+              plainTextOutput.value = plainText;
+
+              // Additional info for plain text
+              const textLength = plainText.length;
+              const wordCount = plainText.split(/\s+/).filter(word => word).length;
+              const uniqueChars = new Set(plainText).size;
+
+              additionalInfo += `Text Length: ${textLength} characters\n`;
+              additionalInfo += `Word Count: ${wordCount} words\n`;
+              additionalInfo += `Unique Characters: ${uniqueChars}\n`;
+            } else if (type === 'text/html') {
+              const html = await blob.text();
+              htmlOutput.value = html;
+
+              // Info about the HTML content
+              additionalInfo += `HTML Content Length: ${html.length} characters\n`;
+            }
+
+            // Format and size info
+            additionalInfo += `Format: ${type}\nSize: ${blob.size} bytes\n\n`;
+          }
+        }
+
+        // Display additional info
+        additionalInfoOutput.value = additionalInfo.trim();
+
+        // Adjust textarea heights
+        adjustTextareaHeight(plainTextOutput);
+        adjustTextareaHeight(htmlOutput);
+        adjustTextareaHeight(additionalInfoOutput);
+
+      } catch (err) {
+        console.error('Failed to read clipboard:', err);
+        additionalInfoOutput.value = 'Error accessing clipboard. Ensure your browser supports this feature and the page is served over HTTPS.';
+      }
+    }
+
+    // Button event listener
+    document.getElementById('analyzeClipboard').addEventListener('click', analyzeClipboard);
+  </script>
+</body>
+</html>
