@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of /files</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #c7c7c7;
+            font-family: monospace;
+        }
+        a {
+            color: #00afff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Index of /files</h1>
+    <div id="file-list">Loading...</div>
+
+    <script>
+        async function fetchFiles() {
+            const repo = "purls/purls.github.io";
+            const path = "files";
+            const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                const files = await response.json();
+
+                if (!Array.isArray(files)) {
+                    document.getElementById("file-list").innerHTML = "Error loading files.";
+                    return;
+                }
+
+                let fileListHTML = files
+                    .map(file => `<a href="${file.download_url}">${file.name}</a>`)
+                    .join("<br>");
+
+                document.getElementById("file-list").innerHTML = fileListHTML;
+            } catch (error) {
+                document.getElementById("file-list").innerHTML = "Failed to fetch files.";
+            }
+        }
+
+        fetchFiles();
+    </script>
+</body>
+</html>
