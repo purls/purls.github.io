@@ -1,0 +1,106 @@
+My usual wallpaper: https://images.alphacoders.com/227/227453.jpg
+
+--- Device Settings & Configurations
+
+Restore old right-click context menu (Windows 11): Win + R: cmd
+
+reg add HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2} /v InprocServer32 /t REG_SZ /d "" /f
+
+Restart Explorer after applying.
+
+
+Disable Bing in Start Menu search:
+
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Search /v BingSearchEnabled /t REG_DWORD /d 0 /f
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Search /v CortanaConsent /t REG_DWORD /d 0 /f
+
+
+Enable "Show hidden files, folders, and drives" and show file extensions
+Disable Windows background app tracking
+Turn off OneDrive (if not used)
+Power settings: Set high performance or balanced
+
+
+Uninstall bloatware via PowerShell:
+
+Get-AppxPackage * | Where-Object {$_.Name -like "*Xbox*"} | Remove-AppxPackage
+
+
+Dark mode, Plum color theme, Inverted mouse pointer style, down motion scrolls down
+
+
+--- Tools, Apps & Programs
+
+WinRar
+7-Zip
+Everything Search
+FastCopy
+AutoHotkey
+PowerToys
+OBS Studio
+Core Temp
+VLC Media Player
+NordVPN
+VirtualBox
+Notepad++
+Windows Terminal
+WSL 2
+Visual Studio Code
+Git
+Node.js + npm
+Python
+Docker
+WinMerge
+Scoop / Chocolatey / Winget
+
+--- Setting Up Things
+
+Git/SSH Key Setup:
+https://raw.githubusercontent.com/purls/purls.github.io/main/files/git%20cheat%20sheet.txt
+
+Node.js Global Packages:
+npm install -g typescript eslint prettier
+
+--- VS Code Extensions:
+
+GitLens, GitHub Copilot, Github Copilot Chat
+Python, Python Debugger, Pylance, Black Formatter
+Svelte for VS Code
+Indent one space
+markdownlint
+vscode-icons
+Rainbow CSV
+Live Server
+Jest Runner
+CodeSnap
+Prettier
+ESLint
+Docker
+
+
+--- Good VS Code Themes (Ctrl+K, Ctrl+T)
+
+Material Theme Darker High Contrast
+Andromeda Dark Theme
+Dark Modern / Dark+
+Monokai Dimmed
+Dracula Theme
+Matcha
+
+--- Toolbar Pins (minimize search bar)
+
+Settings
+File Explorer
+Chrome and other browsers
+(Misc messengers like Teams and Telegram)
+Outlook/Email
+Task Manager
+Control Panel
+PowerToys
+(Misc photo/video)
+IDEs (Visual Studio)
+Git
+Command Prompt
+PowerShell
+Snipping Tool
+Calculator

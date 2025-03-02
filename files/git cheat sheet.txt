@@ -1,0 +1,284 @@
+GIT CHEAT SHEET
+============================
+
+1. SETTING UP SSH KEYS
+----------------------------
+A) Generate a new SSH key pair
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   (Alternative encryptions below)
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+   ssh-keygen -t ecdsa -b 256 -C "your_email@example.com"
+
+   (Follow prompts to save and optionally add a passphrase.)
+
+B) Add your SSH key to ssh-agent
+   eval "$(ssh-agent -s)"
+   ssh-add ~/.ssh/id_ed25519
+
+C) Copy public key to your Git hosting platform
+   (The public key is at ~/.ssh/id_ed25519.pub)
+
+D) Test SSH connection
+   ssh -T git@github.com
+   (Should see a "Hi <username>!" message if successful.)
+
+E) Setting up multiple SSH keys (for different accounts)
+   1) Generate multiple SSH key pairs:
+      ssh-keygen -t ed25519 -C "work_email@example.com" -f ~/.ssh/id_ed25519_work
+      ssh-keygen -t ed25519 -C "personal_email@example.com" -f ~/.ssh/id_ed25519_personal
+
+   2) Create or edit ~/.ssh/config:
+      Host github-work
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/id_ed25519_work
+
+      Host github-personal
+          HostName github.com
+          User git
+          IdentityFile ~/.ssh/id_ed25519_personal
+
+   3) Clone with:
+      git clone git@github-work:WorkOrg/Repo.git
+      git clone git@github-personal:YourPersonal/Repo.git
+
+
+2. STARTING A REPOSITORY
+----------------------------
+A) Initialize a new repo
+   git init
+
+B) Add a remote
+   git remote add origin git@github.com:username/repo-name.git
+
+C) Initial commit and push
+   git add .
+   git commit -m "Initial commit"
+   git push -u origin master
+
+
+3. BRANCHING BASICS
+----------------------------
+A) Check current branches
+   git branch        # Lists local branches
+   git branch -r     # Lists remote branches
+   git branch -a     # Lists both local & remote
+
+B) Create and switch to new branch
+   git checkout -b <new-branch-name>
+   (Or in newer Git: git switch -c <new-branch-name>)
+
+C) Switch to existing branch
+   git checkout <branch-name>
+   (Or: git switch <branch-name>)
+
+D) Delete a branch
+   git branch -d <branch-name>    # Safe delete (if merged)
+   git branch -D <branch-name>    # Force delete
+
+
+4. BASIC WORKFLOW
+----------------------------
+A) Check status
+   git status
+
+B) Stage changes
+   git add <file-name>
+   git add .   # All changes in current directory
+
+C) Commit changes
+   git commit -m "Your descriptive commit message"
+
+D) Push changes to remote
+   git push origin <branch-name>
+
+E) Pull changes from remote
+   git pull origin <branch-name>
+
+
+5. UNDOING MISTAKES
+----------------------------
+A) Amend last commit (change commit message or add files)
+   git commit --amend -m "New commit message"
+   (Avoid if already pushed; it rewrites history.)
+
+B) Unstage a file
+   git restore --staged <file-name>
+   (Legacy: git reset HEAD <file-name>)
+
+C) Discard local changes (not staged)
+   git restore <file-name>
+   (Legacy: git checkout -- <file-name>)
+
+D) Rollback to a previous commit
+   # Soft reset (keeps changes in working directory):
+   git reset --soft <commit-hash>
+   # Mixed reset (unstage changes):
+   git reset --mixed <commit-hash>
+   # Hard reset (discard changes):
+   git reset --hard <commit-hash>
+
+E) Revert a commit (creates a new commit undoing a specific commit)
+   git revert <commit-hash>
+
+
+6. MERGE CONFLICTS & RESOLUTION
+----------------------------
+A) Merge a branch into current branch
+   git merge <other-branch-name>
+
+B) If conflicts occur
+   # Conflict markers appear in the files:
+   <<<<<<< HEAD
+   Your changes
+   =======
+   Their changes
+   >>>>>>> branch-being-merged
+
+C) Resolve conflicts
+   # Manually fix the file contents and remove conflict markers.
+
+D) Stage the resolved files
+   git add <resolved-files>
+
+E) Complete the merge
+   git commit
+   (Default merge commit message is used.)
+
+
+7. STASHING
+----------------------------
+A) Stash uncommitted changes
+   git stash
+
+B) List your stashes
+   git stash list
+
+C) Apply the latest stash
+   git stash apply
+
+D) Apply a specific stash
+   git stash apply stash@{2}
+
+E) Drop a stash
+   git stash drop stash@{2}
+   (Or apply & drop in one step: git stash pop)
+
+
+8. QUICK TIPS & EXTRAS
+----------------------------
+A) Tagging
+   git tag v1.0.0
+   git push origin v1.0.0
+   # Annotated tag example:
+   git tag -a <tag-name> -m "Tag message"
+
+B) Cherry-pick
+   git cherry-pick <commit-hash>
+   (Copies a commit from one branch into another.)
+
+C) Reflog (your safety net!)
+   git reflog
+   (Shows recent commits and actions, including "lost" ones after resets.)
+
+D) Sample .gitconfig aliases
+   [alias]
+       st = status
+       co = checkout
+       ci = commit
+       br = branch
+       lg = log --graph --pretty=format:'%C(auto)%h%d %s %C(black)%C(bold)%cr'
+
+
+9. CATCH-ALL .gitignore
+----------------------------
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+*.out
+*.pid
+*.lock
+
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+.eggs/
+venv/
+.env
+
+# Ruby / Rails
+*.gem
+*.bundle
+vendor/
+.log/
+tmp/
+coverage/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.ipr
+*.iws
+target/
+
+# C/C++/CMake
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+CMakeFiles/
+CMakeCache.txt
+
+# PHP
+vendor/
+
+# macOS
+*.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+*.lnk
+
+# Visual Studio / .NET
+*.csproj
+*.vbproj
+*.sln
+*.suo
+*.user
+*.unityproj
+*.vcxproj
+*.vcxproj.filters
+bin/
+obj/
+*.pdb
+
+# Editor directories & settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+
+============================
+(END OF CHEAT SHEET)
