@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circle PFP</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 700px;
+        }
+
+        .file-upload {
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            padding: 5px;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .image-preview-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-wrapper {
+            width: 400px;
+            height: 400px;
+            margin: 10px 0;
+            border: 2px solid #4a4a4a;
+            overflow: hidden;
+            position: relative;
+            background-color: #121212;
+        }
+
+        .preview-label {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+
+        .circle-preview {
+            border-radius: 50%;
+        }
+
+        .draggable-image {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            transform-origin: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Circle Profile Picture Visualizer</h1>
+
+    <p>
+        Upload an image. It will be shown cropped in a 1:1 aspect ratio and
+        displayed as a circle. Click and drag to reposition.
+    </p>
+
+    <div class="file-upload">
+        <input type="file" id="imageUpload" accept="image/*">
+    </div>
+
+    <div class="image-preview-container">
+        <div class="preview-label">Square (1:1 ratio):</div>
+        <div class="preview-wrapper" id="squareWrapper">
+            <img id="squarePreview" class="draggable-image" style="display: none;">
+        </div>
+
+        <div class="preview-label">Circle:</div>
+        <div class="preview-wrapper circle-preview" id="circleWrapper">
+            <img id="circlePreview" class="draggable-image" style="display: none;">
+        </div>
+    </div>
+
+    <script>
+        const squarePreview = document.getElementById('squarePreview');
+        const squareWrapper = document.getElementById('squareWrapper');
+        const circlePreview = document.getElementById('circlePreview');
+        const circleWrapper = document.getElementById('circleWrapper');
+
+        // Synchronized movement tracking
+        let currentOffsetX = 0;
+        let currentOffsetY = 0;
+        let maxOffsetX = 0;
+        let maxOffsetY = 0;
+
+        function setupDraggableImage(imageElement, wrapperElement, syncElement) {
+            let isDragging = false;
+            let startX, startY;
+
+            imageElement.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+
+            function startDrag(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                e.preventDefault();
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+
+                // Calculate movement delta
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                // Update starting position for next move
+                startX = e.clientX;
+                startY = e.clientY;
+
+                // Calculate new offsets with constraints
+                const newOffsetX = Math.max(Math.min(currentOffsetX + dx, maxOffsetX), -maxOffsetX);
+                const newOffsetY = Math.max(Math.min(currentOffsetY + dy, maxOffsetY), -maxOffsetY);
+
+                // Only move horizontally if image is wider than container
+                if (imageElement.naturalWidth / imageElement.naturalHeight > 1) {
+                    currentOffsetX = newOffsetX;
+                    currentOffsetY = 0; // No vertical movement for wide images
+                }
+                // Only move vertically if image is taller than container
+                else if (imageElement.naturalWidth / imageElement.naturalHeight < 1) {
+                    currentOffsetX = 0; // No horizontal movement for tall images
+                    currentOffsetY = newOffsetY;
+                }
+                // No movement for square images
+                else {
+                    currentOffsetX = 0;
+                    currentOffsetY = 0;
+                }
+
+                // Apply position to both images
+                updateImagePositions();
+            }
+
+            function stopDrag() {
+                isDragging = false;
+            }
+        }
+
+        function updateImagePositions() {
+            // Apply the same offset to both images for synchronized movement
+            squarePreview.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, ${currentOffsetY}px)`;
+            circlePreview.style.transform = `translate(-50%, -50%) translate(${currentOffsetX}px, ${currentOffsetY}px)`;
+        }
+
+        document.getElementById('imageUpload').addEventListener('change', function () {
+            const file = this.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        // Reset position tracking
+                        currentOffsetX = 0;
+                        currentOffsetY = 0;
+
+                        // Calculate aspect ratio
+                        const aspectRatio = img.width / img.height;
+
+                        // Set images
+                        squarePreview.src = e.target.result;
+                        circlePreview.src = e.target.result;
+
+                        // Position the images centrally using transform
+                        [squarePreview, circlePreview].forEach(preview => {
+                            preview.style.display = 'block';
+                            preview.style.left = '50%';
+                            preview.style.top = '50%';
+                            preview.style.transform = 'translate(-50%, -50%)';
+
+                            // Set size based on aspect ratio to fill the container
+                            if (aspectRatio > 1) {
+                                // Landscape image
+                                preview.style.width = 'auto';
+                                preview.style.height = '100%';
+                                maxOffsetX = (400 * aspectRatio - 400) / 2;
+                                maxOffsetY = 0;
+                            } else if (aspectRatio < 1) {
+                                // Portrait image
+                                preview.style.width = '100%';
+                                preview.style.height = 'auto';
+                                maxOffsetX = 0;
+                                maxOffsetY = (400 / aspectRatio - 400) / 2;
+                            } else {
+                                // Square image
+                                preview.style.width = '100%';
+                                preview.style.height = '100%';
+                                maxOffsetX = 0;
+                                maxOffsetY = 0;
+                            }
+                        });
+
+                        // Wait for images to fully load before enabling dragging
+                        setTimeout(() => {
+                            // Setup dragging on both images
+                            setupDraggableImage(squarePreview, squareWrapper, circlePreview);
+                            setupDraggableImage(circlePreview, circleWrapper, squarePreview);
+                        }, 100);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select an image to upload.');
+            }
+        });
+
+    </script>
+</body>
+
+</html>
