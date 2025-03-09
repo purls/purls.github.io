@@ -9,36 +9,15 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="../tools.css" />
     <style>
+      body {
+        max-width: 800px;
+      }
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-      }
-      body {
-        font-family: "JetBrains Mono", monospace;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        line-height: 1.6;
-        background-color: #121212;
-        color: #e0e0e0;
-      }
-      h1,
-      h2 {
-        color: #e0e0e0;
-      }
-      p,
-      label {
-        color: #b0b0b0;
-      }
-      a {
-        color: #80cccc;
-        text-decoration: none;
-      }
-      a:hover {
-        color: #60aaaa;
-        text-decoration: underline;
       }
       .controls {
         margin-bottom: 20px;
@@ -74,14 +53,6 @@
         transition: background-color 0.3s ease;
         margin-right: 10px;
         margin-bottom: 10px;
-      }
-      button:hover {
-        background-color: #255555;
-      }
-      button:focus,
-      input:focus,
-      select:focus {
-        outline: 2px solid #4cafac;
       }
       #qr-container {
         display: inline-block;
@@ -228,7 +199,7 @@
 
       /**
        * Derive version from module count if getTypeNumber() is missing or returns 0.
-       * Version n => Module size = 21 + (n - 1)*4. So:
+       * Version n => Module size = 21 + 4(n - 1). So:
        * n = (moduleCount - 17) / 4
        */
       function deriveVersionFromSize(moduleCount) {
