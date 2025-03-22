@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Formatter</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        button {
+            background-color: #4cafac;
+            color: #1e1e1e;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #60c8c5;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        select,
+        input {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>JSON Formatter</h1>
+
+    <p>Paste your JSON below, then format or minify it.</p>
+
+    <div class="controls">
+        <div>
+            <label for="indentSize">Indent Size:</label>
+            <select id="indentSize">
+                <option value="2">2 spaces</option>
+                <option value="4">4 spaces</option>
+                <option value="tab">Tab</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="sortKeys">Sort Keys:</label>
+            <input type="checkbox" id="sortKeys">
+        </div>
+    </div>
+
+    <textarea id="jsonInput" rows="12" placeholder="Paste your JSON here..."></textarea>
+
+    <div class="button-group">
+        <button id="formatJson">Format JSON</button>
+        <button id="minifyJson">Minify JSON</button>
+        <button id="copyOutput">Copy to Clipboard</button>
+        <button id="clearAll">Clear All</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <h2>Formatted Output:</h2>
+    <textarea id="jsonOutput" rows="20" readonly></textarea>
+
+    <hr>
+    <p>
+        Use this tool to format messy JSON for readability or minify formatted JSON to save space.
+        The formatter can also sort object keys alphabetically if needed.
+    </p>
+
+    <script>
+        // DOM elements
+        const jsonInput = document.getElementById('jsonInput');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const formatBtn = document.getElementById('formatJson');
+        const minifyBtn = document.getElementById('minifyJson');
+        const copyBtn = document.getElementById('copyOutput');
+        const clearBtn = document.getElementById('clearAll');
+        const indentSize = document.getElementById('indentSize');
+        const sortKeys = document.getElementById('sortKeys');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
+
+        // Function to adjust textarea height based on content
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Format JSON
+        formatBtn.addEventListener('click', () => {
+            const input = jsonInput.value.trim();
+            if (!input) {
+                showError('Please enter some JSON to format.');
+                return;
+            }
+
+            try {
+                // Parse the JSON
+                let parsed = JSON.parse(input);
+
+                // Sort keys if requested
+                if (sortKeys.checked) {
+                    parsed = sortObjectKeys(parsed);
+                }
+
+                // Determine indentation
+                let indent;
+                if (indentSize.value === 'tab') {
+                    indent = '\t';
+                } else {
+                    indent = ' '.repeat(parseInt(indentSize.value));
+                }
+
+                // Format the JSON
+                const formatted = JSON.stringify(parsed, null, indent);
+                jsonOutput.value = formatted;
+                adjustTextareaHeight(jsonOutput);
+
+                showInfo(`JSON formatted successfully with ${indentSize.value === 'tab' ? 'tabs' : indentSize.value + ' spaces'} indentation.`);
+            } catch (err) {
+                showError(`Invalid JSON: ${err.message}`);
+            }
+        });
+
+        // Minify JSON
+        minifyBtn.addEventListener('click', () => {
+            const input = jsonInput.value.trim();
+            if (!input) {
+                showError('Please enter some JSON to minify.');
+                return;
+            }
+
+            try {
+                // Parse the JSON
+                let parsed = JSON.parse(input);
+
+                // Minify the JSON
+                const minified = JSON.stringify(parsed);
+                jsonOutput.value = minified;
+                adjustTextareaHeight(jsonOutput);
+
+                const savedBytes = input.length - minified.length;
+                const percentSaved = ((savedBytes / input.length) * 100).toFixed(1);
+                showInfo(`JSON minified successfully. Saved ${savedBytes} bytes (${percentSaved}%).`);
+            } catch (err) {
+                showError(`Invalid JSON: ${err.message}`);
+            }
+        });
+
+        // Copy formatted JSON to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const output = jsonOutput.value;
+            if (!output) {
+                showInfo('Nothing to copy.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                showInfo('Copied to clipboard!');
+            } catch (err) {
+                showError('Failed to copy to clipboard.');
+            }
+        });
+
+        // Clear all fields
+        clearBtn.addEventListener('click', () => {
+            jsonInput.value = '';
+            jsonOutput.value = '';
+            errorMessage.textContent = '';
+            infoMessage.textContent = '';
+        });
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            infoMessage.textContent = '';
+        }
+
+        // Show info message
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            errorMessage.textContent = '';
+        }
+
+        // Sort object keys recursively
+        function sortObjectKeys(obj) {
+            if (typeof obj !== 'object' || obj === null) {
+                return obj;
+            }
+
+            if (Array.isArray(obj)) {
+                return obj.map(sortObjectKeys);
+            }
+
+            const sorted = {};
+            Object.keys(obj)
+                .sort()
+                .forEach(key => {
+                    sorted[key] = sortObjectKeys(obj[key]);
+                });
+
+            return sorted;
+        }
+
+        // Auto-format on paste if it looks like formatted JSON
+        jsonInput.addEventListener('paste', (e) => {
+            // Use setTimeout to get the value after the paste event
+            setTimeout(() => {
+                const input = jsonInput.value.trim();
+                // If it starts with { or [ and contains line breaks, it might be formatted JSON
+                if ((input.startsWith('{') || input.startsWith('[')) &&
+                    (input.includes('\n') || input.includes('\r'))) {
+                    try {
+                        // Try to parse and reformat with current settings
+                        formatBtn.click();
+                    } catch (err) {
+                        // Ignore errors on auto-format
+                    }
+                }
+            }, 0);
+        });
+
+        // Adjust textarea height on input
+        jsonInput.addEventListener('input', () => {
+            adjustTextareaHeight(jsonInput);
+        });
+    </script>
+</body>
+
+</html>
