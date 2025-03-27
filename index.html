@@ -1,80 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="icon" href="images/romero.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>localhost.beer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #121212;
-            color: #e0e0e0;
-        }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: #dacdac;
-        }
-        .info-box {
-            background: #1e1e1e;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-            text-align: center;
-        }
-        .info-item {
-            margin: 0.5rem 0;
-            font-size: 1.2rem;
-            color: #c99999;
-        }
-        .links a {
-            color: #577577;
-            text-decoration: none;
-        }
-        .links a:hover {
-            color: #60aaaa;
-            text-decoration: underline;
-        }
-        footer {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: #999;
-        }
-    </style>
     <script>
         async function fetchInfo() {
             const ipResponse = await fetch('https://api.ipify.org?format=json');
             const ipData = await ipResponse.json();
 
             document.getElementById('ip-address').textContent = ipData.ip;
-            document.getElementById('user-agent').textContent = navigator.userAgent;
             document.getElementById('language').textContent = navigator.language;
             document.getElementById('platform').textContent = navigator.platform;
+            // document.getElementById('user-agent').textContent = navigator.userAgent;
         }
 
         window.onload = fetchInfo;
     </script>
 </head>
+
 <body>
     <h1>localhost.beer</h1>
     <div class="info-box">
         <div class="info-item"><strong>Your IP Address:</strong> <span id="ip-address">Loading...</span></div>
         <div class="info-item"><strong>Browser Language:</strong> <span id="language">Loading...</span></div>
         <div class="info-item"><strong>Operating System:</strong> <span id="platform">Loading...</span></div>
-        <div class="info-item"><strong>User Agent:</strong> <span id="user-agent">Loading...</span></div>
+        <!--<div class="info-item"><strong>User Agent:</strong> <span id="user-agent">Loading...</span></div>-->
         <div style="height: 1rem;"></div>
         <div class="links">
-            <a href="/json" style="margin-right: 2rem;">JSON Formatted Net Info</a>
             <a href="/clipboard" style="margin-right: 2rem;">Clipboard Analysis Tool</a>
             <a href="/qr" style="margin-right: 2rem;">QR Code Generator & Editor</a>
+            <a href="/fj" style="margin-right: 2rem;">JSON Formatter</a>
             <a href="/files">Reference Document Files</a>
         </div>
     </div>
@@ -82,4 +40,56 @@
         Hosted on <a href="https://github.io" target="_blank">GitHub Pages</a>.
     </footer>
 </body>
+
 </html>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #dacdac;
+    }
+
+    .info-box {
+        background: #1e1e1e;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    .info-item {
+        margin: 0.5rem 0;
+        font-size: 1.2rem;
+        color: #c99999;
+    }
+
+    .links a {
+        color: #577577;
+        text-decoration: none;
+    }
+
+    .links a:hover {
+        color: #60aaaa;
+        text-decoration: underline;
+    }
+
+    footer {
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: #999;
+    }
+</style>
