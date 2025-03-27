@@ -6,90 +6,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>localhost.beer</title>
-    <script>
-        async function fetchInfo() {
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-
-            document.getElementById('ip-address').textContent = ipData.ip;
-            document.getElementById('language').textContent = navigator.language;
-            document.getElementById('platform').textContent = navigator.platform;
-            // document.getElementById('user-agent').textContent = navigator.userAgent;
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2"
+        rel="stylesheet" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: 'JetBrains Mono';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2') format('woff2');
         }
 
-        window.onload = fetchInfo;
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #dacdac;
+            --info-color: #c99999;
+            --link-color: #577577;
+            --link-hover: #60aaaa;
+            --text-color: #e0e0e0;
+            --muted-color: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+            letter-spacing: -1px;
+        }
+
+        .info-box {
+            background: var(--card-color);
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item {
+            padding: 0.5rem 0;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item:last-of-type {
+            border-bottom: none;
+        }
+
+        .info-item strong {
+            color: var(--info-color);
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .links a {
+            color: var(--link-color);
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .links a:hover {
+            color: var(--link-hover);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--muted-color);
+            padding: 1rem;
+        }
+
+        footer a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--link-hover);
+        }
+
+        @media (max-width: 600px) {
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .links a {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+    <script>
+        async function fetchInfo() {
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                document.getElementById('ip-address').textContent = ipData.ip;
+            } catch (error) {
+                document.getElementById('ip-address').textContent = 'Failed to load';
+            }
+
+            document.getElementById('language').textContent = navigator.language || 'Not available';
+            document.getElementById('platform').textContent = navigator.platform || 'Not available';
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchInfo);
     </script>
 </head>
 
 <body>
     <h1>localhost.beer</h1>
     <div class="info-box">
-        <div class="info-item"><strong>Your IP Address:</strong> <span id="ip-address">Loading...</span></div>
-        <div class="info-item"><strong>Browser Language:</strong> <span id="language">Loading...</span></div>
-        <div class="info-item"><strong>Operating System:</strong> <span id="platform">Loading...</span></div>
-        <!--<div class="info-item"><strong>User Agent:</strong> <span id="user-agent">Loading...</span></div>-->
-        <div style="height: 1rem;"></div>
+        <div class="info-item">
+            <strong>Your IP Address:</strong>
+            <span id="ip-address">Loading...</span>
+        </div>
+        <div class="info-item">
+            <strong>Browser Language:</strong>
+            <span id="language">Loading...</span>
+        </div>
+        <div class="info-item">
+            <strong>Operating System:</strong>
+            <span id="platform">Loading...</span>
+        </div>
+
         <div class="links">
-            <a href="/clipboard" style="margin-right: 2rem;">Clipboard Analysis Tool</a>
-            <a href="/qr" style="margin-right: 2rem;">QR Code Generator & Editor</a>
-            <a href="/fj" style="margin-right: 2rem;">JSON Formatter</a>
-            <a href="/files">Reference Document Files</a>
+            <a href="/clipboard">Clipboard Analysis</a>
+            <a href="/qr">QR Code Generator</a>
+            <a href="/fj">JSON Formatter</a>
+            <a href="/files">Reference Documents</a>
         </div>
     </div>
     <footer>
-        Hosted on <a href="https://github.io" target="_blank">GitHub Pages</a>.
+        Hosted on <a href="https://github.io" target="_blank">GitHub Pages</a>
     </footer>
 </body>
 
 </html>
-
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background-color: #121212;
-        color: #e0e0e0;
-    }
-
-    h1 {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: #dacdac;
-    }
-
-    .info-box {
-        background: #1e1e1e;
-        padding: 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-        text-align: center;
-    }
-
-    .info-item {
-        margin: 0.5rem 0;
-        font-size: 1.2rem;
-        color: #c99999;
-    }
-
-    .links a {
-        color: #577577;
-        text-decoration: none;
-    }
-
-    .links a:hover {
-        color: #60aaaa;
-        text-decoration: underline;
-    }
-
-    footer {
-        margin-top: 2rem;
-        font-size: 0.9rem;
-        color: #999;
-    }
-</style>
