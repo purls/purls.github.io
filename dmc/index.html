@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diacritical Mark Combiner</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Noto+Sans&family=Noto+Serif&display=swap"
+    rel="stylesheet" />
+  <!-- Backup fonts with good Unicode support -->
+  <style>
+    @font-face {
+      font-family: 'Symbola';
+      src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+  </style>
+  <link rel="stylesheet" href="../tools.css" />
+  <style>
+    body {
+      max-width: 1000px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .container {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .base-char {
+      font-size: 2rem;
+      padding: 10px;
+      width: 100%;
+      text-align: center;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      font-family: 'Noto Sans', sans-serif;
+    }
+
+    .result-section {
+      padding: 20px;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    .result-display {
+      font-size: 5rem;
+      text-align: center;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin-bottom: 10px;
+      background-color: #244444;
+      border: 1px solid #333;
+      overflow-wrap: break-word;
+      word-break: break-all;
+      font-family: 'Noto Serif', 'Arial Unicode MS', 'DejaVu Serif', serif;
+      line-height: 1.5;
+    }
+
+    .diacritics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .diacritic-button {
+      padding: 8px;
+      font-size: 1.5rem;
+      background-color: #244444;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+      font-family: 'Noto Sans', 'Arial Unicode MS', 'DejaVu Sans', sans-serif;
+      min-height: 60px;
+      min-width: 60px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .diacritic-button:hover {
+      background-color: #255555;
+    }
+
+    .info-panel {
+      padding: 10px;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      font-size: 0.9rem;
+    }
+
+    .code-points {
+      white-space: nowrap;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+
+    .byte-display {
+      font-family: "JetBrains Mono", monospace;
+      padding: 10px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .controls button {
+      flex-grow: 1;
+      min-width: 120px;
+    }
+
+    .category-section {
+      margin-top: 20px;
+      border: 1px solid #333;
+      padding: 10px;
+      background-color: #1a1a1a;
+    }
+
+    .category-title {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      color: #80cccc;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .collapsible-section {
+      cursor: pointer;
+    }
+
+    .collapsible-section .category-title:after {
+      content: ' ▼';
+      font-size: 0.8rem;
+    }
+
+    .collapsible-section.collapsed .category-title:after {
+      content: ' ►';
+    }
+
+    .collapsible-section.collapsed .diacritics-grid {
+      display: none;
+    }
+
+    .fonts-dropdown {
+      padding: 8px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    #removeLastBtn {
+      background-color: #553333;
+    }
+
+    #removeLastBtn:hover {
+      background-color: #774444;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Diacritical Mark Combiner</h1>
+  <p>
+    Select or enter a base character (or get a special character from <a href="http://localhost.beer/sc">this page</a>),
+    then add any combination of diacritical marks to create complex combined characters.
+    Great for testing string handling, encodings, and finding edge cases when UI stress-testing and debugging.
+  </p>
+  <br />
+
+  <p>
+    <strong>Font Note:</strong> Diacritical marks aren't known for their font support.
+    You can select different fonts from the dropdown to find the one that displays your combinations best,
+    but there are no guarantees.
+  </p>
+
+  <div class="container">
+    <div class="input-section">
+      <label for="baseChar">Base Character:</label>
+      <input type="text" id="baseChar" class="base-char" value="◌" maxlength="1" />
+
+      <label for="fontSelector">Display Font:</label>
+      <select id="fontSelector" class="fonts-dropdown">
+        <option value="Noto Serif">Noto Serif</option>
+        <option value="Noto Sans">Noto Sans</option>
+        <option value="Arial Unicode MS">Arial Unicode MS</option>
+        <option value="DejaVu Serif">DejaVu Serif</option>
+        <option value="DejaVu Sans">DejaVu Sans</option>
+        <option value="Symbola">Symbola</option>
+      </select>
+
+      <div class="controls">
+        <button id="copyBtn">Copy Result</button>
+        <button id="resetBtn">Reset</button>
+        <button id="randomBtn">Random Mark</button>
+        <button id="removeLastBtn">Remove Last Mark</button>
+        <!--<button id="showAllBtn">Show Invisible Marks</button>-->
+        <button id="toggleDetailsBtn">Toggle Details</button>
+        <button id="collapseAllBtn">Collapse All</button>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-display" id="resultDisplay">◌</div>
+      <div class="info-panel">
+        <div class="code-points">Unicode Code Points: <span id="codePoints">U+25CC</span></div>
+        <div id="detailsSection">
+          <div>Length: <span id="charLength">1 character</span></div>
+          <div>Byte Size (UTF-8): <span id="byteSize">3 bytes</span></div>
+          <div>Raw UTF-8 Bytes:</div>
+          <div class="byte-display" id="byteDisplay">e2 97 8c</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchDiacritics" class="search-box" placeholder="Search diacritical marks..." />
+      <small style="color: #f7a759; display: block; margin-bottom: 15px; font-size: 0.8rem;">
+        Note: Some characters may display as empty boxes due to limited font support. They will still function when
+        added.
+      </small>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Common Diacritical Marks</div>
+      <div class="diacritics-grid" id="commonDiacritics"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Combining Diacritical Marks (0300-036F)</div>
+      <div class="diacritics-grid" id="diacriticsGrid1"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Tibetan Combining Marks (0F71-0FBC)</div>
+      <div class="diacritics-grid" id="diacriticsGridTibetan"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Combining Diacritical Marks Extended (1AB0-1AFF)</div>
+      <div class="diacritics-grid" id="diacriticsGrid2"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Combining Diacritical Marks Supplement (1DC0-1DFF)</div>
+      <div class="diacritics-grid" id="diacriticsGridSupplement"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Combining Diacritical Marks for Symbols (20D0-20FF)</div>
+      <div class="diacritics-grid" id="diacriticsGrid3"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">IPA/Phonetic Modifiers (02B0-02FF)</div>
+      <div class="diacritics-grid" id="diacriticsGridIPA"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Arabic Diacritical Marks (0610-065F)</div>
+      <div class="diacritics-grid" id="diacriticsGridArabic"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Hebrew Diacritical Marks (0591-05C5)</div>
+      <div class="diacritics-grid" id="diacriticsGridHebrew"></div>
+    </div>
+
+    <div class="category-section collapsible-section">
+      <div class="category-title">Combining Half Marks (FE20-FE2F)</div>
+      <div class="diacritics-grid" id="diacriticsGrid4"></div>
+    </div>
+  </div>
+
+  <script>
+    // DOM elements
+    const baseCharInput = document.getElementById('baseChar');
+    const resultDisplay = document.getElementById('resultDisplay');
+    const codePointsDisplay = document.getElementById('codePoints');
+    const charLengthDisplay = document.getElementById('charLength');
+    const byteSizeDisplay = document.getElementById('byteSize');
+    const byteDisplay = document.getElementById('byteDisplay');
+    const copyBtn = document.getElementById('copyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const removeLastBtn = document.getElementById('removeLastBtn');
+    const fontSelector = document.getElementById('fontSelector');
+    // const showAllBtn = document.getElementById('showAllBtn');
+    const toggleDetailsBtn = document.getElementById('toggleDetailsBtn');
+    const collapseAllBtn = document.getElementById('collapseAllBtn');
+    const searchInput = document.getElementById('searchDiacritics');
+    const detailsSection = document.getElementById('detailsSection');
+
+    // Common diacritical marks
+    const commonDiacriticalMarks = [
+      { code: 0x0301, name: 'Acute' },        // ́
+      { code: 0x0300, name: 'Grave' },        // ̀
+      { code: 0x0302, name: 'Circumflex' },   // ̂
+      { code: 0x0303, name: 'Tilde' },        // ̃
+      { code: 0x0308, name: 'Diaeresis' },    // ̈
+      { code: 0x0327, name: 'Cedilla' },      // ̧
+      { code: 0x0304, name: 'Macron' },       // ̄
+      { code: 0x0306, name: 'Breve' },        // ̆
+      { code: 0x030C, name: 'Caron' },        // ̌
+      { code: 0x0307, name: 'Dot Above' },    // ̇
+      { code: 0x0323, name: 'Dot Below' },    // ̣
+      { code: 0x0328, name: 'Ogonek' },       // ̨
+      { code: 0x030A, name: 'Ring Above' },   // ̊
+      { code: 0x030B, name: 'Double Acute' }, // ̋
+      { code: 0x0331, name: 'Macron Below' }, // ̱
+    ];
+
+    // Diacritical mark ranges
+    const diacriticalRanges = [
+      { start: 0x0300, end: 0x036F, grid: 'diacriticsGrid1', name: 'Combining Diacritical Marks' },
+      { start: 0x0F71, end: 0x0FBC, grid: 'diacriticsGridTibetan', name: 'Tibetan Combining Marks' },
+      { start: 0x1AB0, end: 0x1AFF, grid: 'diacriticsGrid2', name: 'Combining Diacritical Marks Extended' },
+      { start: 0x1DC0, end: 0x1DFF, grid: 'diacriticsGridSupplement', name: 'Combining Diacritical Marks Supplement' },
+      { start: 0x20D0, end: 0x20FF, grid: 'diacriticsGrid3', name: 'Combining Diacritical Marks for Symbols' },
+      { start: 0x02B0, end: 0x02FF, grid: 'diacriticsGridIPA', name: 'IPA/Phonetic Modifiers' },
+      { start: 0xFE20, end: 0xFE2F, grid: 'diacriticsGrid4', name: 'Combining Half Marks' },
+      // Arabic diacritics (split into two ranges)
+      { start: 0x0610, end: 0x061A, grid: 'diacriticsGridArabic', name: 'Arabic Diacritical Marks' },
+      { start: 0x064B, end: 0x065F, grid: 'diacriticsGridArabic', name: 'Arabic Diacritical Marks' },
+      // Hebrew diacritics (split into multiple ranges)
+      { start: 0x0591, end: 0x05BD, grid: 'diacriticsGridHebrew', name: 'Hebrew Diacritical Marks' },
+      { start: 0x05BF, end: 0x05BF, grid: 'diacriticsGridHebrew', name: 'Hebrew Diacritical Marks' },
+      { start: 0x05C1, end: 0x05C2, grid: 'diacriticsGridHebrew', name: 'Hebrew Diacritical Marks' },
+      { start: 0x05C4, end: 0x05C5, grid: 'diacriticsGridHebrew', name: 'Hebrew Diacritical Marks' }
+    ];
+
+    let currentChar = '◌';  // Dotted circle (U+25CC)
+    let combinedChar = '◌';
+    let appliedDiacritics = [];
+    let showInvisibleMarks = false;
+    let showDetails = true; // Initially show all details
+
+    function init() {
+      populateCommonDiacritics();
+      populateDiacriticalMarks();
+      updateResult();
+      setupCollapsibleSections();
+
+      baseCharInput.addEventListener('input', function () {
+        if (this.value) {
+          currentChar = this.value.charAt(0);
+          appliedDiacritics = [];
+          updateResult();
+        }
+      });
+
+      copyBtn.addEventListener('click', copyResultToClipboard);
+      resetBtn.addEventListener('click', resetCharacter);
+      randomBtn.addEventListener('click', addRandomDiacritic);
+      removeLastBtn.addEventListener('click', removeLastDiacritic);
+      fontSelector.addEventListener('change', updateFont);
+      // showAllBtn.addEventListener('click', toggleInvisibleMarks);
+      toggleDetailsBtn.addEventListener('click', toggleDetails);
+      collapseAllBtn.addEventListener('click', toggleAllSections);
+      searchInput.addEventListener('input', filterDiacritics);
+
+      // Keyboard shortcut for backspace
+      document.addEventListener('keydown', function (event) {
+        // Check if focus is not in an input field
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          // If Backspace key is pressed
+          if (event.key === 'Backspace') {
+            event.preventDefault(); // Prevent browser back navigation
+            removeLastDiacritic();
+          }
+        }
+      });
+    }
+
+    function removeLastDiacritic() {
+      if (appliedDiacritics.length > 0) {
+        // Remove the last diacritical mark from the array
+        appliedDiacritics.pop();
+        updateResult();
+
+        removeLastBtn.classList.add('active-btn');
+        setTimeout(() => {
+          removeLastBtn.classList.remove('active-btn');
+        }, 200);
+      }
+    }
+
+    function setupCollapsibleSections() {
+      const sections = document.querySelectorAll('.collapsible-section');
+      sections.forEach(section => {
+        const title = section.querySelector('.category-title');
+        title.addEventListener('click', () => {
+          section.classList.toggle('collapsed');
+        });
+      });
+    }
+
+    function toggleAllSections() {
+      const sections = document.querySelectorAll('.collapsible-section');
+      const allCollapsed = Array.from(sections).every(section => section.classList.contains('collapsed'));
+
+      sections.forEach(section => {
+        if (allCollapsed) {
+          section.classList.remove('collapsed');
+        } else {
+          section.classList.add('collapsed');
+        }
+      });
+
+      collapseAllBtn.textContent = allCollapsed ? 'Collapse All' : 'Expand All';
+    }
+
+    function populateCommonDiacritics() {
+      const grid = document.getElementById('commonDiacritics');
+      commonDiacriticalMarks.forEach(mark => {
+        const button = createDiacriticButton(mark.code, mark.name);
+        grid.appendChild(button);
+      });
+    }
+
+    function populateDiacriticalMarks() {
+      // Track which grids already processed to avoid duplicates
+      const processedGrids = new Set();
+
+      diacriticalRanges.forEach(range => {
+        const gridId = range.grid;
+        const grid = document.getElementById(gridId);
+
+        if (!grid) {
+          console.warn(`Grid with ID ${gridId} not found`);
+          return;
+        }
+
+        // Check if grid already processed
+        if (processedGrids.has(gridId)) {
+          // For grids with multiple ranges (Arabic and Hebrew), just add to the existing grid
+          for (let code = range.start; code <= range.end; code++) {
+            try {
+              const button = createDiacriticButton(code, null, isLimitedSupportRange(range));
+              grid.appendChild(button);
+            } catch (e) {
+              console.warn(`Could not create character for code point ${code.toString(16)}`);
+            }
+          }
+        } else {
+          // First time processing this grid
+          processedGrids.add(gridId);
+
+          // Clear the grid
+          grid.innerHTML = '';
+
+          // Add all characters for this range
+          for (let code = range.start; code <= range.end; code++) {
+            try {
+              const button = createDiacriticButton(code, null, isLimitedSupportRange(range));
+              grid.appendChild(button);
+            } catch (e) {
+              console.warn(`Could not create character for code point ${code.toString(16)}`);
+            }
+          }
+        }
+      });
+    }
+
+    function isLimitedSupportRange(range) {
+      const limitedRanges = [
+        0x1AB0, // Combining Diacritical Marks Extended
+        0x1DC0, // Combining Diacritical Marks Supplement
+        0x20D0, // Combining Diacritical Marks for Symbols
+        0x0F71, // Tibetan
+        0xFE20, // Combining Half Marks
+        0x0610, // Arabic
+        0x064B, // Arabic
+        0x0591  // Hebrew
+      ];
+      return limitedRanges.includes(range.start);
+    }
+
+    function createDiacriticButton(codePoint, tooltipName, isLimitedSupport = false) {
+      const button = document.createElement('button');
+      button.className = 'diacritic-button';
+
+      // The combining character by itself
+      const diacritic = String.fromCodePoint(codePoint);
+
+      // For marks with limited font support, add a special visualization
+      if (isLimitedSupport) {
+        button.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+              <span style="opacity:0.5;">◌</span><span>${diacritic}</span>
+              <small style="font-size: 0.6rem; margin-top: 2px;">U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}</small>
+            </div>
+          `;
+      } else {
+        // Standard display for well-supported marks, now with code point
+        button.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <span style="opacity:0.5;">◌</span><span>${diacritic}</span>
+            <small style="font-size: 0.6rem; margin-top: 2px;">U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}</small>
+          </div>
+        `;
+      }
+
+      // Add data attribute for searching
+      const name = tooltipName || `U+${codePoint.toString(16).toUpperCase().padStart(4, '0')}`;
+      button.setAttribute('data-name', name.toLowerCase());
+      button.title = name;
+
+      button.addEventListener('click', function () {
+        addDiacritic(codePoint);
+      });
+
+      return button;
+    }
+
+    function addDiacritic(codePoint) {
+      appliedDiacritics.push(codePoint);
+      updateResult();
+    }
+
+    function updateResult() {
+      // Combine base character with all diacritics
+      combinedChar = currentChar;
+      appliedDiacritics.forEach(code => {
+        combinedChar += String.fromCodePoint(code);
+      });
+
+      // Apply Unicode normalization (NFC - composed form)
+      // This won't affect properly combining marks
+      const normalizedChar = combinedChar;
+
+      // Update display
+      resultDisplay.textContent = normalizedChar;
+
+      // Update code points
+      const codePoints = Array.from(normalizedChar)
+        .map(char => 'U+' + char.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'))
+        .join(' ');
+      codePointsDisplay.textContent = codePoints;
+
+      // Update character length
+      const charCount = Array.from(normalizedChar).length;
+      charLengthDisplay.textContent = `${charCount} ${charCount === 1 ? 'character' : 'characters'}`;
+
+      // Calculate and display byte size (UTF-8)
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(normalizedChar);
+      byteSizeDisplay.textContent = `${bytes.length} ${bytes.length === 1 ? 'byte' : 'bytes'}`;
+
+      // Display raw bytes
+      byteDisplay.textContent = Array.from(bytes)
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join(' ');
+
+      // Update the Remove Last button state
+      removeLastBtn.disabled = appliedDiacritics.length === 0;
+      if (appliedDiacritics.length === 0) {
+        removeLastBtn.style.opacity = '0.5';
+      } else {
+        removeLastBtn.style.opacity = '1';
+      }
+    }
+
+    function updateFont() {
+      const selectedFont = fontSelector.value;
+      resultDisplay.style.fontFamily = `${selectedFont}, 'Arial Unicode MS', 'DejaVu Serif', serif`;
+    }
+
+    function copyResultToClipboard() {
+      navigator.clipboard.writeText(combinedChar)
+        .then(() => {
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('Could not copy text: ', err);
+          alert('Failed to copy to clipboard');
+        });
+    }
+
+    function resetCharacter() {
+      appliedDiacritics = [];
+      updateResult();
+    }
+
+    function addRandomDiacritic() {
+      const rangeIndex = Math.floor(Math.random() * diacriticalRanges.length);
+      const range = diacriticalRanges[rangeIndex];
+      const randomCode = Math.floor(Math.random() * (range.end - range.start + 1)) + range.start;
+      appliedDiacritics.push(randomCode);
+      updateResult();
+    }
+
+    function toggleDetails() {
+      showDetails = !showDetails;
+      detailsSection.style.display = showDetails ? 'block' : 'none';
+      toggleDetailsBtn.textContent = showDetails ? 'Hide Details' : 'Show Details';
+    }
+
+    function filterDiacritics() {
+      const searchText = searchInput.value.toLowerCase();
+      const allButtons = document.querySelectorAll('.diacritic-button');
+
+      allButtons.forEach(button => {
+        const dataName = button.getAttribute('data-name');
+        if (!searchText || dataName.includes(searchText)) {
+          button.style.display = 'flex';
+        } else {
+          button.style.display = 'none';
+        }
+      });
+
+      // If search is active, expand all sections
+      if (searchText) {
+        document.querySelectorAll('.collapsible-section').forEach(section => {
+          section.classList.remove('collapsed');
+        });
+      }
+    }
+
+    function toggleInvisibleMarks() {
+      showInvisibleMarks = !showInvisibleMarks;
+      const allButtons = document.querySelectorAll('.diacritic-button');
+      allButtons.forEach(button => {
+        if (showInvisibleMarks) {
+          button.classList.add('enhanced-visibility');
+        } else {
+          button.classList.remove('enhanced-visibility');
+        }
+      });
+      // showAllBtn.textContent = showInvisibleMarks ? 'Hide Codes' : 'Show Invisible Marks';
+      let styleEl = document.getElementById('enhanced-visibility-style');
+      if (!styleEl && showInvisibleMarks) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'enhanced-visibility-style';
+        styleEl.textContent = `
+            .diacritic-button.enhanced-visibility {
+              position: relative;
+              overflow: visible;
+            }
+            .diacritic-button.enhanced-visibility::after {
+              content: attr(title);
+              position: absolute;
+              bottom: -16px;
+              left: 0;
+              right: 0;
+              font-size: 9px;
+              background-color: #333;
+              padding: 2px;
+              z-index: 10;
+            }
+          `;
+        document.head.appendChild(styleEl);
+      } else if (styleEl && !showInvisibleMarks) {
+        styleEl.remove();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      init();
+    });
+  </script>
+</body>
+
+</html>
