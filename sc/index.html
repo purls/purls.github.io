@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unicode UI Stress Test Characters</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1000px;
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .char-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        .char-card:hover {
+            background-color: #252525;
+        }
+
+        .char-display {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .char-box {
+            width: 40px;
+            height: 40px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 12px;
+            position: relative;
+        }
+
+        .char-info {
+            flex: 1;
+        }
+
+        .char-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .char-code {
+            font-family: "JetBrains Mono", monospace;
+            color: #80cccc;
+            font-size: 0.9rem;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-row button {
+            padding: 6px 8px;
+            font-size: 0.8rem;
+            flex: 1;
+        }
+
+        .empty-char-notice {
+            font-size: 0.7rem;
+            color: #aaa;
+            font-style: italic;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #1e1e1e;
+            padding: 2px 4px;
+            border-radius: 3px;
+            opacity: 0.7;
+        }
+
+        .char-box:hover .empty-char-notice {
+            opacity: 1;
+        }
+
+        .copy-notice {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #244444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .copy-notice.show {
+            opacity: 1;
+        }
+
+        .hidden-visualization {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        .visualization-area {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            padding: 15px;
+            margin-top: 10px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 8px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            font-family: "JetBrains Mono", monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Unicode UI Stress Test Characters</h1>
+    <p>
+        A list of special characters is below. If a site allows user inputs such as for a username or comment,
+        some of these characters can be used to break the UI or cause otherwise unexpected behavior.
+        For example, the right-to-left override (U+202E) may cause elements to appear in a reversed direction.
+    </p>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search by name or code point..." />
+    </div>
+
+    <div class="char-grid" id="charGrid"></div>
+
+    <div class="hidden-visualization">
+        <h2>Visualization Test Area</h2>
+        <p>
+            Type or paste text here to see how it renders with the special characters.
+            Helpful for testing how the characters interact with normal text.
+        </p>
+        <textarea id="visualizationInput" rows="6"
+            placeholder="Type or paste text with special characters here..."></textarea>
+        <div class="button-row" style="margin-bottom: 10px;">
+            <button id="clearVisualization">Clear</button>
+            <button id="copyVisualization">Copy All</button>
+        </div>
+        <div>
+            <label for="surroundWithText">Surround char with:</label>
+            <input type="text" id="surroundWithText" value="[X]" style="width: 80px; padding: 6px;">
+        </div>
+    </div>
+
+    <div id="copyNotice" class="copy-notice">Copied!</div>
+
+    <script>
+        const characters = [
+            {
+                "Char": "​",
+                "CodePoint": "U+200B",
+                "Name": "ZERO WIDTH SPACE"
+            },
+            {
+                "Char": "‌",
+                "CodePoint": "U+200C",
+                "Name": "ZERO WIDTH NON-JOINER"
+            },
+            {
+                "Char": "‍",
+                "CodePoint": "U+200D",
+                "Name": "ZERO WIDTH JOINER"
+            },
+            {
+                "Char": "‎",
+                "CodePoint": "U+200E",
+                "Name": "LEFT-TO-RIGHT MARK"
+            },
+            {
+                "Char": "‏",
+                "CodePoint": "U+200F",
+                "Name": "RIGHT-TO-LEFT MARK"
+            },
+            {
+                "Char": "‪",
+                "CodePoint": "U+202A",
+                "Name": "LEFT-TO-RIGHT EMBEDDING"
+            },
+            {
+                "Char": "‫",
+                "CodePoint": "U+202B",
+                "Name": "RIGHT-TO-LEFT EMBEDDING"
+            },
+            {
+                "Char": "‬",
+                "CodePoint": "U+202C",
+                "Name": "POP DIRECTIONAL FORMATTING"
+            },
+            {
+                "Char": "‭",
+                "CodePoint": "U+202D",
+                "Name": "LEFT-TO-RIGHT OVERRIDE"
+            },
+            {
+                "Char": "‮",
+                "CodePoint": "U+202E",
+                "Name": "RIGHT-TO-LEFT OVERRIDE"
+            },
+            {
+                "Char": "⁠",
+                "CodePoint": "U+2060",
+                "Name": "WORD JOINER"
+            },
+            {
+                "Char": "⁡",
+                "CodePoint": "U+2061",
+                "Name": "FUNCTION APPLICATION"
+            },
+            {
+                "Char": "⁢",
+                "CodePoint": "U+2062",
+                "Name": "INVISIBLE TIMES"
+            },
+            {
+                "Char": "⁣",
+                "CodePoint": "U+2063",
+                "Name": "INVISIBLE SEPARATOR"
+            },
+            {
+                "Char": "⁤",
+                "CodePoint": "U+2064",
+                "Name": "INVISIBLE PLUS"
+            },
+            {
+                "Char": "⁦",
+                "CodePoint": "U+2066",
+                "Name": "LEFT-TO-RIGHT ISOLATE"
+            },
+            {
+                "Char": "⁧",
+                "CodePoint": "U+2067",
+                "Name": "RIGHT-TO-LEFT ISOLATE"
+            },
+            {
+                "Char": "⁨",
+                "CodePoint": "U+2068",
+                "Name": "FIRST STRONG ISOLATE"
+            },
+            {
+                "Char": "⁩",
+                "CodePoint": "U+2069",
+                "Name": "POP DIRECTIONAL ISOLATE"
+            },
+            {
+                "Char": "﻿",
+                "CodePoint": "U+FEFF",
+                "Name": "ZERO WIDTH NO-BREAK SPACE (BOM)"
+            },
+            {
+                "Char": "￹",
+                "CodePoint": "U+FFF9",
+                "Name": "INTERLINEAR ANNOTATION ANCHOR"
+            },
+            {
+                "Char": "￺",
+                "CodePoint": "U+FFFA",
+                "Name": "INTERLINEAR ANNOTATION SEPARATOR"
+            },
+            {
+                "Char": "￻",
+                "CodePoint": "U+FFFB",
+                "Name": "INTERLINEAR ANNOTATION TERMINATOR"
+            },
+            {
+                "Char": "͏",
+                "CodePoint": "U+034F",
+                "Name": "COMBINING GRAPHEME JOINER"
+            }
+        ];
+
+        const charGrid = document.getElementById('charGrid');
+        const copyNotice = document.getElementById('copyNotice');
+        const searchInput = document.getElementById('searchInput');
+        const visualizationInput = document.getElementById('visualizationInput');
+        const clearVisualizationBtn = document.getElementById('clearVisualization');
+        const copyVisualizationBtn = document.getElementById('copyVisualization');
+        const surroundWithText = document.getElementById('surroundWithText');
+
+        // Render all character cards
+        function renderCharacterCards(chars) {
+            charGrid.innerHTML = '';
+
+            chars.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'char-card';
+
+                // For zero-width and other invisible characters, add a notice
+                const isInvisible = char.Name.includes('ZERO WIDTH') ||
+                    char.Name.includes('INVISIBLE') ||
+                    char.Name.includes('JOINER');
+
+                card.innerHTML = `
+                    <div class="char-display">
+                        <div class="char-box">
+                            ${char.Char}
+                            ${isInvisible ? '<span class="empty-char-notice">invisible</span>' : ''}
+                        </div>
+                        <div class="char-info">
+                            <div class="char-name">${char.Name}</div>
+                            <div class="char-code">${char.CodePoint}</div>
+                        </div>
+                    </div>
+                    <div class="button-row">
+                        <button class="copy-char" data-char="${char.Char}">Copy Char</button>
+                        <button class="copy-code" data-code="${char.CodePoint}">Copy Code</button>
+                        <button class="add-to-viz" data-char="${char.Char}">Add to Test</button>
+                    </div>
+                `;
+
+                charGrid.appendChild(card);
+            });
+
+            // Add event listeners to all buttons
+            document.querySelectorAll('.copy-char').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    copyToClipboard(btn.dataset.char);
+                });
+            });
+
+            document.querySelectorAll('.copy-code').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    copyToClipboard(btn.dataset.code);
+                });
+            });
+
+            document.querySelectorAll('.add-to-viz').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const surroundFormat = surroundWithText.value || '[X]';
+                    const charToAdd = btn.dataset.char;
+                    const replacement = surroundFormat.replace('X', charToAdd);
+                    visualizationInput.value += replacement;
+                });
+            });
+        }
+
+        function filterCharacters() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (!searchTerm) {
+                renderCharacterCards(characters);
+                return;
+            }
+            const filtered = characters.filter(char =>
+                char.Name.toLowerCase().includes(searchTerm) ||
+                char.CodePoint.toLowerCase().includes(searchTerm)
+            );
+            renderCharacterCards(filtered);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    // Notification
+                    copyNotice.textContent = 'Copied!';
+                    copyNotice.classList.add('show');
+
+                    // Hidden after 2 seconds
+                    setTimeout(() => {
+                        copyNotice.classList.remove('show');
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    copyNotice.textContent = 'Copy failed';
+                    copyNotice.classList.add('show');
+
+                    setTimeout(() => {
+                        copyNotice.classList.remove('show');
+                    }, 2000);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCharacterCards(characters);
+            searchInput.addEventListener('input', filterCharacters);
+            clearVisualizationBtn.addEventListener('click', () => {
+                visualizationInput.value = '';
+            });
+            copyVisualizationBtn.addEventListener('click', () => {
+                copyToClipboard(visualizationInput.value);
+            });
+        });
+    </script>
+</body>
+</html>
