@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Clipboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "JetBrains Mono", monospace;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #121212;
+            color: #e0e0e0;
+            max-width: 800px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            resize: vertical;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        input[type="color"] {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            vertical-align: middle;
+            height: 30px;
+            width: 40px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            transition: background-color 0.3s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background-color: #255555;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #e0e0e0;
+        }
+
+        p {
+            color: #b0b0b0;
+        }
+
+        a {
+            color: #80cccc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #60aaaa;
+            text-decoration: underline;
+        }
+
+        button:focus,
+        textarea:focus,
+        input:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 6px;
+            border: 3px solid #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #5a5a5a;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .form-row label {
+            min-width: 80px;
+        }
+
+        .clipboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+
+        .clipboard-tag {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+            position: relative;
+        }
+
+        .clipboard-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .clipboard-tag::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.7);
+            transition: width 0.3s ease;
+        }
+
+        .clipboard-tag:hover::after {
+            width: 100%;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .clipboard-tag:hover .delete-button {
+            opacity: 1;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #4cafac;
+            color: #121212;
+            border-radius: 4px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #clearAll {
+            background-color: #553333;
+        }
+
+        #clearAll:hover {
+            background-color: #664444;
+        }
+
+        .info-message {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Multi-Clipboard</h1>
+
+    <p>Create, store, and quickly access multiple text snippets.</p>
+
+    <div class="form-group">
+        <label for="clipContent">Text Content:</label>
+        <textarea id="clipContent" rows="5" placeholder="Paste or type content here..."></textarea>
+    </div>
+
+    <div class="form-row">
+        <div style="flex: 1;">
+            <label for="clipName">Nickname (optional):</label>
+            <input type="text" id="clipName" placeholder="Give this clip a name">
+        </div>
+        <div>
+            <label for="clipColor">Color:</label>
+            <input type="color" id="clipColor" value="#335555">
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="saveClip">Save to Clipboard</button>
+        <button id="clearAll">Clear All Clips</button>
+    </div>
+
+    <div class="info-message" id="clipCount">0 clips stored</div>
+
+    <h2>Your Clipboard Items:</h2>
+    <div id="clipboardContainer" class="clipboard-container">
+        <p id="emptyMessage" style="color: #555;">No clipboard items yet.</p>
+    </div>
+
+    <div class="notification" id="notification">Copied to clipboard!</div>
+
+    <hr>
+    <p>
+        This tool helps you keep multiple text snippets ready for quick access. Add content with an optional nickname
+        and
+        color. Click any item to copy it to your clipboard.
+    </p>
+
+    <script>
+        // DOM elements
+        const clipContent = document.getElementById('clipContent');
+        const clipName = document.getElementById('clipName');
+        const clipColor = document.getElementById('clipColor');
+        const saveClipBtn = document.getElementById('saveClip');
+        const clearAllBtn = document.getElementById('clearAll');
+        const clipboardContainer = document.getElementById('clipboardContainer');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const notification = document.getElementById('notification');
+        const clipCount = document.getElementById('clipCount');
+
+        // Set random dark color on load
+        window.addEventListener('load', () => {
+            const randomColor = getRandomDarkColor();
+            clipColor.value = randomColor;
+        });
+
+        // Load saved clips from localStorage
+        let clips = JSON.parse(localStorage.getItem('multiClips')) || [];
+        updateClipboardDisplay();
+        updateClipCount();
+
+        // Save clip to storage
+        saveClipBtn.addEventListener('click', () => {
+            const content = clipContent.value.trim();
+            if (!content) {
+                showNotification('Please enter some content', '#ff6b6b');
+                return;
+            }
+
+            // Create clip object
+            const clip = {
+                id: Date.now(),
+                content: content,
+                name: clipName.value.trim() || generateShortPreview(content),
+                color: clipColor.value || getRandomDarkColor(),
+                timestamp: new Date().toISOString()
+            };
+
+            // Add to clips array and save to localStorage
+            clips.push(clip);
+            saveClips();
+            updateClipboardDisplay();
+            updateClipCount();
+
+            // Clear form
+            clipContent.value = '';
+            clipName.value = '';
+            clipColor.value = getRandomDarkColor();
+
+            showNotification('Clip saved successfully!', '#4cafac');
+        });
+
+        // Clear all clips
+        clearAllBtn.addEventListener('click', () => {
+            if (clips.length === 0) {
+                showNotification('No clips to clear', '#ff6b6b');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete all clips?')) {
+                clips = [];
+                saveClips();
+                updateClipboardDisplay();
+                updateClipCount();
+                showNotification('All clips cleared', '#ff6b6b');
+            }
+        });
+
+        // Save clips to localStorage
+        function saveClips() {
+            localStorage.setItem('multiClips', JSON.stringify(clips));
+        }
+
+        // Update clipboard display
+        function updateClipboardDisplay() {
+            // Clear container except empty message
+            while (clipboardContainer.firstChild) {
+                clipboardContainer.removeChild(clipboardContainer.firstChild);
+            }
+
+            // Show/hide empty message
+            if (clips.length === 0) {
+                clipboardContainer.appendChild(emptyMessage);
+                return;
+            }
+
+            // Add each clip as a tag
+            clips.forEach(clip => {
+                const clipTag = document.createElement('div');
+                clipTag.className = 'clipboard-tag';
+                clipTag.textContent = clip.name;
+                clipTag.title = truncateForTooltip(clip.content);
+                clipTag.style.backgroundColor = clip.color;
+
+                // Ensure text is readable on any background
+                const textColor = getContrastColor(clip.color);
+                clipTag.style.color = textColor;
+
+                // Delete button
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'delete-button';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.title = 'Delete clip';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteClip(clip.id);
+                };
+                clipTag.appendChild(deleteBtn);
+
+                // Click to copy
+                clipTag.addEventListener('click', () => {
+                    copyToClipboard(clip.content);
+                });
+
+                clipboardContainer.appendChild(clipTag);
+            });
+        }
+
+        // Copy text to clipboard
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showNotification('Copied to clipboard!', '#4cafac');
+            } catch (err) {
+                showNotification('Failed to copy!', '#ff6b6b');
+                console.error('Could not copy text: ', err);
+            }
+        }
+
+        // Show notification
+        function showNotification(message, color) {
+            notification.textContent = message;
+            notification.style.backgroundColor = color;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Delete a clip
+        function deleteClip(id) {
+            clips = clips.filter(clip => clip.id !== id);
+            saveClips();
+            updateClipboardDisplay();
+            updateClipCount();
+            showNotification('Clip deleted', '#ff6b6b');
+        }
+
+        // Generate a short preview from content
+        function generateShortPreview(content) {
+            const maxLength = 12;
+            if (content.length <= maxLength) return content;
+            return content.substring(0, maxLength) + '...';
+        }
+
+        // Truncate content for tooltip
+        function truncateForTooltip(content) {
+            const maxLength = 200;
+            if (content.length <= maxLength) return content;
+            return content.substring(0, maxLength) + '...';
+        }
+
+        // Get random dark color
+        function getRandomDarkColor() {
+            const darkColors = [
+                '#335555', '#553355', '#555533', '#334455', '#554433',
+                '#443355', '#335544', '#445533', '#353545', '#453535',
+                '#2b3a42', '#3b2f45', '#2f3b3b', '#3a2b3b', '#2b3b2f',
+                '#2e2e3b', '#3b2e2e', '#2e3b3b', '#3b3b2e', '#2e3b2e'
+            ];
+            return darkColors[Math.floor(Math.random() * darkColors.length)];
+        }
+
+        // Get contrasting text color (black or white) based on background
+        function getContrastColor(hexColor) {
+            // Convert hex to RGB
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+
+            // Calculate luminance
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            // Return black or white based on luminance
+            return luminance > 0.5 ? '#111111' : '#f0f0f0';
+        }
+
+        // Update clip count
+        function updateClipCount() {
+            clipCount.textContent = `${clips.length} clip${clips.length !== 1 ? 's' : ''} stored`;
+        }
+    </script>
+</body>
+
+</html>
