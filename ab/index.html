@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Text in New Tab</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "JetBrains Mono", monospace;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #121212;
+            color: #e0e0e0;
+            max-width: 800px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            resize: vertical;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+            min-height: 200px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            transition: background-color 0.3s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background-color: #255555;
+        }
+
+        h1, h2, h3 {
+            color: #e0e0e0;
+        }
+
+        p {
+            color: #b0b0b0;
+        }
+
+        a {
+            color: #80cccc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #60aaaa;
+            text-decoration: underline;
+        }
+
+        button:focus,
+        textarea:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 6px;
+            border: 3px solid #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #5a5a5a;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-message {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 20px 0;
+        }
+
+        .checkbox-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        input[type="checkbox"] {
+            accent-color: #4cafac;
+        }
+    </style>
+</head>
+
+<body>
+    <h1><span style="color: #808080;">about:</span>blank</h1>
+
+    <p>Enter text below and open it in a new blank tab.</p>
+
+    <textarea id="textContent" placeholder="Enter or paste your text here..."></textarea>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="formatHtml" checked>
+        <label for="formatHtml">Format as HTML (uncheck to show plain text)</label>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="darkMode" checked>
+        <label for="darkMode">Use dark mode in new tab</label>
+    </div>
+
+    <div class="controls">
+        <button id="openInTab">Open in New Tab</button>
+        <button id="clearText">Clear Text</button>
+    </div>
+
+    <div class="info-message" id="infoMessage"></div>
+
+    <hr>
+    <p>
+        This tool takes any text you enter and opens it in a new blank tab (about:blank).
+        You can format it as HTML or display it as plain text.
+    </p>
+
+    <script>
+        // DOM elements
+        const textContent = document.getElementById('textContent');
+        const openInTabBtn = document.getElementById('openInTab');
+        const clearTextBtn = document.getElementById('clearText');
+        const formatHtml = document.getElementById('formatHtml');
+        const darkMode = document.getElementById('darkMode');
+        const infoMessage = document.getElementById('infoMessage');
+
+        // Open text in new tab
+        openInTabBtn.addEventListener('click', () => {
+            const content = textContent.value.trim();
+            if (!content) {
+                showInfoMessage('Please enter some text first.', '#ff6b6b');
+                return;
+            }
+
+            // Open a new blank tab
+            const newTab = window.open('about:blank', '_blank');
+            
+            if (!newTab) {
+                showInfoMessage('Pop-up was blocked. Please allow pop-ups for this site.', '#ff6b6b');
+                return;
+            }
+
+            // Format the content
+            if (formatHtml.checked) {
+                // Create a full HTML document
+                const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Text Viewer</title>
+                    <style>
+                        body {
+                            font-family: monospace;
+                            line-height: 1.6;
+                            margin: 20px;
+                            ${darkMode.checked ? 'background-color: #121212; color: #e0e0e0;' : 'background-color: #ffffff; color: #333333;'}
+                        }
+                        pre {
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                            ${darkMode.checked ? 'background-color: #1a1a1a; border: 1px solid #333;' : 'background-color: #f5f5f5; border: 1px solid #ddd;'}
+                            padding: 10px;
+                            border-radius: 4px;
+                            overflow: auto;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${escapeHtml(content)}</pre>
+                </body>
+                </html>
+                `;
+                
+                newTab.document.write(htmlContent);
+            } else {
+                // Plain text
+                newTab.document.write('<pre style="white-space: pre-wrap; word-wrap: break-word;">' + escapeHtml(content) + '</pre>');
+                
+                // Apply dark mode if selected
+                if (darkMode.checked) {
+                    newTab.document.body.style.backgroundColor = '#121212';
+                    newTab.document.body.style.color = '#e0e0e0';
+                    newTab.document.body.style.margin = '20px';
+                    newTab.document.body.style.fontFamily = 'monospace';
+                }
+            }
+            
+            newTab.document.close();
+            showInfoMessage('Text opened in new tab.', '#4cafac');
+        });
+
+        // Clear text
+        clearTextBtn.addEventListener('click', () => {
+            textContent.value = '';
+            showInfoMessage('Text cleared.', '#4cafac');
+        });
+
+        // Show info message
+        function showInfoMessage(message, color) {
+            infoMessage.textContent = message;
+            infoMessage.style.color = color;
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                infoMessage.textContent = '';
+            }, 3000);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Try to load last text from localStorage
+        window.addEventListener('load', () => {
+            const savedText = localStorage.getItem('openInNewTabText');
+            if (savedText) {
+                textContent.value = savedText;
+            }
+        });
+
+        // Save text to localStorage when changed
+        textContent.addEventListener('input', () => {
+            localStorage.setItem('openInNewTabText', textContent.value);
+        });
+    </script>
+</body>
+
+</html>
