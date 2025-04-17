@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEEE-754 Floating Point Converter</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "JetBrains Mono", monospace;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #121212;
+            color: #e0e0e0;
+            max-width: 900px;
+        }
+
+        input {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 8px 12px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            transition: background-color 0.3s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background-color: #255555;
+        }
+
+        select {
+            padding: 5px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #e0e0e0;
+        }
+
+        p {
+            color: #b0b0b0;
+        }
+
+        a {
+            color: #80cccc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #60aaaa;
+            text-decoration: underline;
+        }
+
+        button:focus,
+        input:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 6px;
+            border: 3px solid #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #5a5a5a;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .bit-controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 20px 0;
+        }
+
+        .bit-display {
+            display: flex;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .bit {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #444;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .bit:hover {
+            background-color: #2a2a2a;
+        }
+
+        .bit.sign {
+            background-color: #553333;
+        }
+
+        .bit.exponent {
+            background-color: #335533;
+        }
+
+        .bit.mantissa {
+            background-color: #333355;
+        }
+
+        .bit-index {
+            font-size: 0.7em;
+            color: #777;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+
+        .bit-section {
+            display: flex;
+            flex-direction: column;
+            margin-right: 2px;
+        }
+
+        .info-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #4cafac;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            background-color: #2a2a2a;
+            padding: 5px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            accent-color: #4cafac;
+            margin: 0;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            margin-right: 10px;
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .special-values {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .conversion-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .highlight {
+            color: #4cafac;
+        }
+
+        .bit-value-1 {
+            background-color: #445566;
+        }
+
+        .bit-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .conversion-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .conversion-table th,
+        .conversion-table td {
+            padding: 8px;
+            border: 1px solid #333;
+            text-align: left;
+        }
+
+        .conversion-table th {
+            background-color: #1e1e1e;
+        }
+
+        .conversion-table tr:nth-child(even) {
+            background-color: #1a1a1a;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>IEEE-754 Floating Point Converter</h1>
+
+    <p>Explore binary representation of floating point numbers and convert between different formats.</p>
+
+    <div class="type-selector">
+        <label for="dataType">Data Type:</label>
+        <select id="dataType">
+            <option value="float32">Float (32-bit)</option>
+            <option value="float64">Double (64-bit)</option>
+            <option value="int32">Int (32-bit)</option>
+            <option value="uint32">Unsigned Int (32-bit)</option>
+        </select>
+    </div>
+
+    <div class="section-header">
+        <h2>Number Input</h2>
+    </div>
+
+    <input type="text" id="numberInput" placeholder="Enter a number (e.g. 3.14159)" value="3.14159">
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="controls">
+        <button id="parseNumber">Parse Number</button>
+        <button id="addOne">+1</button>
+        <button id="subOne">-1</button>
+        <button id="multiplyTwo">×2</button>
+        <button id="divideTwo">÷2</button>
+    </div>
+
+    <div class="special-values">
+        <button id="setZero">Zero</button>
+        <button id="setOne">One</button>
+        <button id="setPi">Pi</button>
+        <button id="setInf">Infinity</button>
+        <button id="setNaN">NaN</button>
+        <button id="setEpsilon">Epsilon</button>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="autoUpdate" checked>
+        <label for="autoUpdate">Auto-update on input change</label>
+    </div>
+
+    <hr>
+
+    <div class="section-header">
+        <h2>Binary Representation</h2>
+    </div>
+
+    <div class="bit-display" id="bitDisplay"></div>
+
+    <div class="bit-controls">
+        <button id="leftShift">Shift Left</button>
+        <button id="rightShift">Shift Right</button>
+        <div class="checkbox-group">
+            <input type="checkbox" id="wrapBits">
+            <label for="wrapBits">Wrap bits on shift</label>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Decimal Representation</div>
+                <div class="info-value" id="decimalValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Value Actually Stored</div>
+                <div class="info-value" id="storedValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Error</div>
+                <div class="info-value" id="errorValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Binary Representation</div>
+                <div class="info-value" id="binaryValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Hexadecimal Representation</div>
+                <div class="info-value" id="hexValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Scientific Notation</div>
+                <div class="info-value" id="scientificValue">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>Components</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Sign</div>
+                <div class="info-value" id="signValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Sign Value</div>
+                <div class="info-value" id="signActual">+1</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Exponent (Binary)</div>
+                <div class="info-value" id="exponentBinary">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Exponent Value</div>
+                <div class="info-value" id="exponentValue">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mantissa (Binary)</div>
+                <div class="info-value" id="mantissaBinary">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mantissa Value</div>
+                <div class="info-value" id="mantissaValue">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="conversion-panel">
+        <h3>Type Conversion</h3>
+        <div class="type-selector">
+            <label for="convertType">Convert to:</label>
+            <select id="convertType">
+                <option value="float32">Float (32-bit)</option>
+                <option value="float64">Double (64-bit)</option>
+                <option value="int32">Int (32-bit)</option>
+                <option value="uint32">Unsigned Int (32-bit)</option>
+            </select>
+            <div class="checkbox-group">
+                <input type="checkbox" id="bitPatternConversion">
+                <label for="bitPatternConversion">Bit Pattern Conversion (Reinterpret)</label>
+            </div>
+        </div>
+        <button id="convertButton">Convert</button>
+        <div class="info-item">
+            <div class="info-label">Conversion Result</div>
+            <div class="info-value" id="conversionResult">--</div>
+        </div>
+    </div>
+
+    <hr>
+    <p>
+        This tool helps you understand IEEE-754 floating point representation and conversion between different number
+        formats. Click on bits to toggle them, use the shift buttons to manipulate the bit pattern, or use the math
+        operations to see how values change.
+    </p>
+
+    <script>
+        // DOM elements
+        const numberInput = document.getElementById('numberInput');
+        const dataType = document.getElementById('dataType');
+        const bitDisplay = document.getElementById('bitDisplay');
+        const parseButton = document.getElementById('parseNumber');
+        const addOneButton = document.getElementById('addOne');
+        const subOneButton = document.getElementById('subOne');
+        const multiplyTwoButton = document.getElementById('multiplyTwo');
+        const divideTwoButton = document.getElementById('divideTwo');
+        const leftShiftButton = document.getElementById('leftShift');
+        const rightShiftButton = document.getElementById('rightShift');
+        const wrapBitsCheckbox = document.getElementById('wrapBits');
+        const autoUpdateCheckbox = document.getElementById('autoUpdate');
+        const errorMsg = document.getElementById('errorMsg');
+        const convertType = document.getElementById('convertType');
+        const bitPatternConversion = document.getElementById('bitPatternConversion');
+        const convertButton = document.getElementById('convertButton');
+
+        // Special value buttons
+        const setZeroButton = document.getElementById('setZero');
+        const setOneButton = document.getElementById('setOne');
+        const setPiButton = document.getElementById('setPi');
+        const setInfButton = document.getElementById('setInf');
+        const setNaNButton = document.getElementById('setNaN');
+        const setEpsilonButton = document.getElementById('setEpsilon');
+
+        // Info display elements
+        const decimalValue = document.getElementById('decimalValue');
+        const storedValue = document.getElementById('storedValue');
+        const errorValue = document.getElementById('errorValue');
+        const binaryValue = document.getElementById('binaryValue');
+        const hexValue = document.getElementById('hexValue');
+        const scientificValue = document.getElementById('scientificValue');
+        const signValue = document.getElementById('signValue');
+        const signActual = document.getElementById('signActual');
+        const exponentBinary = document.getElementById('exponentBinary');
+        const exponentValue = document.getElementById('exponentValue');
+        const mantissaBinary = document.getElementById('mantissaBinary');
+        const mantissaValue = document.getElementById('mantissaValue');
+        const conversionResult = document.getElementById('conversionResult');
+
+        // Current state
+        let currentBits = new Uint8Array(4); // Default to 32-bit (4 bytes)
+        let currentValue = 0;
+
+        // Format config
+        const formatConfig = {
+            float32: {
+                byteLength: 4,
+                signBits: 1,
+                exponentBits: 8,
+                mantissaBits: 23,
+                bias: 127,
+                getter: (buffer) => new DataView(buffer).getFloat32(0, false),
+                setter: (buffer, value) => new DataView(buffer).setFloat32(0, value, false),
+                name: "Float (32-bit)"
+            },
+            float64: {
+                byteLength: 8,
+                signBits: 1,
+                exponentBits: 11,
+                mantissaBits: 52,
+                bias: 1023,
+                getter: (buffer) => new DataView(buffer).getFloat64(0, false),
+                setter: (buffer, value) => new DataView(buffer).setFloat64(0, value, false),
+                name: "Double (64-bit)"
+            },
+            int32: {
+                byteLength: 4,
+                signBits: 1,
+                exponentBits: 0,
+                mantissaBits: 31,
+                bias: 0,
+                getter: (buffer) => new DataView(buffer).getInt32(0, false),
+                setter: (buffer, value) => new DataView(buffer).setInt32(0, value, false),
+                name: "Int (32-bit)"
+            },
+            uint32: {
+                byteLength: 4,
+                signBits: 0,
+                exponentBits: 0,
+                mantissaBits: 32,
+                bias: 0,
+                getter: (buffer) => new DataView(buffer).getUint32(0, false),
+                setter: (buffer, value) => new DataView(buffer).setUint32(0, value, false),
+                name: "Unsigned Int (32-bit)"
+            }
+        };
+
+        // Current format
+        let currentFormat = formatConfig.float32;
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            updateFromInput();
+
+            // Set up data type change listener
+            dataType.addEventListener('change', () => {
+                currentFormat = formatConfig[dataType.value];
+                updateFromInput();
+            });
+
+            // Set up auto-update listener
+            numberInput.addEventListener('input', () => {
+                if (autoUpdateCheckbox.checked) {
+                    updateFromInput();
+                }
+            });
+
+            // Set up parse button
+            parseButton.addEventListener('click', updateFromInput);
+
+            // Math operations
+            addOneButton.addEventListener('click', () => {
+                const current = getValueFromBits();
+                updateValue(current + 1);
+            });
+
+            subOneButton.addEventListener('click', () => {
+                const current = getValueFromBits();
+                updateValue(current - 1);
+            });
+
+            multiplyTwoButton.addEventListener('click', () => {
+                const current = getValueFromBits();
+                updateValue(current * 2);
+            });
+
+            divideTwoButton.addEventListener('click', () => {
+                const current = getValueFromBits();
+                updateValue(current / 2);
+            });
+
+            // Bit shifting
+            leftShiftButton.addEventListener('click', () => {
+                const bits = Array.from(currentBits);
+                const totalBits = bits.length * 8;
+                let bitArray = [];
+
+                // Convert bytes to bit array
+                for (let i = 0; i < bits.length; i++) {
+                    for (let j = 7; j >= 0; j--) {
+                        bitArray.push((bits[i] >> j) & 1);
+                    }
+                }
+
+                // Shift left with optional wrap
+                if (wrapBitsCheckbox.checked) {
+                    const firstBit = bitArray[0];
+                    bitArray = bitArray.slice(1);
+                    bitArray.push(firstBit);
+                } else {
+                    bitArray.shift();
+                    bitArray.push(0);
+                }
+
+                // Convert back to bytes
+                for (let i = 0; i < bits.length; i++) {
+                    let byte = 0;
+                    for (let j = 0; j < 8; j++) {
+                        byte = (byte << 1) | bitArray[i * 8 + j];
+                    }
+                    currentBits[i] = byte;
+                }
+
+                updateFromBits();
+            });
+
+            rightShiftButton.addEventListener('click', () => {
+                const bits = Array.from(currentBits);
+                const totalBits = bits.length * 8;
+                let bitArray = [];
+
+                // Convert bytes to bit array
+                for (let i = 0; i < bits.length; i++) {
+                    for (let j = 7; j >= 0; j--) {
+                        bitArray.push((bits[i] >> j) & 1);
+                    }
+                }
+
+                // Shift right with optional wrap
+                if (wrapBitsCheckbox.checked) {
+                    const lastBit = bitArray[totalBits - 1];
+                    bitArray.pop();
+                    bitArray.unshift(lastBit);
+                } else {
+                    bitArray.pop();
+                    bitArray.unshift(0);
+                }
+
+                // Convert back to bytes
+                for (let i = 0; i < bits.length; i++) {
+                    let byte = 0;
+                    for (let j = 0; j < 8; j++) {
+                        byte = (byte << 1) | bitArray[i * 8 + j];
+                    }
+                    currentBits[i] = byte;
+                }
+
+                updateFromBits();
+            });
+
+            // Special values
+            setZeroButton.addEventListener('click', () => updateValue(0));
+            setOneButton.addEventListener('click', () => updateValue(1));
+            setPiButton.addEventListener('click', () => updateValue(Math.PI));
+            setInfButton.addEventListener('click', () => updateValue(Infinity));
+            setNaNButton.addEventListener('click', () => updateValue(NaN));
+            setEpsilonButton.addEventListener('click', () => {
+                if (currentFormat === formatConfig.float32) {
+                    updateValue(1.1754943508222875e-38); // Float32 smallest positive normal
+                } else if (currentFormat === formatConfig.float64) {
+                    updateValue(Number.EPSILON); // Float64 epsilon
+                } else {
+                    updateValue(1); // For integers, just use 1
+                }
+            });
+
+            // Type conversion
+            convertButton.addEventListener('click', performConversion);
+        });
+
+        // Update the display from the input value
+        function updateFromInput() {
+            errorMsg.textContent = '';
+            let inputVal = numberInput.value.trim();
+
+            try {
+                let value;
+                if (currentFormat === formatConfig.uint32) {
+                    // Handle hex notation for integers
+                    if (inputVal.startsWith('0x') || inputVal.startsWith('0X')) {
+                        value = parseInt(inputVal, 16);
+                    } else {
+                        value = parseInt(inputVal);
+                    }
+
+                    if (isNaN(value) || !isFinite(value)) {
+                        throw new Error("Invalid number format");
+                    }
+
+                    // Ensure value is in range for uint32
+                    value = value >>> 0; // Force to unsigned 32-bit
+                } else if (currentFormat === formatConfig.int32) {
+                    // Handle hex notation for integers
+                    if (inputVal.startsWith('0x') || inputVal.startsWith('0X')) {
+                        value = parseInt(inputVal, 16);
+                    } else {
+                        value = parseInt(inputVal);
+                    }
+
+                    if (isNaN(value) || !isFinite(value)) {
+                        throw new Error("Invalid number format");
+                    }
+
+                    // Ensure value is in range for int32
+                    value = value | 0; // Force to signed 32-bit
+                } else {
+                    // Parse as float
+                    value = parseFloat(inputVal);
+
+                    if (isNaN(value) && !inputVal.includes('NaN')) {
+                        throw new Error("Invalid number format");
+                    }
+                }
+
+                updateValue(value);
+            } catch (e) {
+                errorMsg.textContent = e.message;
+            }
+        }
+
+        // Update the state with the new value
+        function updateValue(value) {
+            const buffer = new ArrayBuffer(currentFormat.byteLength);
+
+            try {
+                // Set the value in the buffer
+                currentFormat.setter(buffer, value);
+
+                // Copy bytes to our currentBits
+                currentBits = new Uint8Array(buffer);
+
+                // Update the input field with the actual number
+                const actualValue = currentFormat.getter(buffer);
+                if (!autoUpdateCheckbox.checked) {
+                    numberInput.value = isFinite(actualValue) ?
+                        (Number.isInteger(actualValue) ? actualValue : actualValue.toString()) :
+                        actualValue.toString();
+                }
+
+                // Update all displays
+                updateDisplays(value);
+            } catch (e) {
+                errorMsg.textContent = "Error: " + e.message;
+            }
+        }
+
+        // Get the value from the current bits
+        function getValueFromBits() {
+            const buffer = currentBits.buffer;
+            return currentFormat.getter(buffer);
+        }
+
+        // Update from bits (after bit manipulation)
+        function updateFromBits() {
+            const value = getValueFromBits();
+
+            // Update the input field
+            numberInput.value = isFinite(value) ?
+                (Number.isInteger(value) ? value : value.toString()) :
+                value.toString();
+
+            updateDisplays();
+        }
+
+        // Update all the displays
+        function updateDisplays(originalValue = null) {
+            // Get the actual value
+            const buffer = currentBits.buffer;
+            const value = currentFormat.getter(buffer);
+
+            // Fill in the info displays
+            decimalValue.textContent = originalValue !== null ?
+                originalValue.toString() :
+                numberInput.value;
+
+            storedValue.textContent = isFinite(value) ?
+                (Number.isInteger(value) ? value : value.toFixed(20).replace(/\.?0+$/, "")) :
+                value.toString();
+
+            if (originalValue !== null && isFinite(originalValue) && isFinite(value)) {
+                const error = Math.abs(originalValue - value);
+                const relativeError = originalValue !== 0 ? (error / Math.abs(originalValue)) * 100 : 0;
+                errorValue.textContent = `Absolute: ${error.toExponential(6)}, Relative: ${relativeError.toFixed(8)}%`;
+            } else {
+                errorValue.textContent = "N/A";
+            }
+
+            // For floating point formats, extract components
+            if (currentFormat === formatConfig.float32 || currentFormat === formatConfig.float64) {
+                renderFloatComponents();
+            } else if (currentFormat === formatConfig.int32) {
+                renderInt32Components();
+            } else if (currentFormat === formatConfig.uint32) {
+                renderUint32Components();
+            }
+
+            // Update bit display
+            renderBitDisplay();
+
+            // Binary and hex representation
+            updateBinaryAndHex();
+
+            // Scientific notation
+            if (isFinite(value)) {
+                if (value === 0) {
+                    scientificValue.textContent = "0";
+                } else {
+                    scientificValue.textContent = value.toExponential(10);
+                }
+            } else {
+                scientificValue.textContent = value.toString();
+            }
+        }
+
+        // Render the bit display
+        function renderBitDisplay() {
+            bitDisplay.innerHTML = '';
+
+            const totalBits = currentFormat.byteLength * 8;
+            const signBits = currentFormat.signBits;
+            const exponentBits = currentFormat.exponentBits;
+            const mantissaBits = currentFormat.mantissaBits;
+
+            for (let bit = 0; bit < totalBits; bit++) {
+                const bitSection = document.createElement('div');
+                bitSection.className = 'bit-section';
+
+                // Bit index at the top
+                const bitIndex = document.createElement('div');
+                bitIndex.className = 'bit-index';
+                bitIndex.textContent = totalBits - bit - 1;
+                bitSection.appendChild(bitIndex);
+
+                // The bit value
+                const bitElement = document.createElement('div');
+                bitElement.className = 'bit';
+
+                // Assign proper class based on section
+                if (bit < signBits) {
+                    bitElement.classList.add('sign');
+                } else if (bit < signBits + exponentBits) {
+                    bitElement.classList.add('exponent');
+                } else {
+                    bitElement.classList.add('mantissa');
+                }
+
+                // Get the bit value
+                const byteIndex = Math.floor(bit / 8);
+                const bitPos = 7 - (bit % 8);
+                const bitValue = (currentBits[byteIndex] >> bitPos) & 1;
+
+                if (bitValue === 1) {
+                    bitElement.classList.add('bit-value-1');
+                }
+
+                bitElement.textContent = bitValue;
+
+                // Add click handler to toggle the bit
+                bitElement.addEventListener('click', () => {
+                    const newValue = bitValue === 1 ? 0 : 1;
+
+                    // Update the bit
+                    if (newValue === 1) {
+                        currentBits[byteIndex] |= (1 << bitPos);
+                    } else {
+                        currentBits[byteIndex] &= ~(1 << bitPos);
+                    }
+
+                    updateFromBits();
+                });
+
+                bitSection.appendChild(bitElement);
+                bitDisplay.appendChild(bitSection);
+            }
+        }
+
+        // Extract and display float components
+        function renderFloatComponents() {
+            const bits = Array.from(currentBits);
+            const totalBits = bits.length * 8;
+            const signBits = currentFormat.signBits;
+            const exponentBits = currentFormat.exponentBits;
+            const mantissaBits = currentFormat.mantissaBits;
+            const bias = currentFormat.bias;
+
+            // Create a bit array for easy access
+            let bitArray = [];
+            for (let i = 0; i < bits.length; i++) {
+                for (let j = 7; j >= 0; j--) {
+                    bitArray.push((bits[i] >> j) & 1);
+                }
+            }
+
+            // Extract sign bit
+            const sign = bitArray[0];
+            signValue.textContent = sign;
+            signActual.textContent = sign === 0 ? "+1" : "-1";
+
+            // Extract exponent bits
+            const exponentBitArray = bitArray.slice(signBits, signBits + exponentBits);
+            const exponentBitsStr = exponentBitArray.join('');
+            exponentBinary.textContent = exponentBitsStr;
+
+            // Calculate exponent value
+            let exponentVal = 0;
+            for (let i = 0; i < exponentBits; i++) {
+                exponentVal = (exponentVal * 2) + exponentBitArray[i];
+            }
+
+            // Apply bias
+            const biasedExponent = exponentVal - bias;
+            exponentValue.textContent = `${exponentVal} (biased), ${biasedExponent} (unbiased)`;
+
+            // Extract mantissa bits
+            const mantissaBitArray = bitArray.slice(signBits + exponentBits);
+            const mantissaBitsStr = mantissaBitArray.join('');
+            mantissaBinary.textContent = mantissaBitsStr;
+
+            // Calculate mantissa value
+            let mantissaVal = 0;
+            for (let i = 0; i < mantissaBits; i++) {
+                mantissaVal += mantissaBitArray[i] * Math.pow(2, -(i + 1));
+            }
+
+            // Special case handling for normalized form
+            if (exponentVal > 0 && exponentVal < Math.pow(2, exponentBits) - 1) {
+                // Normalized form: 1.mantissa * 2^exponent
+                mantissaVal += 1;
+                mantissaValue.textContent = `1.${mantissaBitsStr} = ${mantissaVal}`;
+            } else if (exponentVal === 0 && mantissaVal !== 0) {
+                // Denormalized form: 0.mantissa * 2^(1-bias)
+                mantissaValue.textContent = `0.${mantissaBitsStr} = ${mantissaVal} (denormal)`;
+            } else if (exponentVal === 0 && mantissaVal === 0) {
+                // Zero
+                mantissaValue.textContent = `0.${mantissaBitsStr} = ${mantissaVal} (zero)`;
+            } else {
+                // Special values (Infinity or NaN)
+                if (mantissaVal === 0) {
+                    mantissaValue.textContent = `${mantissaBitsStr} (Infinity)`;
+                } else {
+                    mantissaValue.textContent = `${mantissaBitsStr} (NaN)`;
+                }
+            }
+        }
+
+        // Extract and display int32 components
+        function renderInt32Components() {
+            const bits = Array.from(currentBits);
+            const signBit = (bits[0] >> 7) & 1;
+
+            // For int32, just show the sign and the rest as magnitude
+            signValue.textContent = signBit;
+            signActual.textContent = signBit === 0 ? "Positive" : "Negative";
+
+            // Clear exponent fields
+            exponentBinary.textContent = "N/A";
+            exponentValue.textContent = "N/A";
+
+            // Show remaining bits as magnitude
+            let bitArray = [];
+            for (let i = 0; i < bits.length; i++) {
+                for (let j = 7; j >= 0; j--) {
+                    if (i === 0 && j === 7) continue; // Skip sign bit
+                    bitArray.push((bits[i] >> j) & 1);
+                }
+            }
+
+            mantissaBinary.textContent = bitArray.join('');
+
+            // For 2's complement, explain the calculation
+            const value = new DataView(currentBits.buffer).getInt32(0, false);
+            if (signBit === 1) {
+                mantissaValue.textContent = `Value = -${Math.abs(value)} (2's complement)`;
+            } else {
+                mantissaValue.textContent = `Value = ${value}`;
+            }
+        }
+
+        // Extract and display uint32 components
+        function renderUint32Components() {
+            // No sign bit for uint32
+            signValue.textContent = "N/A";
+            signActual.textContent = "Unsigned";
+
+            // Clear exponent fields
+            exponentBinary.textContent = "N/A";
+            exponentValue.textContent = "N/A";
+
+            // Show all bits as magnitude
+            let bitArray = [];
+            for (let i = 0; i < currentBits.length; i++) {
+                for (let j = 7; j >= 0; j--) {
+                    bitArray.push((currentBits[i] >> j) & 1);
+                }
+            }
+
+            mantissaBinary.textContent = bitArray.join('');
+            mantissaValue.textContent = `Value = ${new DataView(currentBits.buffer).getUint32(0, false)}`;
+        }
+
+        // Update binary and hex displays
+        function updateBinaryAndHex() {
+            // Binary representation with spaces for readability
+            let binaryStr = '';
+            for (let i = 0; i < currentBits.length; i++) {
+                let byteStr = currentBits[i].toString(2).padStart(8, '0');
+                binaryStr += byteStr + ' ';
+            }
+            binaryValue.textContent = binaryStr.trim();
+
+            // Hexadecimal representation
+            let hexStr = '';
+            for (let i = 0; i < currentBits.length; i++) {
+                hexStr += currentBits[i].toString(16).padStart(2, '0').toUpperCase() + ' ';
+            }
+            hexValue.textContent = '0x' + hexStr.trim().replace(/\s/g, '');
+        }
+
+        // Type conversion
+        function performConversion() {
+            const targetType = convertType.value;
+            const sourceValue = getValueFromBits();
+            const bitPatternMode = bitPatternConversion.checked;
+
+            if (bitPatternMode) {
+                // Bit pattern conversion (reinterpret the bits)
+                const sourceBuffer = currentBits.buffer;
+                const result = formatConfig[targetType].getter(sourceBuffer);
+
+                conversionResult.textContent = `${result} (reinterpreted as ${formatConfig[targetType].name})`;
+            } else {
+                // Value conversion (cast/convert the value)
+                let result;
+
+                if (targetType === 'int32') {
+                    result = sourceValue | 0; // Convert to signed 32-bit integer
+                } else if (targetType === 'uint32') {
+                    result = sourceValue >>> 0; // Convert to unsigned 32-bit integer
+                } else {
+                    // Convert to float
+                    result = Number(sourceValue);
+                }
+
+                conversionResult.textContent = `${result} (converted to ${formatConfig[targetType].name})`;
+            }
+        }
+    </script>
+</body>
+
+</html>
