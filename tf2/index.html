@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TF2 Chat Colorizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'TF2Build';
+            src: url('./tf2build.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: "JetBrains Mono", monospace;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #121212;
+            color: #e0e0e0;
+            max-width: 1000px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            resize: vertical;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        input[type="color"] {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            vertical-align: middle;
+            height: 30px;
+        }
+
+        button {
+            padding: 8px 12px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            transition: background-color 0.3s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        button:hover {
+            background-color: #255555;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #e0e0e0;
+        }
+
+        p {
+            color: #b0b0b0;
+        }
+
+        a {
+            color: #80cccc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #60aaaa;
+            text-decoration: underline;
+        }
+
+        button:focus,
+        textarea:focus,
+        input:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 6px;
+            border: 3px solid #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #5a5a5a;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 20px 0;
+        }
+
+        .info-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .info-message {
+            color: #4cafac;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            border: 1px solid #333;
+            margin-right: 5px;
+        }
+
+        .text-preview {
+            min-height: 50px;
+            padding: 10px;
+            background-color: #222222;
+            border: 1px solid #333;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .color-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .color-segment {
+            padding: 8px;
+            margin-bottom: 8px;
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .color-segment-text {
+            margin-bottom: 5px;
+        }
+
+        .color-segment-preview {
+            display: inline-block;
+            border-radius: 2px;
+            padding: 2px 5px;
+        }
+
+        .remove-segment {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #e0e0e0;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-segment:hover {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .text-editor {
+            margin-bottom: 15px;
+        }
+
+        .color-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .preset-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .preset-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+
+        .preset-color:hover {
+            transform: scale(1.1);
+        }
+
+        .text-section {
+            margin-bottom: 15px;
+        }
+
+        .segmented-editor {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .segment-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .segment-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .tf2-chat-preview {
+            background-color: #252525;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-family: sans-serif;
+            border: 1px solid #333;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted #4cafac;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #222;
+            color: #e0e0e0;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            border: 1px solid #333;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .segment-handle {
+            cursor: move;
+            padding: 5px;
+            background-color: #2a2a2a;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        .text-segment {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .text-segment-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-segment-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .icon-button {
+            background-color: transparent;
+            border: none;
+            color: #808080;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .icon-button:hover {
+            color: #e0e0e0;
+            background-color: #2a2a2a;
+        }
+
+        .color-indicator {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 3px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .segment-edit-form {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .segment-edit-form input[type="text"] {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .color-tabs {
+            display: flex;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+        }
+
+        .color-tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-bottom: none;
+            margin-right: 2px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .color-tab.active {
+            background-color: #244444;
+            border-bottom: 1px solid #244444;
+            margin-bottom: -1px;
+        }
+
+        .color-tab:hover:not(.active) {
+            background-color: #2a2a2a;
+        }
+
+        .color-content {
+            display: none;
+        }
+
+        .color-content.active {
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .segment-edit-form {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .segment-edit-form-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="checkbox"] {
+            accent-color: #4cafac;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="font-family: 'TF2Build', monospace;">TF2 Chat <span style="background: linear-gradient(to right, #ff6666, #6666ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Colorizer</span></h1>
+
+    <p>Generate color-coded chat messages for TF2 using special characters.</p>
+
+    <div class="two-column">
+        <div>
+            <div class="text-section">
+                <h2>Message Editor</h2>
+                <!-- <p>Add text segments and apply colors to them.</p> -->
+
+                <div class="segmented-editor">
+                    <div id="segmentContainer"></div>
+
+                    <div class="segment-controls">
+                        <input type="text" id="newSegmentText" class="segment-input"
+                            placeholder="Enter text for new segment...">
+                        <input type="color" id="colorPicker" value="#4cafac">
+                        <button id="addSegment">Add Colored Segment</button>
+                        <button id="addPlainSegment">Add Plain Text</button>
+                        <button id="addEndTagSegment">Add End Tag</button>
+                    </div>
+                </div>
+
+                <!-- Color Selection Tabs -->
+                <div class="color-tabs">
+                    <div class="color-tab active" data-tab="basic">Basic Colors</div>
+                    <div class="color-tab" data-tab="quality">Item Quality</div>
+                    <div class="color-tab" data-tab="grade">Weapon Grade</div>
+                </div>
+
+                <!-- Basic Colors Tab -->
+                <div class="color-content active" id="basic-colors">
+                    <div class="preset-colors">
+                        <div class="preset-color" style="background-color: #fe0000" title="Red" data-color="#fe0000">
+                        </div>
+                        <div class="preset-color" style="background-color: #ff9700" title="Orange" data-color="#ff9700">
+                        </div>
+                        <div class="preset-color" style="background-color: #fcff00" title="Yellow" data-color="#fcff00">
+                        </div>
+                        <div class="preset-color" style="background-color: #52ff33" title="Green" data-color="#52ff33">
+                        </div>
+                        <div class="preset-color" style="background-color: #0125b7" title="Blue" data-color="#0125b7">
+                        </div>
+                        <div class="preset-color" style="background-color: #a700a6" title="Purple" data-color="#a700a6">
+                        </div>
+                        <div class="preset-color" style="background-color: #39c1df" title="Light Blue"
+                            data-color="#39c1df"></div>
+                        <div class="preset-color" style="background-color: #ffffff" title="White" data-color="#ffffff">
+                        </div>
+                        <div class="preset-color" style="background-color: #dfdfdf" title="Light Gray"
+                            data-color="#dfdfdf"></div>
+                        <div class="preset-color" style="background-color: #b4b4b4" title="Gray" data-color="#b4b4b4">
+                        </div>
+                        <div class="preset-color" style="background-color: #606060" title="Dark Gray"
+                            data-color="#606060"></div>
+                        <div class="preset-color" style="background-color: #3a3a3a" title="Very Dark Gray"
+                            data-color="#3a3a3a"></div>
+                    </div>
+                </div>
+
+                <!-- Item Quality Tab -->
+                <div class="color-content" id="quality-colors">
+                    <div class="preset-colors">
+                        <div class="preset-color" style="background-color: #B2B2B2" title="Normal" data-color="#B2B2B2">
+                        </div>
+                        <div class="preset-color" style="background-color: #FFD700" title="Unique" data-color="#FFD700">
+                        </div>
+                        <div class="preset-color" style="background-color: #476291" title="Vintage"
+                            data-color="#476291"></div>
+                        <div class="preset-color" style="background-color: #4D7455" title="Genuine"
+                            data-color="#4D7455"></div>
+                        <div class="preset-color" style="background-color: #CF6A32" title="Strange"
+                            data-color="#CF6A32"></div>
+                        <div class="preset-color" style="background-color: #8650AC" title="Unusual"
+                            data-color="#8650AC"></div>
+                        <div class="preset-color" style="background-color: #38F3AB" title="Haunted"
+                            data-color="#38F3AB"></div>
+                        <div class="preset-color" style="background-color: #AA0000" title="Collector's"
+                            data-color="#AA0000"></div>
+                        <div class="preset-color" style="background-color: #FAFAFA" title="Decorated"
+                            data-color="#FAFAFA"></div>
+                        <div class="preset-color" style="background-color: #70B04A" title="Community/Self-Made"
+                            data-color="#70B04A"></div>
+                        <div class="preset-color" style="background-color: #A50F79" title="Valve" data-color="#A50F79">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weapon Grade Tab -->
+                <div class="color-content" id="grade-colors">
+                    <div class="preset-colors">
+                        <div class="preset-color" style="background-color: #B0C3D9" title="Civilian Grade"
+                            data-color="#B0C3D9"></div>
+                        <div class="preset-color" style="background-color: #5E98D9" title="Freelance Grade"
+                            data-color="#5E98D9"></div>
+                        <div class="preset-color" style="background-color: #4B69FF" title="Mercenary Grade"
+                            data-color="#4B69FF"></div>
+                        <div class="preset-color" style="background-color: #8847FF" title="Commando Grade"
+                            data-color="#8847FF"></div>
+                        <div class="preset-color" style="background-color: #D32CE6" title="Assassin Grade"
+                            data-color="#D32CE6"></div>
+                        <div class="preset-color" style="background-color: #EB4B4B" title="Elite Grade"
+                            data-color="#EB4B4B"></div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="clearAll">Clear All</button>
+                    <button id="loadExample">Load Example</button>
+                    <button id="applyRainbow">Rainbow Effect</button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h2>Chat Preview</h2>
+            <div class="tf2-chat-preview">
+                <div id="previewArea"></div>
+            </div>
+
+            <h2>Generated Message Code</h2>
+            <textarea id="outputCode" rows="5" readonly></textarea>
+            <div class="controls">
+                <button id="copyOutput">Copy to Clipboard</button>
+                <!-- End tags can be added manually, so this is redundant -->
+                <!-- <div class="checkbox-group">
+                    <input type="checkbox" id="addEndTag">
+                    <label for="addEndTag">Add end tag (U+0001)</label>
+                    <span class="tooltip">?
+                        <span class="tooltiptext">Adds special character to end colored text</span>
+                    </span>
+                </div> -->
+            </div>
+
+            <div class="info-message" id="infoMessage"></div>
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="info-panel">
+                <h3>Quick Instructions</h3>
+                <ol>
+                    <li>Enter text in the input field</li>
+                    <li>Choose a color or select "Add Plain Text" for uncolored text.
+                        <div style="margin-left: 12px; margin-right: 20px; color: #808080; font-size: 0.9em;">
+                            Note: Use an End Tag to terminate any color usage and resume the default color.
+                        </div>
+                    </li>
+                    <li>Add more segments as needed</li>
+                    <li>Rearrange with the up/down arrows</li>
+                    <li>Copy the generated code for use in-game</li>
+                        <div style="margin-left: 12px; margin-right: 20px; color: #808080; font-size: 0.9em;">
+                            Note: Only works in team chat, spectator chat, or while dead.
+                        </div>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const segmentContainer = document.getElementById('segmentContainer');
+        const newSegmentText = document.getElementById('newSegmentText');
+        const colorPicker = document.getElementById('colorPicker');
+        const addSegmentButton = document.getElementById('addSegment');
+        const clearAllButton = document.getElementById('clearAll');
+        const loadExampleButton = document.getElementById('loadExample');
+        const outputCode = document.getElementById('outputCode');
+        const copyOutputButton = document.getElementById('copyOutput');
+        const previewArea = document.getElementById('previewArea');
+        const infoMessage = document.getElementById('infoMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        // const addEndTag = document.getElementById('addEndTag');
+        const presetColors = document.querySelectorAll('.preset-color');
+        const colorTabs = document.querySelectorAll('.color-tab');
+        const colorContents = document.querySelectorAll('.color-content');
+
+        // State
+        let segments = [];
+        let selectedSegmentIndex = -1;
+
+        // Initialize
+        window.addEventListener('load', () => {
+            // Set up event listeners
+            addSegmentButton.addEventListener('click', addColoredSegment);
+            document.getElementById('addPlainSegment').addEventListener('click', addPlainTextSegment);
+            document.getElementById('addEndTagSegment').addEventListener('click', addEndTagSegment);
+            clearAllButton.addEventListener('click', clearAllSegments);
+            loadExampleButton.addEventListener('click', loadExample);
+            document.getElementById('applyRainbow').addEventListener('click', applyRainbowEffect);
+            copyOutputButton.addEventListener('click', copyOutputToClipboard);
+            // addEndTag.addEventListener('change', updateOutput);
+
+            // Tab switcher for color palettes
+            colorTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and content
+                    colorTabs.forEach(t => t.classList.remove('active'));
+                    colorContents.forEach(c => c.classList.remove('active'));
+
+                    // Set active tab and content
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-colors`).classList.add('active');
+                });
+            });
+
+            // Set up preset color buttons
+            presetColors.forEach(color => {
+                color.addEventListener('click', () => {
+                    colorPicker.value = color.getAttribute('data-color');
+                });
+            });
+
+            // Allow enter key to add segment
+            newSegmentText.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addColoredSegment();
+                }
+            });
+
+            // Initial update
+            updateOutput();
+
+            // Add parse button
+            const parseButton = document.createElement('button');
+            parseButton.id = 'parseCode';
+            parseButton.textContent = 'Parse Color Code';
+            parseButton.addEventListener('click', () => {
+                const code = prompt('Enter TF2 color code to parse:');
+                if (code) {
+                    parseColorCode(code);
+                }
+            });
+
+            document.querySelector('.controls').appendChild(parseButton);
+        });
+
+        // Add a new colored text segment
+        function addColoredSegment() {
+            const text = newSegmentText.value;
+            if (text === "") {
+                showError('Please enter some text');
+                return;
+            }
+
+            const segment = {
+                text: text,
+                color: colorPicker.value,
+                isPlain: false,
+                isEndTag: false
+            };
+
+            segments.push(segment);
+            renderSegments();
+            updateOutput();
+
+            // Clear input
+            newSegmentText.value = '';
+
+            showInfo('Colored segment added');
+        }
+
+        // Add a plain text segment (no color formatting)
+        function addPlainTextSegment() {
+            const text = newSegmentText.value;
+            if (text === "") {
+                showError('Please enter some text');
+                return;
+            }
+
+            const segment = {
+                text: text,
+                color: '#FFFFFF', // White for display purposes
+                isPlain: true,
+                isEndTag: false
+            };
+
+            segments.push(segment);
+            renderSegments();
+            updateOutput();
+
+            // Clear input
+            newSegmentText.value = '';
+
+            showInfo('Plain text segment added');
+        }
+
+        // Add an end tag segment
+        function addEndTagSegment() {
+            const segment = {
+                text: '[End Color]',
+                color: '#FFFFFF', // White for display purposes
+                isPlain: false,
+                isEndTag: true
+            };
+
+            segments.push(segment);
+            renderSegments();
+            updateOutput();
+
+            showInfo('End tag segment added');
+        }
+
+        // Apply rainbow effect to all segments
+        function applyRainbowEffect() {
+            if (segments.length === 0) {
+                showError('No segments to apply rainbow effect to');
+                return;
+            }
+
+            const rainbowColors = ['#fe0000', '#ff9700', '#fcff00', '#52ff33', '#0125b7', '#a700a6', '#39c1df'];
+
+            // Collect all text that isn't an end tag
+            let allText = '';
+            const nonEndTagSegments = segments.filter(segment => !segment.isEndTag);
+            nonEndTagSegments.forEach(segment => {
+                allText += segment.text;
+            });
+
+            // Clear existing segments
+            segments = [];
+
+            // Create a new segment for each character with a rainbow color
+            for (let i = 0; i < allText.length; i++) {
+                const char = allText[i];
+                const colorIndex = i % rainbowColors.length;
+
+                segments.push({
+                    text: char,
+                    color: rainbowColors[colorIndex],
+                    isPlain: false,
+                    isEndTag: false
+                });
+            }
+
+            renderSegments();
+            updateOutput();
+            showInfo('Rainbow effect applied');
+        }
+
+        // Remove a segment
+        function removeSegment(index) {
+            segments.splice(index, 1);
+            renderSegments();
+            updateOutput();
+            showInfo('Segment removed');
+        }
+
+        // Edit a segment
+        function editSegment(index) {
+            const segment = segments[index];
+            const textElement = document.querySelector(`#segment-${index} .segment-text`);
+            const actionsElement = document.querySelector(`#segment-${index} .text-segment-actions`);
+
+            if (segment.isEndTag) {
+                // End tags can't be edited, only removed
+                showInfo('End tags cannot be edited, only removed');
+                return;
+            }
+
+            // Create edit form
+            const editForm = document.createElement('div');
+            editForm.className = 'segment-edit-form';
+
+            // Different form for plain vs colored text
+            if (segment.isPlain) {
+                editForm.innerHTML = `
+                    <input type="text" class="edit-text" value="${segment.text}">
+                    <div class="segment-edit-form-buttons">
+                        <button class="save-edit">Save</button>
+                        <button class="convert-to-colored">Convert to Colored</button>
+                        <button class="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            } else {
+                editForm.innerHTML = `
+                    <input type="text" class="edit-text" value="${segment.text}">
+                    <div class="segment-edit-form-buttons">
+                        <input type="color" class="edit-color" value="${segment.color}">
+                        <button class="save-edit">Save</button>
+                        <button class="convert-to-plain">Convert to Plain</button>
+                        <button class="cancel-edit">Cancel</button>
+                    </div>
+                `;
+            }
+
+            // Hide text and actions
+            textElement.style.display = 'none';
+            actionsElement.style.display = 'none';
+
+            // Add edit form
+            const segmentElement = document.getElementById(`segment-${index}`);
+            segmentElement.querySelector('.text-segment-inner').appendChild(editForm);
+
+            // Add common event listeners
+            const saveButton = editForm.querySelector('.save-edit');
+            const cancelButton = editForm.querySelector('.cancel-edit');
+            const textInput = editForm.querySelector('.edit-text');
+
+            saveButton.addEventListener('click', () => {
+                const newText = textInput.value;
+                if (newText === "") {
+                    showError('Text cannot be empty');
+                    return;
+                }
+
+                segment.text = newText;
+
+                // Update color if it's a colored segment
+                if (!segment.isPlain) {
+                    const colorInput = editForm.querySelector('.edit-color');
+                    segment.color = colorInput.value;
+                }
+
+                renderSegments();
+                updateOutput();
+                showInfo('Segment updated');
+            });
+
+            cancelButton.addEventListener('click', () => {
+                renderSegments();
+            });
+
+            // Add conversion buttons event listeners
+            if (segment.isPlain) {
+                const convertButton = editForm.querySelector('.convert-to-colored');
+                convertButton.addEventListener('click', () => {
+                    segment.isPlain = false;
+                    segment.color = colorPicker.value;
+                    renderSegments();
+                    updateOutput();
+                    showInfo('Converted to colored text');
+                });
+            } else {
+                const convertButton = editForm.querySelector('.convert-to-plain');
+                convertButton.addEventListener('click', () => {
+                    segment.isPlain = true;
+                    renderSegments();
+                    updateOutput();
+                    showInfo('Converted to plain text');
+                });
+            }
+
+            // Focus text input
+            textInput.focus();
+        }
+
+        // Move segment up in order
+        function moveSegmentUp(index) {
+            if (index === 0) return;
+
+            const temp = segments[index];
+            segments[index] = segments[index - 1];
+            segments[index - 1] = temp;
+
+            renderSegments();
+            updateOutput();
+            showInfo('Segment moved up');
+        }
+
+        // Move segment down in order
+        function moveSegmentDown(index) {
+            if (index === segments.length - 1) return;
+
+            const temp = segments[index];
+            segments[index] = segments[index + 1];
+            segments[index + 1] = temp;
+
+            renderSegments();
+            updateOutput();
+            showInfo('Segment moved down');
+        }
+
+        // Render all segments
+        function renderSegments() {
+            segmentContainer.innerHTML = '';
+
+            if (segments.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No segments yet. Add some text below.';
+                emptyMessage.style.color = '#808080';
+                segmentContainer.appendChild(emptyMessage);
+                return;
+            }
+
+            segments.forEach((segment, index) => {
+                const segmentElement = document.createElement('div');
+                segmentElement.className = 'text-segment';
+                segmentElement.id = `segment-${index}`;
+
+                let segmentHTML = '';
+
+                if (segment.isEndTag) {
+                    // End tag segment
+                    segmentHTML = `
+                        <div class="text-segment-inner">
+                            <div class="segment-text">
+                                <span style="color: #4cafac; font-weight: bold;">[End Color Tag]</span>
+                            </div>
+                        </div>
+                    `;
+                } else if (segment.isPlain) {
+                    // Plain text segment
+                    segmentHTML = `
+                        <div class="text-segment-inner">
+                            <div class="segment-text">
+                                <span class="segment-preview">${escapeHTML(segment.text)}</span>
+                                <span style="color: #808080; font-style: italic;"> (plain text)</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Colored text segment
+                    segmentHTML = `
+                        <div class="text-segment-inner">
+                            <div class="segment-text">
+                                <span class="color-indicator" style="background-color: ${segment.color}"></span>
+                                <span class="segment-preview" style="color: ${segment.color}">${escapeHTML(segment.text)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                segmentElement.innerHTML = segmentHTML + `
+                    <div class="text-segment-actions">
+                        <button class="icon-button move-up" title="Move Up">↑</button>
+                        <button class="icon-button move-down" title="Move Down">↓</button>
+                        <button class="icon-button edit-segment" title="Edit">✎</button>
+                        <button class="icon-button delete-segment" title="Delete">🗑️</button>
+                    </div>
+                `;
+
+                segmentContainer.appendChild(segmentElement);
+
+                // Add event listeners
+                segmentElement.querySelector('.move-up').addEventListener('click', () => moveSegmentUp(index));
+                segmentElement.querySelector('.move-down').addEventListener('click', () => moveSegmentDown(index));
+                segmentElement.querySelector('.edit-segment').addEventListener('click', () => editSegment(index));
+                segmentElement.querySelector('.delete-segment').addEventListener('click', () => removeSegment(index));
+            });
+        }
+
+        // Clear all segments
+        function clearAllSegments() {
+            if (segments.length === 0) {
+                showInfo('No segments to clear');
+                return;
+            }
+
+            if (confirm('Are you sure you want to clear all segments?')) {
+                segments = [];
+                renderSegments();
+                updateOutput();
+                showInfo('All segments cleared');
+            }
+        }
+
+        // Load example
+        function loadExample() {
+            segments = [
+                { text: 'This is ', color: '#ffffff', isPlain: false, isEndTag: false },
+                { text: 'Unusual ', color: '#8650AC', isPlain: false, isEndTag: false },
+                { text: 'and ', color: '#ffffff', isPlain: false, isEndTag: false },
+                { text: 'Strange ', color: '#CF6A32', isPlain: false, isEndTag: false },
+                { text: 'text!', color: '#ffffff', isPlain: false, isEndTag: false },
+                { text: '[End Color]', color: '#ffffff', isPlain: false, isEndTag: true },
+                { text: ' Normal text after.', color: '#ffffff', isPlain: true, isEndTag: false }
+            ];
+
+            renderSegments();
+            updateOutput();
+            showInfo('Example loaded');
+        }
+
+        // Update output and preview
+        function updateOutput() {
+            if (segments.length === 0) {
+                outputCode.value = '';
+                previewArea.innerHTML = '<em>Preview will appear here</em>';
+                return;
+            }
+
+            let outputText = '';
+            let previewHTML = '';
+            let currentColor = null;
+            let isAfterEndTag = false;
+
+            segments.forEach(segment => {
+                if (segment.isEndTag) {
+                    // End tag segment
+                    outputText += '\u0001';
+                    previewHTML += ''; // No visual indicator for end tag in preview
+                    currentColor = null;
+                    isAfterEndTag = true;
+                } else if (segment.isPlain) {
+                    // Plain text segment (no color formatting)
+                    outputText += segment.text;
+                    previewHTML += `<span>${escapeHTML(segment.text)}</span>`;
+                } else {
+                    // Colored text segment
+                    const hexColor = segment.color.replace('#', '').toLowerCase();
+
+                    // Only add a color code if it's different from the current color or after an end tag
+                    if (segment.color !== currentColor || isAfterEndTag) {
+                        // The BELL character should go between the Xs and the hex color
+                        outputText += '\u0008\u000BXXXXXXX\u0007' + hexColor;
+                        currentColor = segment.color;
+                        isAfterEndTag = false;
+                    }
+
+                    // Add the text
+                    outputText += segment.text;
+
+                    // Add to preview
+                    previewHTML += `<span style="color:${segment.color}">${escapeHTML(segment.text)}</span>`;
+                }
+            });
+
+            // Add end tag if checked and not already ending with one
+            // if (addEndTag.checked && !segments[segments.length - 1].isEndTag) {
+            //     outputText += '\u0001';
+            // }
+
+            // Update output and preview
+            outputCode.value = outputText;
+            previewArea.innerHTML = previewHTML || '<em>Preview will appear here</em>';
+        }
+
+        // Copy output to clipboard
+        async function copyOutputToClipboard() {
+            const output = outputCode.value;
+            if (!output) {
+                showInfo('Nothing to copy');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                showInfo('Copied to clipboard!');
+            } catch (err) {
+                showError('Failed to copy: ' + err.message);
+            }
+        }
+
+        // Parse TF2 color code
+        function parseColorCode(code) {
+            if (!code) {
+                showError('No code to parse');
+                return;
+            }
+
+            try {
+                // Clear existing segments
+                segments = [];
+
+                // Pattern to match: <control chars>XXXXXXX<BELL><hexcolor>
+                const colorRegex = /[\u0008\u000B]XXXXXXX\u0007([0-9a-fA-F]{6})/g;
+
+                // Find all color codes
+                let matches = [];
+                let match;
+                while ((match = colorRegex.exec(code)) !== null) {
+                    matches.push({
+                        index: match.index,
+                        color: '#' + match[1],
+                        length: match[0].length
+                    });
+                }
+
+                // Check for end tag
+                const hasEndTag = code.includes('\u0001');
+                let endTagIndex = code.indexOf('\u0001');
+
+                // If no matches found, treat as plain text
+                if (matches.length === 0) {
+                    if (hasEndTag) {
+                        // If there's an end tag but no color codes, split at the end tag
+                        const beforeEnd = code.substring(0, endTagIndex);
+                        const afterEnd = code.substring(endTagIndex + 1);
+
+                        if (beforeEnd) {
+                            segments.push({
+                                text: beforeEnd,
+                                color: '#ffffff',
+                                isPlain: true,
+                                isEndTag: false
+                            });
+                        }
+
+                        // Add the end tag
+                        segments.push({
+                            text: '[End Color]',
+                            color: '#ffffff',
+                            isPlain: false,
+                            isEndTag: true
+                        });
+
+                        // Add text after end tag as plain text
+                        if (afterEnd) {
+                            segments.push({
+                                text: afterEnd,
+                                color: '#ffffff',
+                                isPlain: true,
+                                isEndTag: false
+                            });
+                        }
+                    } else {
+                        // No color codes and no end tag, just plain text
+                        segments.push({
+                            text: code,
+                            color: '#ffffff',
+                            isPlain: true,
+                            isEndTag: false
+                        });
+                    }
+                } else {
+                    // Process each color section
+                    for (let i = 0; i < matches.length; i++) {
+                        const currentMatch = matches[i];
+                        const nextMatch = matches[i + 1];
+
+                        // Add any text before the first color code as plain text
+                        if (i === 0 && currentMatch.index > 0) {
+                            const plainText = code.substring(0, currentMatch.index);
+                            segments.push({
+                                text: plainText,
+                                color: '#ffffff',
+                                isPlain: true,
+                                isEndTag: false
+                            });
+                        }
+
+                        // Calculate text start and end positions
+                        const textStart = currentMatch.index + currentMatch.length;
+                        let textEnd = nextMatch ? nextMatch.index : code.length;
+
+                        // Check if there's an end tag in this section
+                        if (hasEndTag && endTagIndex > textStart && (!nextMatch || endTagIndex < nextMatch.index)) {
+                            textEnd = endTagIndex;
+                        }
+
+                        // Extract text
+                        let text = code.substring(textStart, textEnd);
+
+                        // Add colored segment
+                        if (text) {
+                            segments.push({
+                                text: text,
+                                color: currentMatch.color,
+                                isPlain: false,
+                                isEndTag: false
+                            });
+                        }
+
+                        // Add end tag if we found one in this section
+                        if (hasEndTag && endTagIndex > textStart && (!nextMatch || endTagIndex < nextMatch.index)) {
+                            segments.push({
+                                text: '[End Color]',
+                                color: '#ffffff',
+                                isPlain: false,
+                                isEndTag: true
+                            });
+
+                            // Add any text after the end tag and before the next color code as plain text
+                            if (nextMatch) {
+                                const plainText = code.substring(endTagIndex + 1, nextMatch.index);
+                                if (plainText) {
+                                    segments.push({
+                                        text: plainText,
+                                        color: '#ffffff',
+                                        isPlain: true,
+                                        isEndTag: false
+                                    });
+                                }
+                            } else if (endTagIndex < code.length - 1) {
+                                // Add text after the last end tag as plain text
+                                const plainText = code.substring(endTagIndex + 1);
+                                segments.push({
+                                    text: plainText,
+                                    color: '#ffffff',
+                                    isPlain: true,
+                                    isEndTag: false
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Update UI
+                renderSegments();
+                updateOutput();
+                showInfo('Color code parsed successfully');
+            } catch (e) {
+                showError('Error parsing color code: ' + e.message);
+            }
+        }
+
+        // Show info message
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            errorMessage.textContent = '';
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (infoMessage.textContent === message) {
+                    infoMessage.textContent = '';
+                }
+            }, 3000);
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            infoMessage.textContent = '';
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (errorMessage.textContent === message) {
+                    errorMessage.textContent = '';
+                }
+            }, 3000);
+        }
+
+        // Escape HTML
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Get contrasting text color (black or white) based on background
+        function getContrastColor(hexColor) {
+            // Remove # if present
+            hexColor = hexColor.replace('#', '');
+
+            // Convert to RGB
+            const r = parseInt(hexColor.substr(0, 2), 16);
+            const g = parseInt(hexColor.substr(2, 2), 16);
+            const b = parseInt(hexColor.substr(4, 2), 16);
+
+            // Calculate luminance - perceived brightness
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            // Return black or white based on luminance
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+    </script>
+</body>
+
+</html>
