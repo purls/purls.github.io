@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Request Tool</title>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1000px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        button {
+            background-color: #4cafac;
+            color: #1e1e1e;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #60c8c5;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            max-width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid #3d3d3d;
+            border-top: none;
+            background-color: #1e1e1e;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 0;
+            border-bottom: 1px solid #3d3d3d;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background-color: #244444;
+            color: #e0e0e0;
+        }
+
+        .request-section,
+        .response-section,
+        .code-section,
+        .content-type-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            background-color: #1e1e1e;
+        }
+
+        .header-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .header-row input {
+            flex: 1;
+        }
+
+        .header-row button {
+            flex: 0 0 auto;
+        }
+
+        .headers-container {
+            margin-bottom: 15px;
+        }
+
+        #responseOutput {
+            min-height: 150px;
+        }
+
+        .code-tabs {
+            margin-top: 20px;
+        }
+
+        .copy-button {
+            position: relative;
+            top: 5px;
+            right: 5px;
+            padding: 3px 8px;
+            font-size: 12px;
+            background-color: #333;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+
+        /* Content Type Cheat Sheet Styles */
+        .content-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .content-type-category {
+            padding: 10px;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            background-color: #2d2d2d;
+        }
+
+        .content-type-category h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #3d3d3d;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .content-type-category h3 span {
+            margin-right: 8px;
+        }
+
+        .content-type-item {
+            padding: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-type-item:hover {
+            background-color: #3d3d3d;
+        }
+
+        .content-type-item code {
+            font-family: 'JetBrains Mono', monospace;
+            flex-grow: 1;
+        }
+
+        .add-button {
+            background-color: #335555;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .add-button:hover {
+            background-color: #4cafac;
+            color: #1e1e1e;
+        }
+
+        .content-type-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .content-type-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .content-type-items.expanded {
+            max-height: 500px;
+        }
+
+        .toggle-button {
+            background: none;
+            border: none;
+            color: #4cafac;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 5px;
+            text-align: center;
+            line-height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-icon.expanded {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-container">
+        <div>
+            <h1>API Request Tool</h1>
+            <p>Configure your API request and convert it to various command-line formats.</p>
+        </div>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+
+    <!-- Request Configuration Section -->
+    <div class="request-section">
+        <h2>Request Configuration</h2>
+
+        <div class="form-group">
+            <label for="requestUrl">API Endpoint URL:</label>
+            <input type="text" id="requestUrl" placeholder="https://api.example.com/endpoint"/>
+        </div>
+
+        <div class="form-group">
+            <label for="requestMethod">Request Method:</label>
+            <select id="requestMethod">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+                <option value="HEAD">HEAD</option>
+                <option value="OPTIONS">OPTIONS</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="authType">Authentication:</label>
+            <select id="authType" onchange="toggleAuthFields()">
+                <option value="none">None</option>
+                <option value="basic">Basic Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="apikey">API Key</option>
+            </select>
+        </div>
+
+        <div id="basicAuthFields" class="form-group" style="display: none;">
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Username" />
+            <label for="password">Password:</label>
+            <input type="password" id="password" placeholder="Password" />
+        </div>
+
+        <div id="bearerTokenField" class="form-group" style="display: none;">
+            <label for="bearerToken">Bearer Token:</label>
+            <input type="text" id="bearerToken" placeholder="Bearer token" />
+        </div>
+
+        <div id="apiKeyFields" class="form-group" style="display: none;">
+            <label for="apiKeyName">API Key Name:</label>
+            <input type="text" id="apiKeyName" placeholder="X-API-Key" />
+            <label for="apiKeyValue">API Key Value:</label>
+            <input type="text" id="apiKeyValue" placeholder="your-api-key-value" />
+            <label for="apiKeyLocation">Location:</label>
+            <select id="apiKeyLocation">
+                <option value="header">Header</option>
+                <option value="query">Query Parameter</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <h3>Request Headers</h3>
+            <div class="headers-container" id="headersContainer">
+                <div class="header-row">
+                    <input type="text" placeholder="Header Name" class="header-name" />
+                    <input type="text" placeholder="Header Value" class="header-value" />
+                    <button onclick="removeHeaderRow(this)">-</button>
+                </div>
+            </div>
+            <button onclick="addHeaderRow()">Add Header</button>
+        </div>
+
+        <div class="form-group" id="requestBodySection">
+            <label for="requestBody">Request Body (JSON):</label>
+            <textarea id="requestBody" rows="10" placeholder='{ "key": "value" }'></textarea>
+        </div>
+    </div>
+
+    <!-- Response Section -->
+    <div class="response-section">
+        <h2>Response</h2>
+        <div class="button-group">
+            <button id="sendRequest">Send Request</button>
+            <button id="clearResponse">Clear Response</button>
+        </div>
+        <textarea id="responseOutput" rows="10" readonly placeholder="Response will appear here..."></textarea>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="info-message" id="infoMessage"></div>
+    </div>
+
+    <!-- Command Line Code Section -->
+    <div class="code-section">
+        <h2>Command Line Code</h2>
+        <p>Convert your request to various command-line formats:</p>
+
+        <div class="tabs code-tabs">
+            <div class="tab active" onclick="switchTab('bash')">Bash (curl)</div>
+            <div class="tab" onclick="switchTab('powershell')">PowerShell</div>
+            <div class="tab" onclick="switchTab('cmd')">Windows CMD</div>
+            <div class="tab" onclick="switchTab('pwsh')">PowerShell 7</div>
+        </div>
+
+        <div id="bash" class="tab-content active">
+            <button class="copy-button" onclick="copyToClipboard('bashCode')">Copy</button>
+            <textarea id="bashCode" rows="15" readonly></textarea>
+        </div>
+
+        <div id="powershell" class="tab-content">
+            <button class="copy-button" onclick="copyToClipboard('powershellCode')">Copy</button>
+            <textarea id="powershellCode" rows="15" readonly></textarea>
+        </div>
+
+        <div id="cmd" class="tab-content">
+            <button class="copy-button" onclick="copyToClipboard('cmdCode')">Copy</button>
+            <textarea id="cmdCode" rows="15" readonly></textarea>
+        </div>
+
+        <div id="pwsh" class="tab-content">
+            <button class="copy-button" onclick="copyToClipboard('pwshCode')">Copy</button>
+            <textarea id="pwshCode" rows="15" readonly></textarea>
+        </div>
+
+        <div class="button-group">
+            <button id="generateCode">Generate Code</button>
+            <button id="clearAll">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Content Type Cheat Sheet Section -->
+    <div class="content-type-section">
+        <div class="content-type-toggle">
+            <h2>Content-Type Cheat Sheet</h2>
+            <button class="toggle-button" onclick="toggleContentTypeSection()">
+                Show/Hide
+                <span class="toggle-icon" id="contentToggleIcon">▼</span>
+            </button>
+        </div>
+        <p>Common Content-Type headers for API requests. Click on any content type to add it to your request headers.
+        </p>
+
+        <div class="content-type-grid" id="contentTypeGrid">
+            <!-- Structured Data -->
+            <div class="content-type-category">
+                <h3><span>🧱</span> Structured Data</h3>
+                <div class="content-type-items expanded">
+                    <div class="content-type-item" onclick="addContentType('application/json')">
+                        <code>application/json</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/xml')">
+                        <code>application/xml</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/x-www-form-urlencoded')">
+                        <code>application/x-www-form-urlencoded</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('multipart/form-data')">
+                        <code>multipart/form-data</code>
+                        <button class="add-button">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Text-Based -->
+            <div class="content-type-category">
+                <h3><span>🗂️</span> Text-Based</h3>
+                <div class="content-type-items expanded">
+                    <div class="content-type-item" onclick="addContentType('text/plain')">
+                        <code>text/plain</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('text/html')">
+                        <code>text/html</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('text/css')">
+                        <code>text/css</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('text/csv')">
+                        <code>text/csv</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('text/xml')">
+                        <code>text/xml</code>
+                        <button class="add-button">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media / Binary -->
+            <div class="content-type-category">
+                <h3><span>🖼️</span> Media / Binary</h3>
+                <div class="content-type-items expanded">
+                    <div class="content-type-item" onclick="addContentType('application/octet-stream')">
+                        <code>application/octet-stream</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('image/png')">
+                        <code>image/png</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('image/jpeg')">
+                        <code>image/jpeg</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/pdf')">
+                        <code>application/pdf</code>
+                        <button class="add-button">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API-Specific / Advanced -->
+            <div class="content-type-category">
+                <h3><span>🧪</span> API-Specific / Advanced</h3>
+                <div class="content-type-items expanded">
+                    <div class="content-type-item" onclick="addContentType('application/graphql')">
+                        <code>application/graphql</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/ld+json')">
+                        <code>application/ld+json</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/vnd.api+json')">
+                        <code>application/vnd.api+json</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/merge-patch+json')">
+                        <code>application/merge-patch+json</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('application/x-ndjson')">
+                        <code>application/x-ndjson</code>
+                        <button class="add-button">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Misc Form Encodings -->
+            <div class="content-type-category">
+                <h3><span>🗃️</span> Misc Form Encodings</h3>
+                <div class="content-type-items expanded">
+                    <div class="content-type-item" onclick="addContentType('application/x-www-form-json')">
+                        <code>application/x-www-form-json</code>
+                        <button class="add-button">+</button>
+                    </div>
+                    <div class="content-type-item" onclick="addContentType('multipart/mixed')">
+                        <code>multipart/mixed</code>
+                        <button class="add-button">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+    <p>
+        Use this tool to build API requests and convert them to various command-line formats.
+        Configure your request above, then click "Generate Code" to see the equivalent command-line code.
+    </p>
+
+    <script>
+        function toggleAuthFields() {
+            const authType = document.getElementById('authType').value;
+            document.getElementById('basicAuthFields').style.display = authType === 'basic' ? 'block' : 'none';
+            document.getElementById('bearerTokenField').style.display = authType === 'bearer' ? 'block' : 'none';
+            document.getElementById('apiKeyFields').style.display = authType === 'apikey' ? 'block' : 'none';
+        }
+
+        function toggleContentTypeSection() {
+            const grid = document.getElementById('contentTypeGrid');
+            const icon = document.getElementById('contentToggleIcon');
+
+            if (grid.style.display === 'none') {
+                grid.style.display = 'grid';
+                icon.classList.add('expanded');
+            } else {
+                grid.style.display = 'none';
+                icon.classList.remove('expanded');
+            }
+        }
+
+        function addContentType(contentType) {
+            let contentTypeExists = false;
+            const headerRows = document.querySelectorAll('.header-row');
+
+            for (const row of headerRows) {
+                const nameInput = row.querySelector('.header-name');
+                if (nameInput.value.trim().toLowerCase() === 'content-type') {
+                    const valueInput = row.querySelector('.header-value');
+                    valueInput.value = contentType;
+                    contentTypeExists = true;
+                    break;
+                }
+            }
+
+            if (!contentTypeExists) {
+                addHeaderRow();
+                const newRow = document.querySelector('.header-row:last-child');
+                const nameInput = newRow.querySelector('.header-name');
+                const valueInput = newRow.querySelector('.header-value');
+
+                nameInput.value = 'Content-Type';
+                valueInput.value = contentType;
+            }
+
+            const infoMessage = document.getElementById('infoMessage');
+            infoMessage.textContent = `Added Content-Type: ${contentType}`;
+            setTimeout(() => {
+                infoMessage.textContent = '';
+            }, 2000);
+        }
+
+        document.getElementById('requestMethod').addEventListener('change', function () {
+            const method = this.value;
+            const bodySection = document.getElementById('requestBodySection');
+            bodySection.style.display = (method === 'GET' || method === 'HEAD') ? 'none' : 'block';
+        });
+
+        function addHeaderRow() {
+            const container = document.getElementById('headersContainer');
+            const row = document.createElement('div');
+            row.className = 'header-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Header Name" class="header-name" />
+                <input type="text" placeholder="Header Value" class="header-value" />
+                <button onclick="removeHeaderRow(this)">-</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeHeaderRow(button) {
+            const row = button.parentNode;
+            row.parentNode.removeChild(row);
+        }
+
+        function switchTab(tabId) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+
+            const infoMessage = document.getElementById('infoMessage');
+            infoMessage.textContent = 'Copied to clipboard!';
+            setTimeout(() => {
+                infoMessage.textContent = '';
+            }, 2000);
+        }
+
+        document.getElementById('generateCode').addEventListener('click', function () {
+            try {
+                const url = document.getElementById('requestUrl').value.trim();
+                const method = document.getElementById('requestMethod').value;
+                const authType = document.getElementById('authType').value;
+
+                if (!url) {
+                    throw new Error('API endpoint URL is required');
+                }
+
+                const headers = {};
+                const headerRows = document.querySelectorAll('.header-row');
+                headerRows.forEach(row => {
+                    const name = row.querySelector('.header-name').value.trim();
+                    const value = row.querySelector('.header-value').value.trim();
+                    if (name && value) {
+                        headers[name] = value;
+                    }
+                });
+
+                if (method !== 'GET' && method !== 'HEAD' && !headers['Content-Type']) {
+                    headers['Content-Type'] = 'application/json';
+                }
+
+                switch (authType) {
+                    case 'basic':
+                        const username = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+                        if (username && password) {
+                            headers['Authorization'] = `Basic ${btoa(username + ':' + password)}`;
+                        }
+                        break;
+                    case 'bearer':
+                        const token = document.getElementById('bearerToken').value.trim();
+                        if (token) {
+                            headers['Authorization'] = `Bearer ${token}`;
+                        }
+                        break;
+                    case 'apikey':
+                        const keyName = document.getElementById('apiKeyName').value.trim();
+                        const keyValue = document.getElementById('apiKeyValue').value.trim();
+                        const keyLocation = document.getElementById('apiKeyLocation').value;
+
+                        if (keyName && keyValue) {
+                            if (keyLocation === 'header') {
+                                headers[keyName] = keyValue;
+                            }
+                        }
+                        break;
+                }
+
+                let body = null;
+                if (method !== 'GET' && method !== 'HEAD') {
+                    const bodyText = document.getElementById('requestBody').value.trim();
+                    if (bodyText) {
+                        try {
+                            body = JSON.parse(bodyText);
+                        } catch (e) {
+                            throw new Error('Invalid JSON in request body');
+                        }
+                    }
+                }
+
+                // Generate curl command (Bash)
+                let curlCmd = `curl -X ${method} "${url}"`;
+                for (const [name, value] of Object.entries(headers)) {
+                    curlCmd += ` \\\n  -H "${name}: ${value}"`;
+                }
+                if (body) {
+                    curlCmd += ` \\\n  -d '${JSON.stringify(body, null, 2)}'`;
+                }
+                document.getElementById('bashCode').value = curlCmd;
+
+                // Generate PowerShell command
+                let psCmd = `$uri = "${url}"\n\n`;
+                let hasBasicAuth = false;
+                if (authType === 'basic') {
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value.trim();
+                    if (username && password) {
+                        psCmd += `# Basic Authentication\n`;
+                        psCmd += `$username = "${username}"\n`;
+                        psCmd += `$password = "${password}"\n`;
+                        hasBasicAuth = true;
+                    }
+                }
+
+                if (Object.keys(headers).length > 0 || hasBasicAuth) {
+                    psCmd += "$headers = @{\n";
+                    if (hasBasicAuth) {
+                        psCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$username:$password"))\n`;
+                    }
+                    for (const [name, value] of Object.entries(headers)) {
+                        if (!(hasBasicAuth && name === 'Authorization')) {
+                            psCmd += `    "${name}" = "${value}"\n`;
+                        }
+                    }
+                    psCmd += "}\n\n";
+                }
+
+                if (body) {
+                    const originalBody = document.getElementById('requestBody').value.trim();
+                    psCmd += `$body = @'
+                        ${originalBody}
+                        '@\n\n`;
+                }
+
+                psCmd += `Invoke-RestMethod -Uri $uri -Method ${method}`;
+                if (Object.keys(headers).length > 0 || hasBasicAuth) {
+                    psCmd += " -Headers $headers";
+                }
+                if (body) {
+                    psCmd += " -Body $body";
+                }
+                psCmd += " -ContentType 'application/json'";
+                document.getElementById('powershellCode').value = psCmd;
+
+                // Generate PowerShell 7 command
+                let pwshCmd = `$uri = "${url}"\n\n`;
+                if (body) {
+                    const originalBody = document.getElementById('requestBody').value.trim();
+                    try {
+                        const parsedBody = JSON.parse(originalBody);
+                        pwshCmd += `$body = @${formatPSObject(parsedBody)} | ConvertTo-Json -Depth 10\n\n`;
+                    } catch (e) {
+                        pwshCmd += `$body = @'
+                            ${originalBody}
+                            '@\n\n`;
+                    }
+                }
+
+                let pwshBasicAuth = false;
+                if (authType === 'basic') {
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value.trim();
+                    if (username && password) {
+                        pwshCmd += `# Basic Authentication\n`;
+                        pwshCmd += `$username = "${username}"\n`;
+                        pwshCmd += `$password = "${password}"\n`;
+                        pwshBasicAuth = true;
+                    }
+                }
+
+                if (Object.keys(headers).length > 0 || pwshBasicAuth) {
+                    pwshCmd += "$headers = @{\n";
+                    if (pwshBasicAuth) {
+                        pwshCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$username:$password"))\n`;
+                    }
+                    for (const [name, value] of Object.entries(headers)) {
+                        if (!(pwshBasicAuth && name === 'Authorization')) {
+                            pwshCmd += `    "${name}" = "${value}"\n`;
+                        }
+                    }
+                    pwshCmd += "}\n\n";
+                }
+
+                pwshCmd += `Invoke-RestMethod -Uri $uri -Method ${method}`;
+                if (Object.keys(headers).length > 0) {
+                    pwshCmd += " -Headers $headers";
+                }
+                if (body) {
+                    pwshCmd += " -Body $body";
+                }
+                document.getElementById('pwshCode').value = pwshCmd;
+
+                // Generate Windows CMD command
+                let cmdCmd = `curl -X ${method} "${url}"`;
+                for (const [name, value] of Object.entries(headers)) {
+                    cmdCmd += ` ^\n  -H "${name}: ${value}"`;
+                }
+                if (body) {
+                    const escapedBody = JSON.stringify(body).replace(/"/g, '\\"');
+                    cmdCmd += ` ^\n  -d "${escapedBody}"`;
+                }
+                document.getElementById('cmdCode').value = cmdCmd;
+
+                const infoMessage = document.getElementById('infoMessage');
+                infoMessage.textContent = 'Code generated successfully!';
+                setTimeout(() => {
+                    infoMessage.textContent = '';
+                }, 2000);
+            } catch (error) {
+                const errorMessage = document.getElementById('errorMessage');
+                errorMessage.textContent = error.message;
+                setTimeout(() => {
+                    errorMessage.textContent = '';
+                }, 3000);
+            }
+        });
+
+        function formatPSObject(obj, indent = '') {
+            if (obj === null || obj === undefined) {
+                return '$null';
+            }
+
+            if (typeof obj === 'string') {
+                return `"${obj}"`;
+            }
+
+            if (typeof obj === 'number' || typeof obj === 'boolean') {
+                return obj;
+            }
+
+            if (Array.isArray(obj)) {
+                if (obj.length === 0) {
+                    return '@()';
+                }
+
+                let result = '@(\n';
+                obj.forEach((item, index) => {
+                    result += `${indent}    ${formatPSObject(item, indent + '    ')}`;
+                    if (index < obj.length - 1) {
+                        result += ',';
+                    }
+                    result += '\n';
+                });
+                result += `${indent})`;
+                return result;
+            }
+
+            if (Object.keys(obj).length === 0) {
+                return '@{}';
+            }
+
+            let result = '{\n';
+            Object.entries(obj).forEach(([key, value], index) => {
+                result += `${indent}    ${key} = ${formatPSObject(value, indent + '    ')}`;
+                if (index < Object.keys(obj).length - 1) {
+                    result += '\n';
+                }
+            });
+            result += `\n${indent}}`;
+            return result;
+        }
+
+        document.getElementById('sendRequest').addEventListener('click', async function () {
+            try {
+                const url = document.getElementById('requestUrl').value.trim();
+                const method = document.getElementById('requestMethod').value;
+
+                if (!url) {
+                    throw new Error('API endpoint URL is required');
+                }
+
+                const options = {
+                    method: method,
+                    headers: {}
+                };
+
+                const headerRows = document.querySelectorAll('.header-row');
+                headerRows.forEach(row => {
+                    const name = row.querySelector('.header-name').value.trim();
+                    const value = row.querySelector('.header-value').value.trim();
+                    if (name && value) {
+                        options.headers[name] = value;
+                    }
+                });
+
+                const authType = document.getElementById('authType').value;
+                switch (authType) {
+                    case 'basic':
+                        const username = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+                        if (username && password) {
+                            options.headers['Authorization'] = `Basic ${btoa(username + ':' + password)}`;
+                        }
+                        break;
+                    case 'bearer':
+                        const token = document.getElementById('bearerToken').value.trim();
+                        if (token) {
+                            options.headers['Authorization'] = `Bearer ${token}`;
+                        }
+                        break;
+                    case 'apikey':
+                        const keyName = document.getElementById('apiKeyName').value.trim();
+                        const keyValue = document.getElementById('apiKeyValue').value.trim();
+                        const keyLocation = document.getElementById('apiKeyLocation').value;
+
+                        if (keyName && keyValue) {
+                            if (keyLocation === 'header') {
+                                options.headers[keyName] = keyValue;
+                            } else {
+                                const urlObj = new URL(url);
+                                urlObj.searchParams.append(keyName, keyValue);
+                                url = urlObj.toString();
+                            }
+                        }
+                        break;
+                }
+
+                if (method !== 'GET' && method !== 'HEAD') {
+                    const bodyText = document.getElementById('requestBody').value.trim();
+                    if (bodyText) {
+                        try {
+                            const bodyObj = JSON.parse(bodyText);
+                            options.body = JSON.stringify(bodyObj);
+
+                            if (!options.headers['Content-Type']) {
+                                options.headers['Content-Type'] = 'application/json';
+                            }
+                        } catch (e) {
+                            throw new Error('Invalid JSON in request body');
+                        }
+                    }
+                }
+
+                document.getElementById('infoMessage').textContent = 'Sending request...';
+
+                const response = await fetch(url, options);
+                const contentType = response.headers.get('content-type');
+
+                let responseText;
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    responseText = JSON.stringify(data, null, 2);
+                } else {
+                    responseText = await response.text();
+                }
+
+                document.getElementById('responseOutput').value =
+                    `Status: ${response.status} ${response.statusText}\n\n${responseText}`;
+
+                document.getElementById('infoMessage').textContent = '';
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('infoMessage').textContent = '';
+                setTimeout(() => {
+                    document.getElementById('errorMessage').textContent = '';
+                }, 3000);
+            }
+        });
+
+        document.getElementById('clearResponse').addEventListener('click', function () {
+            document.getElementById('responseOutput').value = '';
+            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('infoMessage').textContent = '';
+        });
+
+        document.getElementById('clearAll').addEventListener('click', function () {
+            document.getElementById('requestUrl').value = '';
+            document.getElementById('requestMethod').value = 'GET';
+            document.getElementById('authType').value = 'none';
+            document.getElementById('requestBody').value = '';
+
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('bearerToken').value = '';
+            document.getElementById('apiKeyName').value = '';
+            document.getElementById('apiKeyValue').value = '';
+            document.getElementById('apiKeyLocation').value = 'header';
+
+            document.getElementById('basicAuthFields').style.display = 'none';
+            document.getElementById('bearerTokenField').style.display = 'none';
+            document.getElementById('apiKeyFields').style.display = 'none';
+
+            const headerRows = document.querySelectorAll('.header-row');
+            for (let i = 1; i < headerRows.length; i++) {
+                headerRows[i].parentNode.removeChild(headerRows[i]);
+            }
+            const firstRow = document.querySelector('.header-row');
+            if (firstRow) {
+                firstRow.querySelector('.header-name').value = '';
+                firstRow.querySelector('.header-value').value = '';
+            }
+
+            document.getElementById('responseOutput').value = '';
+            document.getElementById('bashCode').value = '';
+            document.getElementById('powershellCode').value = '';
+            document.getElementById('cmdCode').value = '';
+            document.getElementById('pwshCode').value = '';
+            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('infoMessage').textContent = '';
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const method = document.getElementById('requestMethod').value;
+            const bodySection = document.getElementById('requestBodySection');
+            bodySection.style.display = (method === 'GET' || method === 'HEAD') ? 'none' : 'block';
+
+            document.getElementById('contentTypeGrid').style.display = 'grid';
+            document.getElementById('contentToggleIcon').classList.add('expanded');
+        });
+    </script>
+</body>
+
+</html>
