@@ -750,7 +750,7 @@
                 if (Object.keys(headers).length > 0 || hasBasicAuth) {
                     psCmd += "$headers = @{\n";
                     if (hasBasicAuth) {
-                        psCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$username:$password"))\n`;
+                        psCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("\${username}:\${password}"))\n`;
                     }
                     for (const [name, value] of Object.entries(headers)) {
                         if (!(hasBasicAuth && name === 'Authorization')) {
@@ -806,7 +806,7 @@
                 if (Object.keys(headers).length > 0 || pwshBasicAuth) {
                     pwshCmd += "$headers = @{\n";
                     if (pwshBasicAuth) {
-                        pwshCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$username:$password"))\n`;
+                        pwshCmd += `    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("\${username}:\${password}"))\n`;
                     }
                     for (const [name, value] of Object.entries(headers)) {
                         if (!(pwshBasicAuth && name === 'Authorization')) {
