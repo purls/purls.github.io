@@ -5,15 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IEEE-754 Floating Point Converter</title>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../tools.css" />
     <style>
         body {
-            font-family: "JetBrains Mono", monospace;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            background-color: #121212;
-            color: #e0e0e0;
             max-width: 900px;
         }
 
@@ -30,18 +26,8 @@
 
         button {
             padding: 8px 12px;
-            background-color: #244444;
-            color: #e0e0e0;
-            border: none;
-            cursor: pointer;
-            font-family: "JetBrains Mono", monospace;
-            transition: background-color 0.3s ease;
             margin-right: 5px;
             margin-bottom: 5px;
-        }
-
-        button:hover {
-            background-color: #255555;
         }
 
         select {
@@ -50,50 +36,6 @@
             color: #e0e0e0;
             border: 1px solid #333;
             font-family: "JetBrains Mono", monospace;
-        }
-
-        h1,
-        h2,
-        h3 {
-            color: #e0e0e0;
-        }
-
-        p {
-            color: #b0b0b0;
-        }
-
-        a {
-            color: #80cccc;
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: #60aaaa;
-            text-decoration: underline;
-        }
-
-        button:focus,
-        input:focus,
-        select:focus {
-            outline: 2px solid #4cafac;
-        }
-
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #4a4a4a;
-            border-radius: 6px;
-            border: 3px solid #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #5a5a5a;
         }
 
         .controls {
@@ -299,9 +241,14 @@
 </head>
 
 <body>
-    <h1>IEEE-754 Floating Point Converter</h1>
-
-    <p>Explore binary representation of floating point numbers and convert between different formats.</p>
+    <div class="header-top">
+        <h1 style="margin: 0;">IEEE-754 Floating Point Converter</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Explore binary representation of floating point numbers and convert between different formats.</p>
+    <br />
 
     <div class="type-selector">
         <label for="dataType">Data Type:</label>

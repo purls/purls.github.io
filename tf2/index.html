@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TF2 Chat Colorizer</title>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../tools.css" />
     <style>
         @font-face {
             font-family: 'TF2Build';
@@ -15,24 +17,10 @@
         }
 
         body {
-            font-family: "JetBrains Mono", monospace;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            background-color: #121212;
-            color: #e0e0e0;
             max-width: 1000px;
         }
 
         textarea {
-            width: 100%;
-            margin-bottom: 10px;
-            border: 1px solid #333;
-            background-color: #1e1e1e;
-            color: #e0e0e0;
-            padding: 5px;
-            resize: vertical;
-            font-family: "JetBrains Mono", monospace;
             box-sizing: border-box;
         }
 
@@ -56,62 +44,8 @@
 
         button {
             padding: 8px 12px;
-            background-color: #244444;
-            color: #e0e0e0;
-            border: none;
-            cursor: pointer;
-            font-family: "JetBrains Mono", monospace;
-            transition: background-color 0.3s ease;
             margin-right: 5px;
             margin-bottom: 5px;
-        }
-
-        button:hover {
-            background-color: #255555;
-        }
-
-        h1,
-        h2,
-        h3 {
-            color: #e0e0e0;
-        }
-
-        p {
-            color: #b0b0b0;
-        }
-
-        a {
-            color: #80cccc;
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: #60aaaa;
-            text-decoration: underline;
-        }
-
-        button:focus,
-        textarea:focus,
-        input:focus {
-            outline: 2px solid #4cafac;
-        }
-
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #4a4a4a;
-            border-radius: 6px;
-            border: 3px solid #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #5a5a5a;
         }
 
         .controls {
@@ -451,9 +385,16 @@
 </head>
 
 <body>
-    <h1 style="font-family: 'TF2Build', monospace;">TF2 Chat <span style="background: linear-gradient(to right, #ff6666, #6666ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Colorizer</span></h1>
-
-    <p>Generate color-coded chat messages for TF2 using special characters.</p>
+    <div class="header-top">
+        <h1 style="font-family: 'TF2Build', monospace; margin: 0;">TF2 Chat <span
+            style="background: linear-gradient(to right, #ff6666, #6666ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Colorizer</span>
+        </h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Generate color-coded chat messages for TF2 using special characters.</p>
+    <br />
 
     <div class="two-column">
         <div>
@@ -508,8 +449,8 @@
                             data-color="#606060"></div>
                         <div class="preset-color" style="background-color: #3a3a3a" title="Very Dark Gray"
                             data-color="#3a3a3a"></div>
-                        <div class="preset-color" style="background-color: #000000" title="Black"
-                            data-color="#000000"></div>
+                        <div class="preset-color" style="background-color: #000000" title="Black" data-color="#000000">
+                        </div>
                     </div>
                 </div>
 
@@ -602,9 +543,9 @@
                     <li>Add more segments as needed</li>
                     <li>Rearrange with the up/down arrows</li>
                     <li>Copy the generated code for use in-game</li>
-                        <div style="margin-left: 12px; margin-right: 20px; color: #808080; font-size: 0.9em;">
-                            Note: Only works in team chat, spectator chat, or while dead.
-                        </div>
+                    <div style="margin-left: 12px; margin-right: 20px; color: #808080; font-size: 0.9em;">
+                        Note: Only works in team chat, spectator chat, or while dead.
+                    </div>
                 </ol>
             </div>
         </div>

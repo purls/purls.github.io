@@ -1,458 +1,469 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive QR Editor</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="../tools.css" />
-    <style>
-      body {
-        max-width: 800px;
-      }
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      .controls {
-        margin-bottom: 20px;
-      }
-      input[type="text"] {
-        width: 100%;
-        margin-bottom: 10px;
-        border: 1px solid #333;
-        background-color: #1e1e1e;
-        color: #e0e0e0;
-        padding: 8px 5px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 1rem;
-      }
-      select {
-        padding: 5px;
-        background-color: #1e1e1e;
-        color: #e0e0e0;
-        border: 1px solid #333;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.9rem;
-        margin-right: 10px;
-        margin-bottom: 10px;
-      }
-      button {
-        padding: 10px 16px;
-        background-color: #244444;
-        color: #e0e0e0;
-        border: none;
-        cursor: pointer;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 1rem;
-        transition: background-color 0.3s ease;
-        margin-right: 10px;
-        margin-bottom: 10px;
-      }
-      #qr-container {
-        display: inline-block;
-        padding: 10px;
-        background: #ffffff; /* White box for QR */
-        margin-top: 20px;
-      }
-      .row {
-        display: flex;
-      }
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive QR Editor</title>
+  <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../tools.css" />
+  <style>
+    body {
+      max-width: 800px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      padding: 8px 5px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 1rem;
+    }
+
+    select {
+      padding: 5px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.9rem;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 16px;
+      background-color: #244444;
+      color: #e0e0e0;
+      border: none;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    #qr-container {
+      display: inline-block;
+      padding: 10px;
+      background: #ffffff;
+      /* White box for QR */
+      margin-top: 20px;
+    }
+
+    .row {
+      display: flex;
+    }
+
+    .pixel {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      background-color: #ffffff;
+      cursor: pointer;
+    }
+
+    .pixel.black {
+      background-color: #000000;
+    }
+
+    @media (max-width: 480px) {
       .pixel {
-        width: 16px;
-        height: 16px;
-        margin: 0;
-        background-color: #ffffff;
-        cursor: pointer;
+        width: 12px;
+        height: 12px;
       }
-      .pixel.black {
-        background-color: #000000;
-      }
-      @media (max-width: 480px) {
-        .pixel {
-          width: 12px;
-          height: 12px;
-        }
-      }
-      #decodedInfo {
-        margin-top: 20px;
-        font-size: 0.95rem;
-        background: #1e1e1e;
-        border: 1px solid #333;
-        padding: 10px;
-        white-space: pre-wrap;
-      }
-      .fail-outline {
-        outline: 6px solid #dd3333 !important;
-      }
-    </style>
-  </head>
-  <body>
+    }
+
+    #decodedInfo {
+      margin-top: 20px;
+      font-size: 0.95rem;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+
+    .fail-outline {
+      outline: 6px solid #dd3333 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header-top">
     <h1>Interactive QR Editor</h1>
-    <p>
-      Enter text, choose a QR version and error correction level (or leave on
-      Auto), generate a QR code, then click individual squares (modules) to
-      toggle them on/off. The QR matrix will be decoded to show its current
-      content or any errors. You can also export the final QR code as a PNG or
-      SVG.
-    </p>
-    <br />
-    <div class="controls">
-      <label for="qrText">Text to encode:</label>
-      <input type="text" id="qrText" value="Hello, World!" />
+    <a href="https://localhost.beer" class="home-link">
+      ← home
+    </a>
+  </div>
+  <p>
+    Enter text, choose a QR version and error correction level (or leave on
+    Auto), generate a QR code, then click individual squares (modules) to
+    toggle them on/off. The QR matrix will be decoded to show its current
+    content or any errors. You can also export the final QR code as a PNG or
+    SVG.
+  </p>
+  <br />
+  <div class="controls">
+    <label for="qrText">Text to encode:</label>
+    <input type="text" id="qrText" value="Hello, World!" />
 
-      <div style="margin-bottom: 10px">
-        <!-- Version Selection (up to 10 for now)-->
-        <label for="qrVersion">Version:</label>
-        <select id="qrVersion">
-          <option value="0">Auto (smallest)</option>
-          <option value="1">Version 1</option>
-          <option value="2">Version 2</option>
-          <option value="3">Version 3</option>
-          <option value="4">Version 4</option>
-          <option value="5">Version 5</option>
-          <option value="6">Version 6</option>
-          <option value="7">Version 7</option>
-          <option value="8">Version 8</option>
-          <option value="9">Version 9</option>
-          <option value="10">Version 10</option>
-        </select>
+    <div style="margin-bottom: 10px">
+      <!-- Version Selection (up to 10 for now)-->
+      <label for="qrVersion">Version:</label>
+      <select id="qrVersion">
+        <option value="0">Auto (smallest)</option>
+        <option value="1">Version 1</option>
+        <option value="2">Version 2</option>
+        <option value="3">Version 3</option>
+        <option value="4">Version 4</option>
+        <option value="5">Version 5</option>
+        <option value="6">Version 6</option>
+        <option value="7">Version 7</option>
+        <option value="8">Version 8</option>
+        <option value="9">Version 9</option>
+        <option value="10">Version 10</option>
+      </select>
 
-        <!-- Error Correction Selection -->
-        <label for="qrEC">EC Level:</label>
-        <select id="qrEC">
-          <option value="L">L (Low)</option>
-          <option value="M">M (Medium)</option>
-          <option value="Q" selected>Q (Quartile)</option>
-          <option value="H">H (High)</option>
-        </select>
-      </div>
-
-      <button id="generateBtn">Generate QR</button>
-      <button id="exportBtn">Export PNG</button>
-      <button id="exportSvgBtn">Export SVG</button>
+      <!-- Error Correction Selection -->
+      <label for="qrEC">EC Level:</label>
+      <select id="qrEC">
+        <option value="L">L (Low)</option>
+        <option value="M">M (Medium)</option>
+        <option value="Q" selected>Q (Quartile)</option>
+        <option value="H">H (High)</option>
+      </select>
     </div>
 
-    <div id="qr-container"></div>
-    <div id="decodedInfo">
-      <em>Decoded info will appear here.</em>
-    </div>
+    <button id="generateBtn">Generate QR</button>
+    <button id="exportBtn">Export PNG</button>
+    <button id="exportSvgBtn">Export SVG</button>
+  </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <div id="qr-container"></div>
+  <div id="decodedInfo">
+    <em>Decoded info will appear here.</em>
+  </div>
 
-    <script>
-      const qrTextInput = document.getElementById("qrText");
-      const generateBtn = document.getElementById("generateBtn");
-      const exportBtn = document.getElementById("exportBtn");
-      const exportSvgBtn = document.getElementById("exportSvgBtn");
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
-      const qrVersionSel = document.getElementById("qrVersion");
-      const qrECSel = document.getElementById("qrEC");
+  <script>
+    const qrTextInput = document.getElementById("qrText");
+    const generateBtn = document.getElementById("generateBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const exportSvgBtn = document.getElementById("exportSvgBtn");
 
-      const qrContainer = document.getElementById("qr-container");
-      const decodedInfo = document.getElementById("decodedInfo");
+    const qrVersionSel = document.getElementById("qrVersion");
+    const qrECSel = document.getElementById("qrEC");
 
-      let qrMatrix = [];
-      let finalVersionUsed = 0;
+    const qrContainer = document.getElementById("qr-container");
+    const decodedInfo = document.getElementById("decodedInfo");
 
-      // On page load, generate once with default text & settings
-      window.addEventListener("load", () => {
-        generateQR(
-          qrTextInput.value,
-          parseInt(qrVersionSel.value),
-          qrECSel.value
-        );
-      });
+    let qrMatrix = [];
+    let finalVersionUsed = 0;
 
-      // Button & select listeners
-      generateBtn.addEventListener("click", () => {
-        generateQR(
-          qrTextInput.value,
-          parseInt(qrVersionSel.value),
-          qrECSel.value
-        );
-      });
-      qrVersionSel.addEventListener("change", () => {
-        generateQR(
-          qrTextInput.value,
-          parseInt(qrVersionSel.value),
-          qrECSel.value
-        );
-      });
-      qrECSel.addEventListener("change", () => {
-        generateQR(
-          qrTextInput.value,
-          parseInt(qrVersionSel.value),
-          qrECSel.value
-        );
-      });
+    // On page load, generate once with default text & settings
+    window.addEventListener("load", () => {
+      generateQR(
+        qrTextInput.value,
+        parseInt(qrVersionSel.value),
+        qrECSel.value
+      );
+    });
 
-      exportBtn.addEventListener("click", exportQRCodePNG);
-      exportSvgBtn.addEventListener("click", exportQRCodeSVG);
+    // Button & select listeners
+    generateBtn.addEventListener("click", () => {
+      generateQR(
+        qrTextInput.value,
+        parseInt(qrVersionSel.value),
+        qrECSel.value
+      );
+    });
+    qrVersionSel.addEventListener("change", () => {
+      generateQR(
+        qrTextInput.value,
+        parseInt(qrVersionSel.value),
+        qrECSel.value
+      );
+    });
+    qrECSel.addEventListener("change", () => {
+      generateQR(
+        qrTextInput.value,
+        parseInt(qrVersionSel.value),
+        qrECSel.value
+      );
+    });
 
-      /**
-       * Derive version from module count if getTypeNumber() is missing or returns 0.
-       * Version n => Module size = 21 + 4(n - 1). So:
-       * n = (moduleCount - 17) / 4
-       */
-      function deriveVersionFromSize(moduleCount) {
-        return (moduleCount - 17) / 4;
+    exportBtn.addEventListener("click", exportQRCodePNG);
+    exportSvgBtn.addEventListener("click", exportQRCodeSVG);
+
+    /**
+     * Derive version from module count if getTypeNumber() is missing or returns 0.
+     * Version n => Module size = 21 + 4(n - 1). So:
+     * n = (moduleCount - 17) / 4
+     */
+    function deriveVersionFromSize(moduleCount) {
+      return (moduleCount - 17) / 4;
+    }
+
+
+    // Generate or re-generate the QR code from text, version, and EC level.
+    function generateQR(text, version, ec) {
+      // Reset container, indicate "Generating..."
+      qrContainer.innerHTML = "";
+      decodedInfo.textContent = "...Generating...";
+      qrContainer.classList.remove("fail-outline");
+
+      // Create new QR
+      const qr = window.qrcode(version, ec); // pass the error correction from user
+
+      try {
+        qr.addData(text);
+        qr.make(); // may throw if text doesn't fit
+      } catch (err) {
+        decodedInfo.textContent =
+          "Error: Text is too long/invalid for chosen version+EC!";
+        console.error(err);
+        qrContainer.classList.add("fail-outline");
+        return;
       }
 
-      /**
-       * Generate or re-generate the QR code from text, version, and EC level.
-       */
-      function generateQR(text, version, ec) {
-        // Reset container, indicate "Generating..."
-        qrContainer.innerHTML = "";
-        decodedInfo.textContent = "...Generating...";
-        qrContainer.classList.remove("fail-outline");
+      let detectedVer = 0;
+      if (typeof qr.getTypeNumber === "function") {
+        detectedVer = qr.getTypeNumber();
+      }
 
-        // Create new QR
-        const qr = window.qrcode(version, ec); // pass the error correction from user
+      const size = qr.getModuleCount();
+      // If library didn't give a version (0), compute from size
+      if (!detectedVer) {
+        detectedVer = deriveVersionFromSize(size);
+      }
+      finalVersionUsed = detectedVer;
 
-        try {
-          qr.addData(text);
-          qr.make(); // may throw if text doesn't fit
-        } catch (err) {
-          decodedInfo.textContent =
-            "Error: Text is too long/invalid for chosen version+EC!";
-          console.error(err);
-          qrContainer.classList.add("fail-outline");
-          return;
+      // Build the 2D matrix
+      qrMatrix = [];
+      for (let row = 0; row < size; row++) {
+        const rowArr = [];
+        for (let col = 0; col < size; col++) {
+          rowArr.push(qr.isDark(row, col) ? 1 : 0);
         }
+        qrMatrix.push(rowArr);
+      }
 
-        let detectedVer = 0;
-        if (typeof qr.getTypeNumber === "function") {
-          detectedVer = qr.getTypeNumber();
-        }
+      // Render
+      renderMatrix();
+      // Decode
+      decodeCurrentMatrix();
+    }
 
-        const size = qr.getModuleCount();
-        // If library didn't give a version (0), compute from size
-        if (!detectedVer) {
-          detectedVer = deriveVersionFromSize(size);
-        }
-        finalVersionUsed = detectedVer;
 
-        // Build the 2D matrix
-        qrMatrix = [];
-        for (let row = 0; row < size; row++) {
-          const rowArr = [];
-          for (let col = 0; col < size; col++) {
-            rowArr.push(qr.isDark(row, col) ? 1 : 0);
+    // Render the qrMatrix as a grid of clickable squares in #qr-container.
+    function renderMatrix() {
+      qrContainer.innerHTML = "";
+
+      qrMatrix.forEach((rowArr, rowIndex) => {
+        const rowDiv = document.createElement("div");
+        rowDiv.classList.add("row");
+
+        rowArr.forEach((val, colIndex) => {
+          const pixel = document.createElement("div");
+          pixel.classList.add("pixel");
+          if (val === 1) {
+            pixel.classList.add("black");
           }
-          qrMatrix.push(rowArr);
-        }
 
-        // Render
-        renderMatrix();
-        // Decode
-        decodeCurrentMatrix();
-      }
-
-      /**
-       * Render the qrMatrix as a grid of clickable squares in #qr-container.
-       */
-      function renderMatrix() {
-        qrContainer.innerHTML = "";
-
-        qrMatrix.forEach((rowArr, rowIndex) => {
-          const rowDiv = document.createElement("div");
-          rowDiv.classList.add("row");
-
-          rowArr.forEach((val, colIndex) => {
-            const pixel = document.createElement("div");
-            pixel.classList.add("pixel");
-            if (val === 1) {
-              pixel.classList.add("black");
-            }
-
-            // Toggle on click
-            pixel.addEventListener("click", () => {
-              qrMatrix[rowIndex][colIndex] = 1 - qrMatrix[rowIndex][colIndex];
-              renderMatrix();
-              decodeCurrentMatrix();
-            });
-
-            rowDiv.appendChild(pixel);
+          // Toggle on click
+          pixel.addEventListener("click", () => {
+            qrMatrix[rowIndex][colIndex] = 1 - qrMatrix[rowIndex][colIndex];
+            renderMatrix();
+            decodeCurrentMatrix();
           });
 
-          qrContainer.appendChild(rowDiv);
+          rowDiv.appendChild(pixel);
         });
+
+        qrContainer.appendChild(rowDiv);
+      });
+    }
+
+
+    // Decode the current qrMatrix with jsQR, then display stats & version used.
+    function decodeCurrentMatrix() {
+      const size = qrMatrix.length;
+      if (size === 0) {
+        decodedInfo.textContent = "No matrix data.";
+        qrContainer.classList.add("fail-outline");
+        return;
       }
 
-      /**
-       * Decode the current qrMatrix with jsQR, then display stats & version used.
-       */
-      function decodeCurrentMatrix() {
-        const size = qrMatrix.length;
-        if (size === 0) {
-          decodedInfo.textContent = "No matrix data.";
-          qrContainer.classList.add("fail-outline");
-          return;
+      const QUIET_ZONE = 4;
+      const SCALE = 3; // upsampling for decoding reliability
+      const canvasSize = (size + QUIET_ZONE * 2) * SCALE;
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = canvasSize;
+      canvas.height = canvasSize;
+
+      // Fill white
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw matrix
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          ctx.fillStyle = qrMatrix[r][c] === 1 ? "#000000" : "#ffffff";
+          ctx.fillRect(
+            (c + QUIET_ZONE) * SCALE,
+            (r + QUIET_ZONE) * SCALE,
+            SCALE,
+            SCALE
+          );
         }
-
-        const QUIET_ZONE = 4;
-        const SCALE = 3; // upsampling for decoding reliability
-        const canvasSize = (size + QUIET_ZONE * 2) * SCALE;
-
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = canvasSize;
-        canvas.height = canvasSize;
-
-        // Fill white
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Draw matrix
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            ctx.fillStyle = qrMatrix[r][c] === 1 ? "#000000" : "#ffffff";
-            ctx.fillRect(
-              (c + QUIET_ZONE) * SCALE,
-              (r + QUIET_ZONE) * SCALE,
-              SCALE,
-              SCALE
-            );
-          }
-        }
-
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const result = jsQR(imageData.data, canvas.width, canvas.height);
-
-        // Count black/white
-        let blackCount = 0;
-        let whiteCount = 0;
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (qrMatrix[r][c] === 1) blackCount++;
-            else whiteCount++;
-          }
-        }
-
-        const lines = [];
-
-        if (result) {
-          // success
-          qrContainer.classList.remove("fail-outline");
-          lines.push(`Decoded Text: ${result.data}`);
-        } else {
-          // fail
-          qrContainer.classList.add("fail-outline");
-          lines.push("Decoded Text:");
-          lines.push("No valid QR data found.");
-        }
-
-        lines.push(`Version Used: ${finalVersionUsed}`);
-        lines.push(`Matrix Size (modules): ${size} × ${size}`);
-        lines.push(`Black Modules: ${blackCount}`);
-        lines.push(`White Modules: ${whiteCount}`);
-
-        decodedInfo.textContent = lines.join("\n");
       }
 
-      /**
-       * Export the current qrMatrix as a PNG @ 25 px/module.
-       */
-      function exportQRCodePNG() {
-        const size = qrMatrix.length;
-        if (size === 0) {
-          alert("No QR matrix to export!");
-          return;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const result = jsQR(imageData.data, canvas.width, canvas.height);
+
+      // Count black/white
+      let blackCount = 0;
+      let whiteCount = 0;
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (qrMatrix[r][c] === 1) blackCount++;
+          else whiteCount++;
         }
-
-        const QUIET_ZONE = 4;
-        const SCALE = 25;
-        const canvasSize = (size + QUIET_ZONE * 2) * SCALE;
-
-        const exportCanvas = document.createElement("canvas");
-        exportCanvas.width = canvasSize;
-        exportCanvas.height = canvasSize;
-        const ctx = exportCanvas.getContext("2d");
-
-        // Fill background white
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-        // Draw modules
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            ctx.fillStyle = qrMatrix[r][c] === 1 ? "#000000" : "#ffffff";
-            ctx.fillRect(
-              (c + QUIET_ZONE) * SCALE,
-              (r + QUIET_ZONE) * SCALE,
-              SCALE,
-              SCALE
-            );
-          }
-        }
-
-        // Data URL => Download
-        const dataURL = exportCanvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = dataURL;
-        link.download = "my-qr-code.png";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
       }
 
-      /**
-       * Export the current qrMatrix as an SVG (scalable).
-       */
-      function exportQRCodeSVG() {
-        const size = qrMatrix.length;
-        if (size === 0) {
-          alert("No QR matrix to export!");
-          return;
+      const lines = [];
+
+      if (result) {
+        // success
+        qrContainer.classList.remove("fail-outline");
+        lines.push(`Decoded Text: ${result.data}`);
+      } else {
+        // fail
+        qrContainer.classList.add("fail-outline");
+        lines.push("Decoded Text:");
+        lines.push("No valid QR data found.");
+      }
+
+      lines.push(`Version Used: ${finalVersionUsed}`);
+      lines.push(`Matrix Size (modules): ${size} × ${size}`);
+      lines.push(`Black Modules: ${blackCount}`);
+      lines.push(`White Modules: ${whiteCount}`);
+
+      decodedInfo.textContent = lines.join("\n");
+    }
+
+    // Export the current qrMatrix as a PNG @ 25 px/module.
+    function exportQRCodePNG() {
+      const size = qrMatrix.length;
+      if (size === 0) {
+        alert("No QR matrix to export!");
+        return;
+      }
+
+      const QUIET_ZONE = 4;
+      const SCALE = 25;
+      const canvasSize = (size + QUIET_ZONE * 2) * SCALE;
+
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = canvasSize;
+      exportCanvas.height = canvasSize;
+      const ctx = exportCanvas.getContext("2d");
+
+      // Fill background white
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+      // Draw modules
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          ctx.fillStyle = qrMatrix[r][c] === 1 ? "#000000" : "#ffffff";
+          ctx.fillRect(
+            (c + QUIET_ZONE) * SCALE,
+            (r + QUIET_ZONE) * SCALE,
+            SCALE,
+            SCALE
+          );
         }
+      }
 
-        const QUIET_ZONE = 4;
-        const SCALE = 25; // each module => 25×25 in the SVG
-        const svgWidth = (size + QUIET_ZONE * 2) * SCALE;
-        const svgHeight = (size + QUIET_ZONE * 2) * SCALE;
+      // Data URL => Download
+      const dataURL = exportCanvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = dataURL;
+      link.download = "my-qr-code.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-        // Start the SVG string
-        let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        svgContent += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
-        // Fill entire background white
-        svgContent += `<rect width="${svgWidth}" height="${svgHeight}" fill="#ffffff" />`;
+    // Export the current qrMatrix as an SVG (scalable).
+    function exportQRCodeSVG() {
+      const size = qrMatrix.length;
+      if (size === 0) {
+        alert("No QR matrix to export!");
+        return;
+      }
 
-        // Draw black squares
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (qrMatrix[r][c] === 1) {
-              const x = (c + QUIET_ZONE) * SCALE;
-              const y = (r + QUIET_ZONE) * SCALE;
-              svgContent += `<rect x="${x}" y="${y}" width="${SCALE}" height="${SCALE}" fill="#000000"/>`;
-            }
+      const QUIET_ZONE = 4;
+      const SCALE = 25; // each module => 25×25 in the SVG
+      const svgWidth = (size + QUIET_ZONE * 2) * SCALE;
+      const svgHeight = (size + QUIET_ZONE * 2) * SCALE;
+
+      // Start the SVG string
+      let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      svgContent += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
+      // Fill entire background white
+      svgContent += `<rect width="${svgWidth}" height="${svgHeight}" fill="#ffffff" />`;
+
+      // Draw black squares
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (qrMatrix[r][c] === 1) {
+            const x = (c + QUIET_ZONE) * SCALE;
+            const y = (r + QUIET_ZONE) * SCALE;
+            svgContent += `<rect x="${x}" y="${y}" width="${SCALE}" height="${SCALE}" fill="#000000"/>`;
           }
         }
-
-        svgContent += `</svg>`;
-
-        // Create a Blob and download as .svg file
-        const svgBlob = new Blob([svgContent], { type: "image/svg+xml" });
-        const svgUrl = URL.createObjectURL(svgBlob);
-
-        const link = document.createElement("a");
-        link.href = svgUrl;
-        link.download = "my-qr-code.svg";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Free the URL
-        URL.revokeObjectURL(svgUrl);
       }
-    </script>
-  </body>
+
+      svgContent += `</svg>`;
+
+      // Create a Blob and download as .svg file
+      const svgBlob = new Blob([svgContent], { type: "image/svg+xml" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      const link = document.createElement("a");
+      link.href = svgUrl;
+      link.download = "my-qr-code.svg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Free the URL
+      URL.revokeObjectURL(svgUrl);
+    }
+  </script>
+</body>
+
 </html>

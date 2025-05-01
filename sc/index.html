@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <meta charset="UTF-8" />
@@ -144,12 +145,20 @@
 </head>
 
 <body>
-    <h1>Unicode UI Stress Test Characters</h1>
-    <p>
+    <div class="header-top">
+        <div>
+            <h1 style="margin: 0;">Unicode UI Stress Test Characters</h1>
+        </div>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">
         A list of special characters is below. If a site allows user inputs such as for a username or comment,
         some of these characters can be used to break the UI or cause otherwise unexpected behavior.
         For example, the right-to-left override (U+202E) may cause elements to appear in a reversed direction.
     </p>
+    <br />
 
     <div class="search-container">
         <input type="text" id="searchInput" placeholder="Search by name or code point..." />
@@ -414,4 +423,5 @@
         });
     </script>
 </body>
+
 </html>

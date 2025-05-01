@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Request Tool</title>
+    <title>HTTP Request Tool</title>
     <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../tools.css" />
@@ -289,23 +289,22 @@
 </head>
 
 <body>
-    <div class="header-container">
-        <div>
-            <h1>API Request Tool</h1>
-            <p>Configure your API request and convert it to various command-line formats.</p>
-        </div>
+    <div class="header-top">
+        <h1 style="margin: 0;">HTTP Request Tool</h1>
         <a href="https://localhost.beer" class="home-link">
             ← home
         </a>
     </div>
+    <p style="margin: 0;">Configure your HTTP request and convert it to various command-line formats.</p>
+    <br />
 
     <!-- Request Configuration Section -->
     <div class="request-section">
         <h2>Request Configuration</h2>
 
         <div class="form-group">
-            <label for="requestUrl">API Endpoint URL:</label>
-            <input type="text" id="requestUrl" placeholder="https://api.example.com/endpoint"/>
+            <label for="requestUrl">HTTP Endpoint URL:</label>
+            <input type="text" id="requestUrl" placeholder="https://api.example.com/endpoint" />
         </div>
 
         <div class="form-group">
@@ -432,7 +431,7 @@
                 <span class="toggle-icon" id="contentToggleIcon">▼</span>
             </button>
         </div>
-        <p>Common Content-Type headers for API requests. Click on any content type to add it to your request headers.
+        <p>Common Content-Type headers for HTTP API requests. Click on any content type to add it to your request headers.
         </p>
 
         <div class="content-type-grid" id="contentTypeGrid">
@@ -668,7 +667,7 @@
                 const authType = document.getElementById('authType').value;
 
                 if (!url) {
-                    throw new Error('API endpoint URL is required');
+                    throw new Error('HTTP endpoint URL is required');
                 }
 
                 const headers = {};
@@ -902,7 +901,7 @@
                 const method = document.getElementById('requestMethod').value;
 
                 if (!url) {
-                    throw new Error('API endpoint URL is required');
+                    throw new Error('HTTP endpoint URL is required');
                 }
 
                 const options = {

@@ -5,27 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Clipboard</title>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../tools.css" />
     <style>
         body {
-            font-family: "JetBrains Mono", monospace;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            background-color: #121212;
-            color: #e0e0e0;
             max-width: 800px;
         }
 
         textarea {
-            width: 100%;
-            margin-bottom: 10px;
-            border: 1px solid #333;
-            background-color: #1e1e1e;
-            color: #e0e0e0;
-            padding: 5px;
-            resize: vertical;
-            font-family: "JetBrains Mono", monospace;
             box-sizing: border-box;
         }
 
@@ -50,63 +38,8 @@
         }
 
         button {
-            padding: 10px;
-            background-color: #244444;
-            color: #e0e0e0;
-            border: none;
-            cursor: pointer;
-            font-family: "JetBrains Mono", monospace;
-            transition: background-color 0.3s ease;
             margin-right: 5px;
             margin-bottom: 5px;
-        }
-
-        button:hover {
-            background-color: #255555;
-        }
-
-        h1,
-        h2,
-        h3 {
-            color: #e0e0e0;
-        }
-
-        p {
-            color: #b0b0b0;
-        }
-
-        a {
-            color: #80cccc;
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: #60aaaa;
-            text-decoration: underline;
-        }
-
-        button:focus,
-        textarea:focus,
-        input:focus {
-            outline: 2px solid #4cafac;
-        }
-
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #4a4a4a;
-            border-radius: 6px;
-            border: 3px solid #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background-color: #5a5a5a;
         }
 
         .form-group {
@@ -240,9 +173,14 @@
 </head>
 
 <body>
-    <h1>Multi-Clipboard</h1>
-
-    <p>Create, store, and quickly access multiple text snippets.</p>
+    <div class="header-top">
+        <h1 style="margin: 0;">Multi-Clipboard</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Create, store, and quickly access multiple text snippets.</p>
+    <br />
 
     <div class="form-group">
         <label for="clipContent">Text Content:</label>
