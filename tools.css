@@ -64,3 +64,22 @@ button:focus {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #5a5a5a;
 }
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.home-link {
+  text-decoration: none;
+  color: #666;
+  font-size: 14px;
+  transition: color 0.2s;
+  margin-top: 30px;
+}
+
+.home-link:hover {
+  color: #333;
+}
