@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookmarks</title>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1200px;
+        }
+
+        body:after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .bookmark-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-top: 30px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .section-title {
+            margin: 0;
+        }
+
+        .section-title::after {
+            content: attr(data-order);
+            font-size: 0.6em;
+            margin-left: 8px;
+            color: #888;
+            vertical-align: super;
+        }
+
+        .bookmark-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .bookmark {
+            flex-grow: 0;
+            flex-shrink: 0;
+            border-radius: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            border-width: 1px;
+            border-style: solid;
+            background-color: #1a1a1a;
+        }
+
+        .bookmark:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .bookmark a {
+            padding: 12px 15px;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+            font-weight: 600;
+        }
+
+        .bookmark a:hover {
+            filter: brightness(1.2);
+        }
+
+        @media (max-width: 768px) {
+            .bookmark-container {
+                gap: 10px;
+            }
+
+            .bookmark a {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">My Bookmarks</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <br />
+
+    <div id="bookmarkSections"></div>
+
+    <script>
+        const bookmarkData = {
+            sites: {
+                google: { url: "https://www.google.com", title: "Google" },
+                youtube: { url: "https://www.youtube.com", title: "YouTube" },
+                github: { url: "https://github.com", title: "GitHub" },
+                wolframAlpha: { url: "https://www.wolframalpha.com", title: "WolframAlpha" },
+                desmos: { url: "https://www.desmos.com", title: "Desmos" },
+                speedTest: { url: "https://www.speedtest.net", title: "Speed Test" },
+                whois: { url: "https://www.whois.com/whois/", title: "WHOIS Lookup" },
+                ia: { url: "https://archive.org", title: "Internet Archive" },
+                exploitDB: { url: "https://www.exploit-db.com", title: "Exploit Database" },
+                python: { url: "https://www.programiz.com/python-programming/online-compiler/", title: "Python" },
+                torrent: { url: "https://1337x.to/", title: "1337x" },
+                cobalt: { url: "https://cobalt.tools", title: "Cobalt" },
+                vert: { url: "https://vert.sh", title: "File Converter" },
+                hex: { url: "https://hex.dance", title: "Binary File Analysis" },
+                tenHours: { url: "https://youtu.be/fx2Z5ZD_Rbo", title: "10 Hours of Nothing" },
+                chromeFlags: { url: "chrome://flags", title: "Chrome Flags" },
+
+                // Tools
+                photopea: { url: "https://photpea.com", title: "Photopea" },
+                unsplash: { url: "https://unsplash.com", title: "Unsplash" },
+                surfaceExplorer: { url: "http://www.senchalabs.org/philogl/PhiloGL/examples/explorer/", title: "Surface Explorer" },
+                randLetSeq: { url: "http://www.dave-reed.com/Nifty/randSeq.html", title: "Random Letter Sequence" },
+                wordCounter: { url: "https://wordcounter.net", title: "Word Counter" },
+                unicodeAnalyzer: { url: "https://www.fontspace.com/unicode/analyzer", title: "Unicode Analyzer" },
+                unicodeTextConverter: { url: "https://www.branah.com/unicode-converter", title: "Unicode Text Converter" },
+                encodingCorrection: { url: "http://www.mytju.com/classCode/tools/messyCodeRecover.asp", title: "Text Encoding Corrector" },
+                fontinterceptor: { url: "https://fontinterceptor.mschfmag.com/", title: "Font Interceptor" },
+                mapGenerator: { url: "https://map-generator-nsj.vercel.app/", title: "Map Generator" },
+
+                // Calculators
+                baseConverter: { url: "https://www.rapidtables.com/convert/number/base-converter.html", title: "Base Converter" },
+                boolSimp: { url: "https://www.boolean-algebra.com/", title: "Boolean Simplifier" },
+                twosComp: { url: "https://www.exploringbinary.com/twos-complement-converter/", title: "Two's Complement" },
+                binCalc: { url: "https://www.calculator.net/binary-calculator.htmlphp", title: "Binary Calculator" },
+                dijkstra: { url: "https://mdahshan.github.io/dijkstra/", title: "Dijkstra's Algorithm" },
+
+                // What is my
+                wimIP: { url: "https://whatismyipaddress.com/", title: "What is my IP" },
+                wimResolution: { url: "https://www.whatismyresolution.com/", title: "What is my Resolution" },
+                wimRefreshRate: { url: "https://www.testufo.com/refreshrate", title: "What is my Refresh Rate" },
+
+                // Testers
+                mouseTester: { url: "https://www.onlinemictest.com/mouse-test/", title: "Mouse Tester" },
+                keyboardTester: { url: "https://www.keyboardtester.com/", title: "Keyboard Tester" },
+                clickCounter: { url: "https://www.rapidtables.com/tools/click-counter.html", title: "Click Counter" },
+                scrollTest: { url: "https://fractalglider.github.io/fun/2018/02/13/testing-mouse-scroll-wheel.html", title: "Scroll Wheel Test" },
+                micTest: { url: "https://online-voice-recorder.com/", title: "Microphone Test" },
+                stereoTest: { url: "https://youtu.be/6TWJaFD6R2s", title: "Stereo Test" },
+                syncTest: { url: "https://youtu.be/ucZl6vQ_8Uo", title: "Audio Sync Test" },
+                virusTotal: { url: "https://www.virustotal.com", title: "VirusTotal" },
+                virusScan: { url: "https://www.hybrid-analysis.com/", title: "Virus Scan" },
+                dnsChecker: { url: "https://dnschecker.org", title: "DNS Checker" },
+
+                // Toys and Games
+                svm: { url: "https://sciencevsmagic.net/", title: "Science vs Magic" },
+                spirograph: { url: "https://seedcode.com/SpirographN/sgn.html", title: "Spirograph" },
+                puzzleGames: { url: "https://www.puzzle-nurikabe.com/", title: "Puzzle Games" },
+                opticalIllusions: { url: "https://michaelbach.de/ot/", title: "Optical Illusions" },
+                thirtyDollar: { url: "https://thirtydollar.website/", title: "Don\'t you lecture me" },
+                drum: { url: "https://www.drumbit.app/", title: "Drum Machine" },
+                webglPT: { url: "https://madebyevan.com/webgl-path-tracing/", title: "WebGL Path Tracing" },
+                sand: { url: "https://games.increpare.com/sandscratcher/", title: "Sand Scratcher" },
+                iso: { url: "https://wxs.ca/iso/", title: "iso" },
+
+                // Miscellaneous
+                steamDB: { url: "https://steamdb.info", title: "SteamDB" },
+                hadzy: { url: "https://hadzy.com/analytics/youtube/", title: "YouTube Comment Search" },
+                altText: { url: "https://qaz.wtf/u/convert.cgi?text=AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz", title: "Fancy Unicode" },
+                opentopia: { url: "https://opentopia.com", title: "Opentopia" },
+                oldFonts: { url: "https://moorstation.org/typoasis/designers/lnf/lnfmain.htm", title: "Old Fonts" },
+                prefix: { url: "https://i.pinimg.com/originals/af/b1/da/afb1daa0d8d780a7d6ddae6229ddcab7.jpg", title: "Prefix Cheat Sheet" },
+
+            },
+            sections: [
+                {
+                    title: "★",
+                    order: 1,
+                    links: ["google", "youtube", "github", "wolframAlpha", "speedTest", "whois", "ia", "exploitDB", "python", "torrent", "cobalt", "vert", "hex", "tenHours", "chromeFlags"]
+                },
+                {
+                    title: "Tools",
+                    order: 2,
+                    links: ["photopea", "unsplash", "surfaceExplorer", "randLetSeq", "wordCounter", "unicodeAnalyzer", "unicodeTextConverter", "encodingCorrection", "fontinterceptor", "mapGenerator"
+                    ]
+                },
+                {
+                    title: "Calculators",
+                    order: 3,
+                    links: ["desmos", "baseConverter", "boolSimp", "twosComp", "binCalc", "dijkstra"]
+                },
+                {
+                    title: "Testers",
+                    order: 4,
+                    links: ["mouseTester", "keyboardTester", "clickCounter", "scrollTest", "micTest", "stereoTest", "syncTest", "virusTotal", "virusScan", "dnsChecker"]
+                },
+                {
+                    title: "What is my",
+                    order: 5,
+                    links: ["wimIP", "wimResolution", "wimRefreshRate"]
+                },
+                {
+                    title: "Toys and Games",
+                    order: 6,
+                    links: ["svm", "spirograph", "puzzleGames", "opticalIllusions", "thirtyDollar", "drum", "webglPT", "sand", "iso"]
+                },
+                {
+                    title: "Miscellaneous",
+                    order: 7,
+                    links: ["steamDB", "hadzy", "altText", "opentopia", "oldFonts", "prefix"]
+                }
+            ]
+        };
+
+        function createBookmark(siteKey) {
+            const site = bookmarkData.sites[siteKey];
+            if (!site) return null;
+
+            const bookmark = document.createElement('div');
+            bookmark.className = 'bookmark';
+
+            const link = document.createElement('a');
+            link.href = site.url;
+            link.target = '_blank';
+            link.textContent = site.title;
+
+            bookmark.appendChild(link);
+            return bookmark;
+        }
+
+        function createSection(section) {
+            const sectionEl = document.createElement('div');
+            sectionEl.className = 'bookmark-section';
+
+            const headerEl = document.createElement('div');
+            headerEl.className = 'section-header';
+
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'section-title';
+            titleEl.setAttribute('data-order', section.order);
+            titleEl.textContent = section.title;
+
+            headerEl.appendChild(titleEl);
+            sectionEl.appendChild(headerEl);
+
+            const containerEl = document.createElement('div');
+            containerEl.className = 'bookmark-container';
+
+            section.links.forEach(linkKey => {
+                const bookmark = createBookmark(linkKey);
+                if (bookmark) containerEl.appendChild(bookmark);
+            });
+
+            sectionEl.appendChild(containerEl);
+            return sectionEl;
+        }
+
+        function generateRandomPaleColor() {
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = 20 + Math.floor(Math.random() * 20);
+            const lightness = 70 + Math.floor(Math.random() * 15);
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+
+        function applyRandomPaleColors() {
+            document.querySelectorAll('.bookmark').forEach(bookmark => {
+                const textColor = generateRandomPaleColor();
+                const borderColor = generateRandomPaleColor();
+
+                const link = bookmark.querySelector('a');
+                link.style.color = textColor;
+                bookmark.style.borderColor = borderColor;
+            });
+        }
+
+        // Initialize bookmarks
+        function initializeBookmarks() {
+            const sectionsContainer = document.getElementById('bookmarkSections');
+
+            bookmarkData.sections.forEach(section => {
+                const sectionEl = createSection(section);
+                sectionsContainer.appendChild(sectionEl);
+            });
+
+            applyRandomPaleColors();
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeBookmarks);
+    </script>
+</body>
+
+</html>
