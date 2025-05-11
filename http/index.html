@@ -431,7 +431,8 @@
                 <span class="toggle-icon" id="contentToggleIcon">▼</span>
             </button>
         </div>
-        <p>Common Content-Type headers for HTTP API requests. Click on any content type to add it to your request headers.
+        <p>Common Content-Type headers for HTTP API requests. Click on any content type to add it to your request
+            headers.
         </p>
 
         <div class="content-type-grid" id="contentTypeGrid">
@@ -783,7 +784,7 @@
                     const originalBody = document.getElementById('requestBody').value.trim();
                     try {
                         const parsedBody = JSON.parse(originalBody);
-                        pwshCmd += `$body = @${formatPSObject(parsedBody)} | ConvertTo-Json -Depth 10\n\n`;
+                        pwshCmd += `$body = ${formatPSObject(parsedBody)} | ConvertTo-Json -Depth 10\n\n`;
                     } catch (e) {
                         pwshCmd += `$body = @'
                             ${originalBody}
@@ -856,11 +857,15 @@
             }
 
             if (typeof obj === 'string') {
-                return `"${obj}"`;
+                return `"${obj.replace(/"/g, '`"')}"`;
             }
 
-            if (typeof obj === 'number' || typeof obj === 'boolean') {
+            if (typeof obj === 'number') {
                 return obj;
+            }
+
+            if (typeof obj === 'boolean') {
+                return obj ? '$true' : '$false';
             }
 
             if (Array.isArray(obj)) {
@@ -884,9 +889,13 @@
                 return '@{}';
             }
 
-            let result = '{\n';
+            let result = '[PSCustomObject]@{\n';
             Object.entries(obj).forEach(([key, value], index) => {
-                result += `${indent}    ${key} = ${formatPSObject(value, indent + '    ')}`;
+                // Check if the key contains special characters that require quoting
+                const needsQuotes = /[^a-zA-Z0-9_]/.test(key);
+                const formattedKey = needsQuotes ? `"${key}"` : key;
+
+                result += `${indent}    ${formattedKey} = ${formatPSObject(value, indent + '    ')}`;
                 if (index < Object.keys(obj).length - 1) {
                     result += '\n';
                 }
