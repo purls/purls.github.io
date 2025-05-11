@@ -18,6 +18,16 @@
             padding: 10px;
             background-color: #2d2d2d;
             border: 1px solid #3d3d3d;
+            width: 100%;
+            box-sizing: border-box; 
+            max-width: 100%;
+            margin: 0;
+        }
+
+        textarea:focus {
+            outline: none;
+            border: 1px solid #4cafac;
+            box-shadow: 0 0 0 2px rgba(76, 175, 172, 0.5);
         }
 
         input[type="text"],
@@ -96,6 +106,8 @@
         .form-group {
             margin-bottom: 15px;
             max-width: 100%;
+            width: 100%;
+            padding: 2px;
         }
 
         .tab-content {
@@ -141,6 +153,7 @@
             border: 1px solid #3d3d3d;
             border-radius: 4px;
             background-color: #1e1e1e;
+            box-sizing: border-box;
         }
 
         .header-row {
@@ -181,6 +194,13 @@
             border-radius: 3px;
             cursor: pointer;
             margin-bottom: 5px;
+        }
+
+        #requestBodySection {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 0 2px;
         }
 
         /* Content Type Cheat Sheet Styles */
@@ -713,18 +733,19 @@
                 }
 
                 let body = null;
+                let originalBody = '';
                 if (method !== 'GET' && method !== 'HEAD') {
-                    const bodyText = document.getElementById('requestBody').value.trim();
-                    if (bodyText) {
+                    originalBody = document.getElementById('requestBody').value.trim();
+                    if (originalBody) {
                         try {
-                            body = JSON.parse(bodyText);
+                            body = JSON.parse(originalBody);
                         } catch (e) {
                             throw new Error('Invalid JSON in request body');
                         }
                     }
                 }
 
-                // Generate curl command (Bash)
+                // 1. Generate curl command (Bash)
                 let curlCmd = `curl -X ${method} "${url}"`;
                 for (const [name, value] of Object.entries(headers)) {
                     curlCmd += ` \\\n  -H "${name}: ${value}"`;
@@ -734,8 +755,20 @@
                 }
                 document.getElementById('bashCode').value = curlCmd;
 
-                // Generate PowerShell command
+                // 2. Generate PowerShell command
                 let psCmd = `$uri = "${url}"\n\n`;
+                if (body) {
+                    // Improved PowerShell approach - convert JSON to PowerShell object
+                    try {
+                        psCmd += `$body = ${formatPSObject(body)} | ConvertTo-Json -Depth 10\n\n`;
+                    } catch (e) {
+                        // Fallback to heredoc if the conversion fails
+                        psCmd += `$body = @'
+                            ${originalBody}
+                            '@\n\n`;
+                    }
+                }
+
                 let hasBasicAuth = false;
                 if (authType === 'basic') {
                     const username = document.getElementById('username').value.trim();
@@ -761,13 +794,6 @@
                     psCmd += "}\n\n";
                 }
 
-                if (body) {
-                    const originalBody = document.getElementById('requestBody').value.trim();
-                    psCmd += `$body = @'
-                        ${originalBody}
-                        '@\n\n`;
-                }
-
                 psCmd += `Invoke-RestMethod -Uri $uri -Method ${method}`;
                 if (Object.keys(headers).length > 0 || hasBasicAuth) {
                     psCmd += " -Headers $headers";
@@ -775,17 +801,27 @@
                 if (body) {
                     psCmd += " -Body $body";
                 }
-                psCmd += " -ContentType 'application/json'";
                 document.getElementById('powershellCode').value = psCmd;
 
-                // Generate PowerShell 7 command
+                // 3. Generate Windows CMD command
+                let cmdCmd = `curl -X ${method} "${url}"`;
+                for (const [name, value] of Object.entries(headers)) {
+                    cmdCmd += ` ^\n  -H "${name}: ${value}"`;
+                }
+                if (body) {
+                    // Escape double quotes for Windows CMD
+                    const escapedBody = JSON.stringify(body).replace(/"/g, '\\"');
+                    cmdCmd += ` ^\n  -d "${escapedBody}"`;
+                }
+                document.getElementById('cmdCode').value = cmdCmd;
+
+                // 4. Generate PowerShell 7 command
                 let pwshCmd = `$uri = "${url}"\n\n`;
                 if (body) {
-                    const originalBody = document.getElementById('requestBody').value.trim();
                     try {
-                        const parsedBody = JSON.parse(originalBody);
-                        pwshCmd += `$body = ${formatPSObject(parsedBody)} | ConvertTo-Json -Depth 10\n\n`;
+                        pwshCmd += `$body = ${formatPSObject(body)} | ConvertTo-Json -Depth 10\n\n`;
                     } catch (e) {
+                        // Fallback to heredoc if conversion fails
                         pwshCmd += `$body = @'
                             ${originalBody}
                             '@\n\n`;
@@ -811,31 +847,20 @@
                     }
                     for (const [name, value] of Object.entries(headers)) {
                         if (!(pwshBasicAuth && name === 'Authorization')) {
-                            pwshCmd += `    "${name}" = "${value}"\n`;
+                            psCmd += `    "${name}" = "${value}"\n`;
                         }
                     }
                     pwshCmd += "}\n\n";
                 }
 
                 pwshCmd += `Invoke-RestMethod -Uri $uri -Method ${method}`;
-                if (Object.keys(headers).length > 0) {
+                if (Object.keys(headers).length > 0 || pwshBasicAuth) {
                     pwshCmd += " -Headers $headers";
                 }
                 if (body) {
                     pwshCmd += " -Body $body";
                 }
                 document.getElementById('pwshCode').value = pwshCmd;
-
-                // Generate Windows CMD command
-                let cmdCmd = `curl -X ${method} "${url}"`;
-                for (const [name, value] of Object.entries(headers)) {
-                    cmdCmd += ` ^\n  -H "${name}: ${value}"`;
-                }
-                if (body) {
-                    const escapedBody = JSON.stringify(body).replace(/"/g, '\\"');
-                    cmdCmd += ` ^\n  -d "${escapedBody}"`;
-                }
-                document.getElementById('cmdCode').value = cmdCmd;
 
                 const infoMessage = document.getElementById('infoMessage');
                 infoMessage.textContent = 'Code generated successfully!';
