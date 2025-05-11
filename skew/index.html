@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skew Width Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+        }
+
+        input {
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #3d3d3d;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            padding: 5px;
+            resize: vertical;
+            font-family: "JetBrains Mono", monospace;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        label {
+            margin-bottom: 5px;
+            color: #b0b0b0;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        canvas {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .result-box {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .formula-box {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .color-key {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .color-swatch {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        #resultValue {
+            font-size: 1.2em;
+            color: #80cccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Skew Width Calculator</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Calculate the correct width for a skewed line to appear the same thickness as a rotated line.
+    </p>
+    <br />
+
+    <div class="controls">
+        <div class="input-group">
+            <label for="originalWidth">Original Line Width:</label>
+            <input type="number" id="originalWidth" value="10" min="1" max="100" step="1">
+        </div>
+
+        <div class="input-group">
+            <label for="skewAngle">Skew Angle (degrees):</label>
+            <input type="number" id="skewAngle" value="30" min="0" max="89" step="1">
+        </div>
+    </div>
+
+    <div class="button-group">
+        <!--<button id="calculateBtn">Calculate</button>-->
+        <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="result-box">
+        <h3>Result:</h3>
+        <p>For a line with width <span id="widthValue">10</span> and skew angle <span id="angleValue">30°</span>,
+            the adjusted width should be <span id="resultValue">Loading...</span> to maintain visual consistency.</p>
+    </div>
+
+    <h3>Visual Reference:</h3>
+    <canvas id="skewCanvas" height="300"></canvas>
+    <div class="color-key">
+        <div class="color-item">
+            <div class="color-swatch" style="background-color: #4cafac;"></div>
+            <span>Original Line</span>
+        </div>
+        <div class="color-item">
+            <div class="color-swatch" style="background-color: #ff6b6b;"></div>
+            <span>Rotated Line (Reference)</span>
+        </div>
+        <div class="color-item">
+            <div class="color-swatch" style="background-color: #ffbc44;"></div>
+            <span>Skewed Line (Unadjusted)</span>
+        </div>
+        <div class="color-item">
+            <div class="color-swatch" style="background-color: #80cccc;"></div>
+            <span>Skewed Line (Adjusted)</span>
+        </div>
+    </div>
+
+    <div class="formula-box">
+        <h3>Formula:</h3>
+        <p>The adjusted width can be calculated using:</p>
+        <p><strong>adjustedWidth = originalWidth / cos(skewAngle)</strong></p>
+        <p>This formula ensures that the skewed line appears the same thickness as if it were rotated by the same angle.
+        </p>
+    </div>
+
+    <hr>
+    <h3>How It Works:</h3>
+    <p>
+        When a line is skewed, its apparent thickness changes because skewing doesn't preserve angles like rotation
+        does.
+        The skew transformation shears the shape along one axis, which causes the thickness to appear reduced.
+    </p>
+    <p>
+        To compensate for this effect, the width of the skewed line needs to be increased by the original width
+        divided by the cosine of the skew angle. This ensures that the perpendicular cross-section of the line maintains
+        the
+        same visual thickness as the original or rotated line.
+    </p>
+
+    <script>
+        const originalWidthInput = document.getElementById('originalWidth');
+        const skewAngleInput = document.getElementById('skewAngle');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const widthValue = document.getElementById('widthValue');
+        const angleValue = document.getElementById('angleValue');
+        const resultValue = document.getElementById('resultValue');
+        const canvas = document.getElementById('skewCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Canvas dimensions
+        function resizeCanvas() {
+            const width = canvas.clientWidth;
+            canvas.width = width;
+            canvas.height = 300;
+            redraw();
+        }
+
+        function calculateAdjustedWidth(width, angle) {
+            // Convert angle to radians
+            const radians = (angle * Math.PI) / 180;
+            return width / Math.cos(radians);
+        }
+
+        function redraw() {
+            const width = parseInt(originalWidthInput.value);
+            const angle = parseInt(skewAngleInput.value);
+            const adjustedWidth = calculateAdjustedWidth(width, angle);
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const lineLength = 100;
+
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            // Horizontal axis
+            ctx.moveTo(20, centerY);
+            ctx.lineTo(canvas.width - 20, centerY);
+            // Vertical axis
+            ctx.moveTo(centerX, 20);
+            ctx.lineTo(centerX, canvas.height - 20);
+            ctx.stroke();
+
+            // Add axis ticks
+            const tickLength = 5;
+            const tickSpacing = 20;
+
+            // X-axis ticks
+            for (let x = centerX - tickSpacing; x >= 20; x -= tickSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, centerY - tickLength);
+                ctx.lineTo(x, centerY + tickLength);
+                ctx.stroke();
+            }
+
+            for (let x = centerX + tickSpacing; x <= canvas.width - 20; x += tickSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, centerY - tickLength);
+                ctx.lineTo(x, centerY + tickLength);
+                ctx.stroke();
+            }
+
+            // Y-axis ticks
+            for (let y = centerY - tickSpacing; y >= 20; y -= tickSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - tickLength, y);
+                ctx.lineTo(centerX + tickLength, y);
+                ctx.stroke();
+            }
+
+            for (let y = centerY + tickSpacing; y <= canvas.height - 20; y += tickSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - tickLength, y);
+                ctx.lineTo(centerX + tickLength, y);
+                ctx.stroke();
+            }
+
+            // Original vertical line
+            ctx.strokeStyle = '#4cafac';
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 180, centerY - lineLength / 2);
+            ctx.lineTo(centerX - 180, centerY + lineLength / 2);
+            ctx.stroke();
+
+            // Circle for original line
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.arc(centerX - 180, centerY, width / 2, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Rotated line (reference)
+            const radians = (angle * Math.PI) / 180;
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.save();
+            ctx.translate(centerX + 180, centerY);
+            ctx.rotate(-radians);
+            ctx.moveTo(0, -lineLength / 2);
+            ctx.lineTo(0, lineLength / 2);
+            ctx.stroke();
+
+            // Circle for rotated line at center
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.arc(0, 0, width / 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Skewed line (unadjusted)
+            ctx.strokeStyle = '#ffbc44';
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.save();
+            ctx.translate(centerX - 60, centerY);
+            ctx.transform(1, 0, Math.tan(radians), 1, 0, 0);
+            ctx.moveTo(0, -lineLength / 2);
+            ctx.lineTo(0, lineLength / 2);
+            ctx.stroke();
+
+            // Circle for unadjusted skewed line
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.arc(0, 0, width / 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Skewed line (adjusted width)
+            ctx.strokeStyle = '#80cccc';
+            ctx.lineWidth = adjustedWidth;
+            ctx.beginPath();
+            ctx.save();
+            ctx.translate(centerX + 60, centerY);
+            ctx.transform(1, 0, Math.tan(radians), 1, 0, 0);
+            ctx.moveTo(0, -lineLength / 2);
+            ctx.lineTo(0, lineLength / 2);
+            ctx.stroke();
+
+            // Circle for adjusted skewed line
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.arc(0, 0, adjustedWidth / 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Labels
+            ctx.fillStyle = '#e0e0e0';
+            ctx.font = '12px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText('Original', centerX - 180, centerY + lineLength / 2 + 25);
+            ctx.fillText('Skewed (Adjusted)', centerX + 60, centerY - lineLength / 2 - 15);
+            ctx.fillText('Skewed (Unadjusted)', centerX - 60, centerY + lineLength / 2 + 25);
+            ctx.fillText('Rotated (Reference)', centerX + 180, centerY + lineLength / 2 + 25);
+        }
+
+        function calculate() {
+            const width = parseInt(originalWidthInput.value);
+            const angle = parseInt(skewAngleInput.value);
+            const adjustedWidth = calculateAdjustedWidth(width, angle);
+
+            widthValue.textContent = width;
+            angleValue.textContent = angle + '°';
+            resultValue.textContent = adjustedWidth.toFixed(4);
+
+            redraw();
+        }
+
+        function init() {
+            document.fonts.ready.then(() => {
+                resizeCanvas();
+                calculate();
+            });
+
+            resetBtn.addEventListener('click', () => {
+                originalWidthInput.value = 10;
+                skewAngleInput.value = 30;
+                calculate();
+            });
+
+            originalWidthInput.addEventListener('input', calculate);
+            originalWidthInput.addEventListener('change', calculate);
+            skewAngleInput.addEventListener('input', calculate);
+            skewAngleInput.addEventListener('change', calculate);
+
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
