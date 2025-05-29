@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Binary File Analyzer & Hex Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-input-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #3d3d3d;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #1a1a1a;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-container.drag-over {
+            border-color: #60c8c5;
+            background-color: #1e2525;
+        }
+
+        .file-input-container input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background-color: #255555;
+        }
+
+        .file-info {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .file-info-label {
+            color: #60c8c5;
+            font-weight: bold;
+        }
+
+        .file-info-value {
+            color: #e0e0e0;
+            word-break: break-all;
+        }
+
+        .hex-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .hex-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .hex-viewer {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+            max-height: 600px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .hex-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .hex-offset {
+            color: #666;
+            font-weight: bold;
+            width: 80px;
+            flex-shrink: 0;
+            margin-right: 20px;
+        }
+
+        .hex-bytes {
+            display: flex;
+            gap: 4px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .hex-byte {
+            width: 28px;
+            text-align: center;
+            cursor: pointer;
+            padding: 2px 0;
+            border-radius: 3px;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .hex-byte:hover {
+            background-color: #2a2a2a;
+            color: #60c8c5;
+            transform: scale(1.05);
+        }
+
+        .hex-byte.selected {
+            background-color: #244444;
+            color: #60c8c5;
+        }
+
+        .hex-byte.modified {
+            background-color: #443322;
+            color: #ffcc66;
+        }
+
+        .hex-byte.modified:hover {
+            background-color: #554433;
+            color: #ffdd77;
+        }
+
+        .hex-ascii {
+            color: #888;
+            white-space: pre;
+            font-size: 13px;
+            display: flex;
+            gap: 0;
+        }
+
+        .ascii-char {
+            width: 16px;
+            text-align: center;
+            padding: 2px 0;
+            transition: all 0.15s ease;
+            border-radius: 2px;
+        }
+
+        .ascii-char.hover {
+            background-color: #333;
+            color: #60c8c5;
+            font-weight: bold;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            width: 200px;
+        }
+
+        .hex-stats {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #60c8c5;
+            padding: 20px;
+            display: none;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .edit-modal input {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            width: 100px;
+            text-align: center;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        select {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .highlight {
+            background-color: #445544 !important;
+            color: #88ff88 !important;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Binary File Analyzer & Hex Editor</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Analyze binary files, view hex dumps, and edit bytes directly in your browser.</p>
+
+    <div class="file-input-container" id="dropZone">
+        <label for="fileInput" class="file-input-label">
+            Choose File or Drop Here
+        </label>
+        <input type="file" id="fileInput" accept="*/*">
+        <p style="margin: 10px 0; color: #666;">Drop any file here to analyze</p>
+    </div>
+
+    <div class="loading" id="loading">
+        Analyzing file...
+    </div>
+
+    <div class="file-info" id="fileInfo">
+        <h2>File Information</h2>
+        <div class="file-info-grid" id="fileInfoGrid"></div>
+    </div>
+
+    <div class="hex-container" id="hexContainer">
+        <h2>Hex Dump</h2>
+        <div class="hex-controls">
+            <button id="downloadModified" disabled>Download Modified File</button>
+            <button id="resetChanges" disabled>Reset Changes</button>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search hex (e.g., FF 00 1A)">
+                <button id="searchBtn">Search</button>
+                <button id="searchNext" disabled>Next</button>
+            </div>
+            <div>
+                <label for="bytesPerRow">Bytes per row:</label>
+                <select id="bytesPerRow">
+                    <option value="8">8</option>
+                    <option value="16" selected>16</option>
+                    <option value="32">32</option>
+                </select>
+            </div>
+        </div>
+        <div class="hex-viewer" id="hexViewer"></div>
+        <div class="hex-stats" id="hexStats"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="edit-modal" id="editModal">
+        <h3>Edit Byte</h3>
+        <p>Offset: <span id="editOffset"></span></p>
+        <p>Current value: <span id="currentValue"></span></p>
+        <input type="text" id="newValue" maxlength="2" placeholder="00">
+        <div style="margin-top: 15px;">
+            <button id="saveEdit">Save</button>
+            <button id="cancelEdit">Cancel</button>
+        </div>
+    </div>
+
+    <hr>
+    <p>
+        This tool allows you to analyze any file at the binary level. View file metadata, magic numbers,
+        and explore the raw hex data. You can edit individual bytes and download the modified file.
+        Supports files up to 10MB for optimal performance.
+    </p>
+
+    <script>
+        // Global variables
+        let currentFile = null;
+        let fileData = null;
+        let modifiedData = null;
+        let searchResults = [];
+        let currentSearchIndex = 0;
+
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const loading = document.getElementById('loading');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileInfoGrid = document.getElementById('fileInfoGrid');
+        const hexContainer = document.getElementById('hexContainer');
+        const hexViewer = document.getElementById('hexViewer');
+        const hexStats = document.getElementById('hexStats');
+        const downloadBtn = document.getElementById('downloadModified');
+        const resetBtn = document.getElementById('resetChanges');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchNextBtn = document.getElementById('searchNext');
+        const bytesPerRow = document.getElementById('bytesPerRow');
+        const editModal = document.getElementById('editModal');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        // File type magic numbers
+        const magicNumbers = {
+            '89504E47': 'PNG Image',
+            'FFD8FF': 'JPEG Image',
+            '47494638': 'GIF Image',
+            '25504446': 'PDF Document',
+            '504B0304': 'ZIP Archive',
+            '504B0506': 'ZIP Archive (empty)',
+            '504B0708': 'ZIP Archive (spanned)',
+            '7F454C46': 'ELF Executable',
+            '4D5A': 'DOS/Windows Executable',
+            'CAFEBABE': 'Java Class File',
+            '1F8B': 'GZIP Archive',
+            '425A68': 'BZIP2 Archive',
+            '377ABCAF271C': '7-Zip Archive',
+            '52617221': 'RAR Archive',
+            '00000100': 'ICO Icon',
+            '424D': 'BMP Image',
+            '49492A00': 'TIFF Image (little endian)',
+            '4D4D002A': 'TIFF Image (big endian)',
+            'D0CF11E0A1B11AE1': 'Microsoft Office Document',
+            '0D444F43': 'DOC Document',
+            'CF84': 'DOCX Document',
+            '7B5C727466': 'RTF Document',
+            '3C3F786D6C': 'XML Document',
+            '3C68746D6C': 'HTML Document',
+            '1F9D': 'Compressed tape archive',
+            '1FA0': 'Compressed tape archive',
+            'FEEDFACE': 'Mach-O Binary (32-bit)',
+            'FEEDFACF': 'Mach-O Binary (64-bit)',
+            'CEFAEDFE': 'Mach-O Binary (32-bit, reverse)',
+            'CFFAEDFE': 'Mach-O Binary (64-bit, reverse)',
+            '4F676753': 'OGG Media',
+            '38425053': 'Photoshop Document',
+            '52494646': 'RIFF (WAV/AVI)',
+            '57415645': 'WAV Audio',
+            '41564920': 'AVI Video',
+            'FFFB': 'MP3 Audio',
+            '494433': 'MP3 with ID3v2',
+            '000001BA': 'MPEG Video',
+            '000001B3': 'MPEG Video',
+            '66747970': 'MP4 Video',
+            '1A45DFA3': 'MKV Video',
+            '06054B50': 'ZIP Archive (JAR)',
+            '75737461': 'TAR Archive',
+            '72616421': 'RAR Archive v5'
+        };
+
+        // Event listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        dropZone.addEventListener('drop', handleDrop);
+        downloadBtn.addEventListener('click', downloadModified);
+        resetBtn.addEventListener('click', resetChanges);
+        searchBtn.addEventListener('click', performSearch);
+        searchNextBtn.addEventListener('click', searchNext);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+        bytesPerRow.addEventListener('change', () => renderHexDump());
+        document.getElementById('saveEdit').addEventListener('click', saveByteEdit);
+        document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+        modalOverlay.addEventListener('click', closeEditModal);
+
+        // File handling
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        }
+
+        async function processFile(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB. For optimal performance, please use a smaller file.');
+                return;
+            }
+
+            currentFile = file;
+            loading.style.display = 'block';
+            fileInfo.style.display = 'none';
+            hexContainer.style.display = 'none';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileData = new Uint8Array(arrayBuffer);
+                modifiedData = new Uint8Array(fileData);
+
+                displayFileInfo();
+                renderHexDump();
+                updateStats();
+
+                loading.style.display = 'none';
+                fileInfo.style.display = 'block';
+                hexContainer.style.display = 'block';
+                hexStats.style.display = 'block';
+            } catch (error) {
+                console.error('Error processing file:', error);
+                loading.style.display = 'none';
+                alert('Error processing file. Please try again.');
+            }
+        }
+
+        function displayFileInfo() {
+            const info = {
+                'File Name': currentFile.name,
+                'File Size': formatFileSize(currentFile.size),
+                'File Type': getMimeType(currentFile),
+                'Magic Number': getMagicNumber(),
+                'Last Modified': new Date(currentFile.lastModified).toLocaleString(),
+                'SHA-256 Hash': 'Calculating...',
+                'Entropy': calculateEntropy().toFixed(4)
+            };
+
+            fileInfoGrid.innerHTML = '';
+            for (const [label, value] of Object.entries(info)) {
+                fileInfoGrid.innerHTML += `
+                    <div class="file-info-label">${label}:</div>
+                    <div class="file-info-value">${value}</div>
+                `;
+            }
+
+            // Calculate SHA-256 asynchronously
+            calculateSHA256().then(hash => {
+                const hashElement = Array.from(fileInfoGrid.children).find(
+                    el => el.textContent === 'SHA-256 Hash:'
+                );
+                if (hashElement && hashElement.nextElementSibling) {
+                    hashElement.nextElementSibling.textContent = hash;
+                }
+            });
+        }
+
+        function getMimeType(file) {
+            const type = file.type || 'Unknown';
+            const magicType = getMagicNumber().split(' - ')[1];
+            return magicType ? `${type} (${magicType})` : type;
+        }
+
+        function getMagicNumber() {
+            if (!fileData || fileData.length === 0) return 'No data';
+
+            const hexString = Array.from(fileData.slice(0, 16))
+                .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+                .join('');
+
+            // Check magic numbers
+            for (const [magic, type] of Object.entries(magicNumbers)) {
+                if (hexString.startsWith(magic)) {
+                    return `${magic} - ${type}`;
+                }
+            }
+
+            // Return first few bytes if no match
+            return hexString.slice(0, 8) + ' - Unknown';
+        }
+
+        function formatFileSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+
+            return `${size.toFixed(2)} ${units[unitIndex]} (${bytes.toLocaleString()} bytes)`;
+        }
+
+        function calculateEntropy() {
+            if (!fileData || fileData.length === 0) return 0;
+
+            const frequency = new Array(256).fill(0);
+            for (const byte of fileData) {
+                frequency[byte]++;
+            }
+
+            let entropy = 0;
+            const len = fileData.length;
+
+            for (const count of frequency) {
+                if (count > 0) {
+                    const probability = count / len;
+                    entropy -= probability * Math.log2(probability);
+                }
+            }
+
+            return entropy;
+        }
+
+        async function calculateSHA256() {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', fileData);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function renderHexDump() {
+            if (!modifiedData) return;
+
+            const bytesPerRowValue = parseInt(bytesPerRow.value);
+            let html = '';
+
+            for (let offset = 0; offset < modifiedData.length; offset += bytesPerRowValue) {
+                html += '<div class="hex-row">';
+
+                // Offset
+                html += `<div class="hex-offset">${offset.toString(16).toUpperCase().padStart(8, '0')}</div>`;
+
+                // Hex bytes container
+                html += '<div class="hex-bytes">';
+                for (let i = 0; i < bytesPerRowValue; i++) {
+                    if (offset + i < modifiedData.length) {
+                        const byte = modifiedData[offset + i];
+                        const isModified = fileData[offset + i] !== byte;
+                        html += `<div class="hex-byte ${isModified ? 'modified' : ''}" 
+                                data-offset="${offset + i}" 
+                                data-row-index="${i}"
+                                onclick="editByte(${offset + i})">${byte.toString(16).toUpperCase().padStart(2, '0')}</div>`;
+                    } else {
+                        html += '<div class="hex-byte" style="visibility: hidden;">00</div>';
+                    }
+                }
+                html += '</div>';
+
+                // ASCII representation
+                html += '<div class="hex-ascii">';
+                for (let i = 0; i < bytesPerRowValue && offset + i < modifiedData.length; i++) {
+                    const byte = modifiedData[offset + i];
+                    const char = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+                    html += `<div class="ascii-char" data-ascii-index="${i}">${char}</div>`;
+                }
+                html += '</div>';
+
+                html += '</div>';
+            }
+
+            hexViewer.innerHTML = html;
+
+            // Add hover event listeners
+            setupHoverEffects();
+        }
+
+        function setupHoverEffects() {
+            const hexBytes = document.querySelectorAll('.hex-byte[data-offset]');
+
+            hexBytes.forEach(hexByte => {
+                hexByte.addEventListener('mouseenter', function () {
+                    const rowIndex = parseInt(this.dataset.rowIndex);
+                    const row = this.closest('.hex-row');
+                    const asciiChar = row.querySelector(`.ascii-char[data-ascii-index="${rowIndex}"]`);
+
+                    if (asciiChar) {
+                        asciiChar.classList.add('hover');
+                    }
+                });
+
+                hexByte.addEventListener('mouseleave', function () {
+                    const rowIndex = parseInt(this.dataset.rowIndex);
+                    const row = this.closest('.hex-row');
+                    const asciiChar = row.querySelector(`.ascii-char[data-ascii-index="${rowIndex}"]`);
+
+                    if (asciiChar) {
+                        asciiChar.classList.remove('hover');
+                    }
+                });
+            });
+
+            // Add reverse hover (ASCII to hex)
+            const asciiChars = document.querySelectorAll('.ascii-char');
+
+            asciiChars.forEach(asciiChar => {
+                asciiChar.addEventListener('mouseenter', function () {
+                    const asciiIndex = parseInt(this.dataset.asciiIndex);
+                    const row = this.closest('.hex-row');
+                    const hexByte = row.querySelector(`.hex-byte[data-row-index="${asciiIndex}"]`);
+
+                    if (hexByte && hexByte.dataset.offset) {
+                        hexByte.style.backgroundColor = '#2a2a2a';
+                        hexByte.style.color = '#60c8c5';
+                        hexByte.style.transform = 'scale(1.05)';
+                        this.classList.add('hover');
+                    }
+                });
+
+                asciiChar.addEventListener('mouseleave', function () {
+                    const asciiIndex = parseInt(this.dataset.asciiIndex);
+                    const row = this.closest('.hex-row');
+                    const hexByte = row.querySelector(`.hex-byte[data-row-index="${asciiIndex}"]`);
+
+                    if (hexByte && hexByte.dataset.offset) {
+                        hexByte.style.backgroundColor = '';
+                        hexByte.style.color = '';
+                        hexByte.style.transform = '';
+                        this.classList.remove('hover');
+                    }
+                });
+            });
+        }
+
+        function editByte(offset) {
+            const currentByte = modifiedData[offset];
+            document.getElementById('editOffset').textContent = `0x${offset.toString(16).toUpperCase().padStart(8, '0')}`;
+            document.getElementById('currentValue').textContent = `0x${currentByte.toString(16).toUpperCase().padStart(2, '0')}`;
+            document.getElementById('newValue').value = currentByte.toString(16).toUpperCase().padStart(2, '0');
+
+            editModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+            document.getElementById('newValue').focus();
+            document.getElementById('newValue').select();
+
+            // Store current offset for saving
+            editModal.dataset.offset = offset;
+        }
+
+        function saveByteEdit() {
+            const offset = parseInt(editModal.dataset.offset);
+            const newValueStr = document.getElementById('newValue').value;
+            const newValue = parseInt(newValueStr, 16);
+
+            if (isNaN(newValue) || newValue < 0 || newValue > 255) {
+                alert('Please enter a valid hex value (00-FF)');
+                return;
+            }
+
+            modifiedData[offset] = newValue;
+            renderHexDump();
+            updateStats();
+
+            downloadBtn.disabled = false;
+            resetBtn.disabled = false;
+
+            closeEditModal();
+        }
+
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        }
+
+        function downloadModified() {
+            const blob = new Blob([modifiedData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `modified_${currentFile.name}`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetChanges() {
+            modifiedData = new Uint8Array(fileData);
+            renderHexDump();
+            updateStats();
+            downloadBtn.disabled = true;
+            resetBtn.disabled = true;
+        }
+
+        function performSearch() {
+            const searchValue = searchInput.value.trim().replace(/\s+/g, '');
+            if (!searchValue || searchValue.length % 2 !== 0) {
+                alert('Please enter valid hex values (e.g., FF 00 1A)');
+                return;
+            }
+
+            // Convert search string to byte array
+            const searchBytes = [];
+            for (let i = 0; i < searchValue.length; i += 2) {
+                searchBytes.push(parseInt(searchValue.substr(i, 2), 16));
+            }
+
+            // Find all occurrences
+            searchResults = [];
+            for (let i = 0; i <= modifiedData.length - searchBytes.length; i++) {
+                let match = true;
+                for (let j = 0; j < searchBytes.length; j++) {
+                    if (modifiedData[i + j] !== searchBytes[j]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    searchResults.push(i);
+                }
+            }
+
+            if (searchResults.length > 0) {
+                currentSearchIndex = 0;
+                highlightSearchResult();
+                searchNextBtn.disabled = searchResults.length <= 1;
+                alert(`Found ${searchResults.length} occurrence(s)`);
+            } else {
+                alert('No matches found');
+                searchNextBtn.disabled = true;
+            }
+        }
+
+        function searchNext() {
+            if (searchResults.length > 0) {
+                currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+                highlightSearchResult();
+            }
+        }
+
+        function highlightSearchResult() {
+            // Remove previous highlights
+            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+
+            // Highlight current result
+            const offset = searchResults[currentSearchIndex];
+            const searchLength = searchInput.value.trim().replace(/\s+/g, '').length / 2;
+
+            for (let i = 0; i < searchLength; i++) {
+                const byteElement = document.querySelector(`[data-offset="${offset + i}"]`);
+                if (byteElement) {
+                    byteElement.classList.add('highlight');
+                    if (i === 0) {
+                        byteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
+        }
+
+        function updateStats() {
+            const modified = Array.from(modifiedData).filter((byte, i) => byte !== fileData[i]).length;
+            const stats = {
+                'Total Bytes': modifiedData.length.toLocaleString(),
+                'Modified Bytes': modified.toLocaleString(),
+                'Null Bytes': Array.from(modifiedData).filter(b => b === 0).length.toLocaleString(),
+                'Non-ASCII Bytes': Array.from(modifiedData).filter(b => b < 32 || b > 126).length.toLocaleString()
+            };
+
+            let statsHtml = '<h3>Statistics</h3><div style="display: grid; grid-template-columns: auto 1fr; gap: 10px;">';
+            for (const [label, value] of Object.entries(stats)) {
+                statsHtml += `
+                    <div style="color: #60c8c5;">${label}:</div>
+                    <div>${value}</div>
+                `;
+            }
+            statsHtml += '</div>';
+
+            hexStats.innerHTML = statsHtml;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'f') {
+                    e.preventDefault();
+                    searchInput.focus();
+                } else if (e.key === 's' && !downloadBtn.disabled) {
+                    e.preventDefault();
+                    downloadModified();
+                }
+            }
+        });
+
+        // Validate hex input in edit modal
+        document.getElementById('newValue').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+        });
+    </script>
+</body>
+
+</html>
