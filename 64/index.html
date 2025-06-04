@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Base64 Encoder/Decoder</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .mode-toggle {
+            background-color: #4cafac;
+            color: #121212;
+            font-weight: bold;
+        }
+
+        .mode-toggle:hover {
+            background-color: #5cbfbb;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        select,
+        input[type="file"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .file-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .mode-and-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            min-height: 24px;
+        }
+
+        .mode-indicator {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4cafac;
+        }
+
+        input[type="file"] {
+            min-width: 250px;
+        }
+
+        .character-info {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .mode-highlight {
+            text-decoration: underline;
+            color: #4cafac;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Base64 <span id="encoderText">Encoder</span>/<span id="decoderText">Decoder</span></h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Encode text to Base64 or decode Base64 back to text with various character set options.</p>
+    <br />
+
+    <div class="controls">
+        <button id="modeToggle" class="mode-toggle">Switch to Decoder</button>
+
+        <div class="control-group">
+            <label for="charset">Character Set:</label>
+            <select id="charset">
+                <option value="utf8">UTF-8</option>
+                <option value="ascii">ASCII</option>
+                <option value="latin1">Latin-1 (ISO-8859-1)</option>
+                <option value="utf16le">UTF-16 Little Endian</option>
+                <option value="utf16be">UTF-16 Big Endian</option>
+                <option value="windows1252">Windows-1252 (CP1252)</option>
+                <option value="iso88592">ISO-8859-2 (Central European)</option>
+                <option value="iso88595">ISO-8859-5 (Cyrillic)</option>
+                <option value="iso885915">ISO-8859-15 (Latin-9)</option>
+                <option value="koi8r">KOI8-R (Russian)</option>
+                <option value="gb2312">GB2312 (Simplified Chinese)</option>
+                <option value="shiftjis">Shift JIS (Japanese)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mode-and-options">
+        <div class="mode-indicator" id="modeIndicator">Mode: Encoder</div>
+        <div class="control-group" id="lineBreaksControl">
+            <label for="lineBreaks">Line Breaks:</label>
+            <select id="lineBreaks">
+                <option value="none">None</option>
+                <option value="64">Every 64 chars</option>
+                <option value="76">Every 76 chars</option>
+                <option value="128">Every 128 chars</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="file-controls">
+        <input type="file" id="fileInput" accept="*/*">
+        <button id="loadFile">Load File</button>
+        <button id="downloadResult">Download Result</button>
+    </div>
+
+    <textarea id="inputText" rows="12" placeholder="Enter text to encode..."></textarea>
+
+    <div class="button-group">
+        <button id="processBtn">Encode</button>
+        <button id="copyOutput">Copy to Clipboard</button>
+        <button id="clearAll">Clear All</button>
+        <button id="swapInputOutput">Swap Input/Output</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <h2 id="outputLabel">Encoded Output:</h2>
+    <textarea id="outputText" rows="20" readonly></textarea>
+    <div class="character-info" id="characterInfo"></div>
+
+    <hr>
+    <p id="description">
+        Use this tool to encode text to Base64. You can upload text files, choose different character encodings,
+        and control line break formatting. Switch to decoder mode to convert Base64 back to readable text.
+    </p>
+
+    <script>
+        // State
+        let isEncoderMode = true;
+
+        // DOM elements
+        const modeToggle = document.getElementById('modeToggle');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const encoderText = document.getElementById('encoderText');
+        const decoderText = document.getElementById('decoderText');
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const processBtn = document.getElementById('processBtn');
+        const copyBtn = document.getElementById('copyOutput');
+        const clearBtn = document.getElementById('clearAll');
+        const swapBtn = document.getElementById('swapInputOutput');
+        const charset = document.getElementById('charset');
+        const lineBreaks = document.getElementById('lineBreaks');
+        const lineBreaksControl = document.getElementById('lineBreaksControl');
+        const fileInput = document.getElementById('fileInput');
+        const loadFileBtn = document.getElementById('loadFile');
+        const downloadBtn = document.getElementById('downloadResult');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
+        const outputLabel = document.getElementById('outputLabel');
+        const description = document.getElementById('description');
+        const characterInfo = document.getElementById('characterInfo');
+
+        // Toggle between encoder and decoder modes
+        modeToggle.addEventListener('click', () => {
+            isEncoderMode = !isEncoderMode;
+            updateUI();
+        });
+
+        function updateUI() {
+            if (isEncoderMode) {
+                modeToggle.textContent = 'Switch to Decoder';
+                modeIndicator.textContent = 'Mode: Encoder';
+                encoderText.className = 'mode-highlight';
+                decoderText.className = '';
+                inputText.placeholder = 'Enter text to encode...';
+                processBtn.textContent = 'Encode';
+                outputLabel.textContent = 'Encoded Output:';
+                description.textContent = 'Use this tool to encode text to Base64. You can upload text files, choose different character encodings, and control line break formatting. Switch to decoder mode to convert Base64 back to readable text.';
+                lineBreaksControl.style.display = 'flex';
+            } else {
+                modeToggle.textContent = 'Switch to Encoder';
+                modeIndicator.textContent = 'Mode: Decoder';
+                encoderText.className = '';
+                decoderText.className = 'mode-highlight';
+                inputText.placeholder = 'Enter Base64 to decode...';
+                processBtn.textContent = 'Decode';
+                outputLabel.textContent = 'Decoded Output:';
+                description.textContent = 'Use this tool to decode Base64 back to readable text. You can upload Base64 files and choose different character encodings for the output. Switch to encoder mode to convert text to Base64.';
+                lineBreaksControl.style.display = 'none';
+            }
+            clearMessages();
+        }
+
+        // Process (encode or decode)
+        processBtn.addEventListener('click', () => {
+            const input = inputText.value;
+            if (!input.trim()) {
+                showError(`Please enter some ${isEncoderMode ? 'text' : 'Base64'} to ${isEncoderMode ? 'encode' : 'decode'}.`);
+                return;
+            }
+
+            try {
+                if (isEncoderMode) {
+                    encodeText(input);
+                } else {
+                    decodeText(input);
+                }
+            } catch (err) {
+                showError(`Error: ${err.message}`);
+            }
+        });
+
+        function encodeText(text) {
+            try {
+                // Convert text to bytes based on charset
+                let bytes;
+                const charsetValue = charset.value;
+
+                if (charsetValue === 'utf8') {
+                    bytes = new TextEncoder().encode(text);
+                } else if (charsetValue === 'ascii') {
+                    bytes = new Uint8Array(text.length);
+                    for (let i = 0; i < text.length; i++) {
+                        const code = text.charCodeAt(i);
+                        if (code > 127) {
+                            throw new Error(`Non-ASCII character found at position ${i}: '${text[i]}' (code ${code})`);
+                        }
+                        bytes[i] = code;
+                    }
+                } else if (charsetValue === 'latin1') {
+                    bytes = new Uint8Array(text.length);
+                    for (let i = 0; i < text.length; i++) {
+                        const code = text.charCodeAt(i);
+                        if (code > 255) {
+                            throw new Error(`Character outside Latin-1 range found at position ${i}: '${text[i]}' (code ${code})`);
+                        }
+                        bytes[i] = code;
+                    }
+                } else if (charsetValue === 'utf16le') {
+                    bytes = new Uint8Array(text.length * 2);
+                    for (let i = 0; i < text.length; i++) {
+                        const code = text.charCodeAt(i);
+                        bytes[i * 2] = code & 0xFF;
+                        bytes[i * 2 + 1] = (code >> 8) & 0xFF;
+                    }
+                } else if (charsetValue === 'utf16be') {
+                    bytes = new Uint8Array(text.length * 2);
+                    for (let i = 0; i < text.length; i++) {
+                        const code = text.charCodeAt(i);
+                        bytes[i * 2] = (code >> 8) & 0xFF;
+                        bytes[i * 2 + 1] = code & 0xFF;
+                    }
+                } else {
+                    // For other character sets, try to use TextEncoder with fallback to Latin-1
+                    try {
+                        bytes = new TextEncoder().encode(text);
+                    } catch (err) {
+                        // Fallback to Latin-1 encoding for unsupported character sets
+                        bytes = new Uint8Array(text.length);
+                        for (let i = 0; i < text.length; i++) {
+                            const code = text.charCodeAt(i);
+                            bytes[i] = code > 255 ? 63 : code; // Replace with '?' if outside range
+                        }
+                    }
+                }
+
+                // Convert bytes to base64
+                let base64 = btoa(String.fromCharCode(...bytes));
+
+                // Add line breaks if requested
+                const lineBreakValue = lineBreaks.value;
+                if (lineBreakValue !== 'none') {
+                    const charsPerLine = parseInt(lineBreakValue);
+                    base64 = base64.replace(new RegExp(`(.{${charsPerLine}})`, 'g'), '$1\n').trim();
+                }
+
+                outputText.value = base64;
+                updateCharacterInfo();
+                showInfo(`Text encoded successfully using ${charsetValue.toUpperCase()} character set.`);
+            } catch (err) {
+                throw new Error(`Encoding failed: ${err.message}`);
+            }
+        }
+
+        function decodeText(base64) {
+            try {
+                // Remove whitespace and line breaks
+                const cleanBase64 = base64.replace(/\s/g, '');
+
+                // Validate base64
+                if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBase64)) {
+                    throw new Error('Invalid Base64 characters found');
+                }
+
+                // Decode base64 to bytes
+                const binaryString = atob(cleanBase64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                // Convert bytes to text based on charset
+                let text;
+                const charsetValue = charset.value;
+
+                if (charsetValue === 'utf8') {
+                    text = new TextDecoder('utf-8').decode(bytes);
+                } else if (charsetValue === 'ascii') {
+                    text = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        if (bytes[i] > 127) {
+                            throw new Error(`Non-ASCII byte found at position ${i}: ${bytes[i]}`);
+                        }
+                        text += String.fromCharCode(bytes[i]);
+                    }
+                } else if (charsetValue === 'latin1') {
+                    text = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        text += String.fromCharCode(bytes[i]);
+                    }
+                } else if (charsetValue === 'utf16le') {
+                    if (bytes.length % 2 !== 0) {
+                        throw new Error('Invalid UTF-16 data: odd number of bytes');
+                    }
+                    text = '';
+                    for (let i = 0; i < bytes.length; i += 2) {
+                        const code = bytes[i] | (bytes[i + 1] << 8);
+                        text += String.fromCharCode(code);
+                    }
+                } else if (charsetValue === 'utf16be') {
+                    if (bytes.length % 2 !== 0) {
+                        throw new Error('Invalid UTF-16 data: odd number of bytes');
+                    }
+                    text = '';
+                    for (let i = 0; i < bytes.length; i += 2) {
+                        const code = (bytes[i] << 8) | bytes[i + 1];
+                        text += String.fromCharCode(code);
+                    }
+                } else {
+                    // For other character sets, try to use TextDecoder with fallback to Latin-1
+                    try {
+                        const decoderName = getDecoderName(charsetValue);
+                        text = new TextDecoder(decoderName).decode(bytes);
+                    } catch (err) {
+                        // Fallback to Latin-1 decoding
+                        text = '';
+                        for (let i = 0; i < bytes.length; i++) {
+                            text += String.fromCharCode(bytes[i]);
+                        }
+                    }
+                }
+
+                outputText.value = text;
+                updateCharacterInfo();
+                showInfo(`Base64 decoded successfully using ${charsetValue.toUpperCase()} character set.`);
+            } catch (err) {
+                throw new Error(`Decoding failed: ${err.message}`);
+            }
+        }
+
+        function updateCharacterInfo() {
+            const text = outputText.value;
+            const chars = text.length;
+            const bytes = new TextEncoder().encode(text).length;
+            characterInfo.textContent = `${chars} characters, ${bytes} bytes`;
+        }
+
+        // Helper function to get TextDecoder name for character sets
+        function getDecoderName(charsetValue) {
+            const decoderMap = {
+                'windows1252': 'windows-1252',
+                'iso88592': 'iso-8859-2',
+                'iso88595': 'iso-8859-5',
+                'iso885915': 'iso-8859-15',
+                'koi8r': 'koi8-r',
+                'gb2312': 'gb2312',
+                'shiftjis': 'shift_jis'
+            };
+            return decoderMap[charsetValue] || 'utf-8';
+        }
+
+        // Load file
+        loadFileBtn.addEventListener('click', () => {
+            if (!fileInput.files[0]) {
+                showError('Please select a file first.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                inputText.value = e.target.result;
+                adjustTextareaHeight(inputText);
+                showInfo(`File "${file.name}" loaded successfully (${file.size} bytes).`);
+            };
+
+            reader.onerror = () => {
+                showError('Failed to read file.');
+            };
+
+            reader.readAsText(file);
+        });
+
+        // Download result
+        downloadBtn.addEventListener('click', () => {
+            const output = outputText.value;
+            if (!output) {
+                showError('Nothing to download.');
+                return;
+            }
+
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = isEncoderMode ? 'encoded.txt' : 'decoded.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showInfo(`File downloaded as "${a.download}".`);
+        });
+
+        // Copy to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const output = outputText.value;
+            if (!output) {
+                showInfo('Nothing to copy.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                showInfo('Copied to clipboard!');
+            } catch (err) {
+                showError('Failed to copy to clipboard.');
+            }
+        });
+
+        // Swap input and output
+        swapBtn.addEventListener('click', () => {
+            const temp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = temp;
+            adjustTextareaHeight(inputText);
+            adjustTextareaHeight(outputText);
+            updateCharacterInfo();
+            showInfo('Input and output swapped.');
+        });
+
+        // Clear all
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            fileInput.value = '';
+            errorMessage.textContent = '';
+            infoMessage.textContent = '';
+            characterInfo.textContent = '';
+        });
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            infoMessage.textContent = '';
+        }
+
+        // Show info message
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            errorMessage.textContent = '';
+        }
+
+        // Clear messages
+        function clearMessages() {
+            errorMessage.textContent = '';
+            infoMessage.textContent = '';
+        }
+
+        // Function to adjust textarea height based on content
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Auto-adjust textarea height on input
+        inputText.addEventListener('input', () => {
+            adjustTextareaHeight(inputText);
+        });
+
+        // Auto-process on input change (with debounce)
+        let processTimeout;
+        inputText.addEventListener('input', () => {
+            clearTimeout(processTimeout);
+            processTimeout = setTimeout(() => {
+                if (inputText.value.trim()) {
+                    try {
+                        if (isEncoderMode) {
+                            encodeText(inputText.value);
+                        } else {
+                            decodeText(inputText.value);
+                        }
+                    } catch (err) {
+                        // Ignore errors during auto-processing
+                    }
+                }
+            }, 500);
+        });
+
+        updateUI();
+    </script>
+</body>
+
+</html>
