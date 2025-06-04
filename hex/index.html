@@ -104,6 +104,11 @@
             margin-bottom: 2px;
         }
 
+        .hex-row:hover .hex-byte[data-offset],
+        .hex-row:hover .ascii-char {
+            opacity: 0.5;
+        }
+
         .hex-offset {
             color: #666;
             font-weight: bold;
@@ -125,14 +130,27 @@
             cursor: pointer;
             padding: 2px 0;
             border-radius: 3px;
-            transition: all 0.15s ease;
+            transition: transform 0.1s ease, opacity 0.1s ease;
             position: relative;
         }
 
         .hex-byte:hover {
-            background-color: #2a2a2a;
-            color: #60c8c5;
-            transform: scale(1.05);
+            background-color: #2a2a2a !important;
+            color: #60c8c5 !important;
+            transform: scale(1.1);
+            opacity: 1 !important;
+        }
+
+        .hex-byte:hover~.hex-byte {
+            opacity: 0.5 !important;
+        }
+
+        .hex-bytes:hover .hex-byte {
+            opacity: 0.5;
+        }
+
+        .hex-bytes .hex-byte:hover {
+            opacity: 1 !important;
         }
 
         .hex-byte.selected {
@@ -146,8 +164,8 @@
         }
 
         .hex-byte.modified:hover {
-            background-color: #554433;
-            color: #ffdd77;
+            background-color: #554433 !important;
+            color: #ffdd77 !important;
         }
 
         .hex-ascii {
@@ -162,14 +180,49 @@
             width: 16px;
             text-align: center;
             padding: 2px 0;
-            transition: all 0.15s ease;
+            transition: transform 0.1s ease, opacity 0.1s ease;
             border-radius: 2px;
+            cursor: default;
         }
 
-        .ascii-char.hover {
+        /* Sometimes my genius is almost frightening */
+        .hex-row:has(.hex-byte:nth-child(1):hover) .ascii-char:nth-child(1),
+        .hex-row:has(.hex-byte:nth-child(2):hover) .ascii-char:nth-child(2),
+        .hex-row:has(.hex-byte:nth-child(3):hover) .ascii-char:nth-child(3),
+        .hex-row:has(.hex-byte:nth-child(4):hover) .ascii-char:nth-child(4),
+        .hex-row:has(.hex-byte:nth-child(5):hover) .ascii-char:nth-child(5),
+        .hex-row:has(.hex-byte:nth-child(6):hover) .ascii-char:nth-child(6),
+        .hex-row:has(.hex-byte:nth-child(7):hover) .ascii-char:nth-child(7),
+        .hex-row:has(.hex-byte:nth-child(8):hover) .ascii-char:nth-child(8),
+        .hex-row:has(.hex-byte:nth-child(9):hover) .ascii-char:nth-child(9),
+        .hex-row:has(.hex-byte:nth-child(10):hover) .ascii-char:nth-child(10),
+        .hex-row:has(.hex-byte:nth-child(11):hover) .ascii-char:nth-child(11),
+        .hex-row:has(.hex-byte:nth-child(12):hover) .ascii-char:nth-child(12),
+        .hex-row:has(.hex-byte:nth-child(13):hover) .ascii-char:nth-child(13),
+        .hex-row:has(.hex-byte:nth-child(14):hover) .ascii-char:nth-child(14),
+        .hex-row:has(.hex-byte:nth-child(15):hover) .ascii-char:nth-child(15),
+        .hex-row:has(.hex-byte:nth-child(16):hover) .ascii-char:nth-child(16),
+        .hex-row:has(.hex-byte:nth-child(17):hover) .ascii-char:nth-child(17),
+        .hex-row:has(.hex-byte:nth-child(18):hover) .ascii-char:nth-child(18),
+        .hex-row:has(.hex-byte:nth-child(19):hover) .ascii-char:nth-child(19),
+        .hex-row:has(.hex-byte:nth-child(20):hover) .ascii-char:nth-child(20),
+        .hex-row:has(.hex-byte:nth-child(21):hover) .ascii-char:nth-child(21),
+        .hex-row:has(.hex-byte:nth-child(22):hover) .ascii-char:nth-child(22),
+        .hex-row:has(.hex-byte:nth-child(23):hover) .ascii-char:nth-child(23),
+        .hex-row:has(.hex-byte:nth-child(24):hover) .ascii-char:nth-child(24),
+        .hex-row:has(.hex-byte:nth-child(25):hover) .ascii-char:nth-child(25),
+        .hex-row:has(.hex-byte:nth-child(26):hover) .ascii-char:nth-child(26),
+        .hex-row:has(.hex-byte:nth-child(27):hover) .ascii-char:nth-child(27),
+        .hex-row:has(.hex-byte:nth-child(28):hover) .ascii-char:nth-child(28),
+        .hex-row:has(.hex-byte:nth-child(29):hover) .ascii-char:nth-child(29),
+        .hex-row:has(.hex-byte:nth-child(30):hover) .ascii-char:nth-child(30),
+        .hex-row:has(.hex-byte:nth-child(31):hover) .ascii-char:nth-child(31),
+        .hex-row:has(.hex-byte:nth-child(32):hover) .ascii-char:nth-child(32) {
             background-color: #333;
             color: #60c8c5;
             font-weight: bold;
+            transform: scale(1.1);
+            opacity: 1 !important;
         }
 
         .search-container {
@@ -598,9 +651,7 @@
                         const byte = modifiedData[offset + i];
                         const isModified = fileData[offset + i] !== byte;
                         html += `<div class="hex-byte ${isModified ? 'modified' : ''}" 
-                                data-offset="${offset + i}" 
-                                data-row-index="${i}"
-                                onclick="editByte(${offset + i})">${byte.toString(16).toUpperCase().padStart(2, '0')}</div>`;
+                                data-offset="${offset + i}">${byte.toString(16).toUpperCase().padStart(2, '0')}</div>`;
                     } else {
                         html += '<div class="hex-byte" style="visibility: hidden;">00</div>';
                     }
@@ -612,7 +663,7 @@
                 for (let i = 0; i < bytesPerRowValue && offset + i < modifiedData.length; i++) {
                     const byte = modifiedData[offset + i];
                     const char = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
-                    html += `<div class="ascii-char" data-ascii-index="${i}">${char}</div>`;
+                    html += `<div class="ascii-char">${char}</div>`;
                 }
                 html += '</div>';
 
@@ -620,67 +671,14 @@
             }
 
             hexViewer.innerHTML = html;
-
-            // Add hover event listeners
-            setupHoverEffects();
         }
 
-        function setupHoverEffects() {
-            const hexBytes = document.querySelectorAll('.hex-byte[data-offset]');
-
-            hexBytes.forEach(hexByte => {
-                hexByte.addEventListener('mouseenter', function () {
-                    const rowIndex = parseInt(this.dataset.rowIndex);
-                    const row = this.closest('.hex-row');
-                    const asciiChar = row.querySelector(`.ascii-char[data-ascii-index="${rowIndex}"]`);
-
-                    if (asciiChar) {
-                        asciiChar.classList.add('hover');
-                    }
-                });
-
-                hexByte.addEventListener('mouseleave', function () {
-                    const rowIndex = parseInt(this.dataset.rowIndex);
-                    const row = this.closest('.hex-row');
-                    const asciiChar = row.querySelector(`.ascii-char[data-ascii-index="${rowIndex}"]`);
-
-                    if (asciiChar) {
-                        asciiChar.classList.remove('hover');
-                    }
-                });
-            });
-
-            // Add reverse hover (ASCII to hex)
-            const asciiChars = document.querySelectorAll('.ascii-char');
-
-            asciiChars.forEach(asciiChar => {
-                asciiChar.addEventListener('mouseenter', function () {
-                    const asciiIndex = parseInt(this.dataset.asciiIndex);
-                    const row = this.closest('.hex-row');
-                    const hexByte = row.querySelector(`.hex-byte[data-row-index="${asciiIndex}"]`);
-
-                    if (hexByte && hexByte.dataset.offset) {
-                        hexByte.style.backgroundColor = '#2a2a2a';
-                        hexByte.style.color = '#60c8c5';
-                        hexByte.style.transform = 'scale(1.05)';
-                        this.classList.add('hover');
-                    }
-                });
-
-                asciiChar.addEventListener('mouseleave', function () {
-                    const asciiIndex = parseInt(this.dataset.asciiIndex);
-                    const row = this.closest('.hex-row');
-                    const hexByte = row.querySelector(`.hex-byte[data-row-index="${asciiIndex}"]`);
-
-                    if (hexByte && hexByte.dataset.offset) {
-                        hexByte.style.backgroundColor = '';
-                        hexByte.style.color = '';
-                        hexByte.style.transform = '';
-                        this.classList.remove('hover');
-                    }
-                });
-            });
-        }
+        // Use event delegation for click handling
+        hexViewer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('hex-byte') && e.target.dataset.offset) {
+                editByte(parseInt(e.target.dataset.offset));
+            }
+        });
 
         function editByte(offset) {
             const currentByte = modifiedData[offset];
