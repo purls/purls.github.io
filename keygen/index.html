@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Keygen</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #3d3d3d;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 15px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .key-output {
+            padding: 12px;
+            border-radius: 4px;
+            background-color: #111111;
+            border: 1px solid #3d3d3d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            word-break: break-all;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .key-output:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .key-label {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .copied {
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 4px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #244444;
+            color: #e0e0e0;
+            padding: 12px 20px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Keygen</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+
+    <div class="input-section">
+        <input type="text" id="keyInput" placeholder="Enter key string..." />
+        <button id="generateBtn">Generate</button>
+    </div>
+
+    <div id="outputContainer" class="output-grid"></div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        const keyInput = document.getElementById('keyInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputContainer = document.getElementById('outputContainer');
+        const notification = document.getElementById('notification');
+
+        const variants = [
+            { n: 'Dark Red', c: '#7A152C' },
+            { n: 'Red', c: '#DB2955' },
+            { n: 'Light Red', c: '#EA859E' },
+            { n: 'Dark Orange', c: '#B15F06' },
+            { n: 'Orange', c: '#F89C3A' },
+            { n: 'Light Orange', c: '#FCD0A1' },
+            { n: 'Dark Yellow', c: '#BB7A11' },
+            { n: 'Yellow', c: '#EDAE49' },
+            { n: 'Light Yellow', c: '#F8DEB5' },
+            { n: 'Dark Green', c: '#21453C' },
+            { n: 'Green', c: '#309C52' },
+            { n: 'Light Green', c: '#63CF85' },
+            { n: 'Dark Blue', c: '#182B77' },
+            { n: 'Blue', c: '#2541B2' },
+            { n: 'Light Blue', c: '#60E1FB' },
+            { n: 'Dark Indigo', c: '#412083' },
+            { n: 'Indigo', c: '#784BD2' },
+            { n: 'Light Indigo', c: '#B69DE7' },
+            { n: 'Dark Violet', c: '#49304B' },
+            { n: 'Violet', c: '#7150B9' },
+            { n: 'Light Violet', c: '#B8A7DC' },
+            { n: 'Black', c: '#000000' },
+            { n: 'Grey', c: '#808080' },
+            { n: 'White', c: '#FFFFFF' }
+        ];
+
+        function rotl(n, b) {
+            return (n << b) | (n >>> (32 - b));
+        }
+
+        function mxr(a, b, c, d) {
+            a = (a + b + c) >>> 0;
+            d = rotl(d ^ a, 16);
+            c = (c + d) >>> 0;
+            b = rotl(b ^ c, 12);
+            a = (a + b + d) >>> 0;
+            d = rotl(d ^ a, 8);
+            c = (c + d) >>> 0;
+            b = rotl(b ^ c, 7);
+            return [a, b, c, d];
+        }
+
+        function proc(seed, rounds) {
+            let state = new Uint32Array(16);
+            for (let i = 0; i < seed.length; i++) {
+                state[i % 16] ^= seed[i];
+            }
+            
+            for (let r = 0; r < rounds; r++) {
+                [state[0], state[4], state[8], state[12]] = mxr(state[0], state[4], state[8], state[12]);
+                [state[1], state[5], state[9], state[13]] = mxr(state[1], state[5], state[9], state[13]);
+                [state[2], state[6], state[10], state[14]] = mxr(state[2], state[6], state[10], state[14]);
+                [state[3], state[7], state[11], state[15]] = mxr(state[3], state[7], state[11], state[15]);
+                [state[0], state[5], state[10], state[15]] = mxr(state[0], state[5], state[10], state[15]);
+                [state[1], state[6], state[11], state[12]] = mxr(state[1], state[6], state[11], state[12]);
+                [state[2], state[7], state[8], state[13]] = mxr(state[2], state[7], state[8], state[13]);
+                [state[3], state[4], state[9], state[14]] = mxr(state[3], state[4], state[9], state[14]);
+            }
+            
+            return state;
+        }
+
+        function transform(data, variant) {
+            const ops = [
+                (x) => x ^ 0xDEADBEEF,
+                (x) => rotl(x, 13),
+                (x) => x * 0x85EBCA6B,
+                (x) => x ^ (x >>> 15),
+                (x) => x * 0xC2B2AE35,
+                (x) => x ^ (x >>> 16),
+                (x) => rotl(x, 7),
+                (x) => x + 0x16546B64
+            ];
+            
+            let result = new Uint32Array(data);
+            const sequence = variant % ops.length;
+            
+            for (let i = 0; i < result.length; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const opIndex = (sequence + i + j * variant) % ops.length;
+                    result[i] = ops[opIndex](result[i]) >>> 0;
+                }
+            }
+            
+            return result;
+        }
+
+        function derive(input, index) {
+            const encoder = new TextEncoder();
+            const utcDate = new Date().toISOString().split('T')[0];
+            const combined = encoder.encode(utcDate + input + index);
+            
+            let seed = new Uint32Array(16);
+            for (let i = 0; i < combined.length; i++) {
+                seed[i % 16] ^= combined[i] << ((i * 7) % 24);
+            }
+            
+            const rounds = 20 + (index % 10);
+            let state = proc(seed, rounds);
+            state = transform(state, index);
+            
+            const extra = proc(state, 10);
+            for (let i = 0; i < state.length; i++) {
+                state[i] ^= extra[15 - i];
+            }
+            
+            let hex = '';
+            for (let i = 0; i < 16; i++) {
+                hex += state[i].toString(16).padStart(8, '0');
+            }
+            
+            return hex;
+        }
+
+        function showNotification(text) {
+            notification.textContent = text;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                element.classList.add('copied');
+                showNotification('Copied');
+                setTimeout(() => {
+                    element.classList.remove('copied');
+                }, 300);
+            });
+        }
+
+        generateBtn.addEventListener('click', () => {
+            const input = keyInput.value.trim();
+            if (!input) return;
+            
+            outputContainer.innerHTML = '';
+            
+            variants.forEach((variant, index) => {
+                const key = derive(input, index);
+                
+                const keyDiv = document.createElement('div');
+                keyDiv.className = 'key-output';
+                keyDiv.style.color = variant.c;
+                keyDiv.style.borderColor = variant.c + '40';
+                
+                const label = document.createElement('div');
+                label.className = 'key-label';
+                label.textContent = variant.n;
+                
+                const keyText = document.createElement('div');
+                keyText.textContent = key;
+                
+                keyDiv.appendChild(label);
+                keyDiv.appendChild(keyText);
+                
+                keyDiv.addEventListener('click', () => {
+                    copyToClipboard(key, keyDiv);
+                });
+                
+                outputContainer.appendChild(keyDiv);
+            });
+        });
+
+        keyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateBtn.click();
+            }
+        });
+    </script>
+</body>
+
+</html>
