@@ -1,119 +1,318 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <link rel="icon" href="images/romero.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 Not Found</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>404 - Page Not Found</title>
     <style>
-        body {
+        @font-face {
+            font-family: 'JetBrains Mono';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2') format('woff2');
+        }
+
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #ff6b6b;
+            --info-color: #c99999;
+            --link-color: #577577;
+            --link-hover: #60aaaa;
+            --text-color: #e0e0e0;
+            --muted-color: #666;
+            --success-color: #60c8c5;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #1a1a1a;
-            overflow: hidden;
+        }
+
+        body {
             font-family: 'JetBrains Mono', monospace;
-            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow: hidden;
         }
 
-        #canvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
+        .container {
+            text-align: center;
+            max-width: 600px;
+            z-index: 10;
+            position: relative;
         }
 
-        .char {
-            color: #1a4a1a;
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 0;
+            line-height: 1;
+            position: relative;
+            display: inline-block;
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+
+            0%,
+            100% {
+                text-shadow:
+                    0.02em 0 0 rgba(255, 0, 0, 0.75),
+                    -0.02em -0 0 rgba(0, 255, 255, 0.75);
+            }
+
+            50% {
+                text-shadow:
+                    0.05em 0 0 rgba(255, 0, 0, 0.75),
+                    -0.05em -0 0 rgba(0, 255, 255, 0.75);
+            }
+        }
+
+        .error-message {
+            font-size: 1.5rem;
+            margin: 1rem 0 2rem;
+            color: var(--info-color);
+        }
+
+        .terminal {
+            background: var(--card-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .terminal::before {
+            content: '$ ';
+            color: var(--success-color);
+        }
+
+        .terminal-text {
+            display: inline;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background: var(--success-color);
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+
+            0%,
+            50% {
+                opacity: 1;
+            }
+
+            51%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: #244444;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn:hover {
+            background: #255555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--link-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--link-hover);
+        }
+
+        /* Matrix rain effect */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+            z-index: 1;
+        }
+
+        .matrix-column {
             position: absolute;
-            line-height: 1.2;
-            font-size: 16px;
+            top: -100%;
+            font-size: 14px;
+            line-height: 14px;
+            color: #0f0;
+            animation: matrix-fall linear infinite;
+            font-family: monospace;
+        }
+
+        @keyframes matrix-fall {
+            to {
+                transform: translateY(calc(100vh + 100%));
+            }
+        }
+
+        .suggestions {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .suggestions h3 {
+            color: var(--info-color);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .suggestions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .suggestions li {
+            margin: 0.5rem 0;
+        }
+
+        .suggestions a {
+            color: var(--link-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .suggestions a:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .error-code {
+                font-size: 5rem;
+            }
+
+            .error-message {
+                font-size: 1.2rem;
+            }
+
+            .terminal {
+                font-size: 0.8rem;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div id="canvas"></div>
+    <div class="matrix-rain" id="matrix"></div>
+
+    <div class="container">
+        <h1 class="error-code">404</h1>
+        <p class="error-message">Page not found</p>
+
+        <div class="terminal">
+            <span class="terminal-text" id="terminal-text"></span><span class="cursor"></span>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">← Go Home</a>
+            <a href="javascript:history.back()" class="btn">Go Back</a>
+        </div>
+
+        <div class="suggestions">
+            <h3>Tools you might be looking for:</h3>
+            <ul>
+                <li><a href="/bm">Bookmarks</a></li>
+                <li><a href="/fj">JSON Formatter</a></li>
+                <li><a href="/qr">QR Code Generator</a></li>
+                <li><a href="/hex">Hex Dump &amp; Editor</a></li>
+            </ul>
+        </div>
+    </div>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const charSize = 20;
-        const rows = Math.floor(window.innerHeight / charSize);
-        const cols = Math.floor(window.innerWidth / charSize);
+        // Terminal typing effect
+        const terminalText = "curl -I https://localhost.beer" + window.location.pathname + "\nHTTP/2 404 Not Found\nServer: GitHub.com\nContent-Type: text/html; charset=utf-8";
+        const terminalElement = document.getElementById('terminal-text');
+        let charIndex = 0;
 
-        const grid = [];
-        for (let i = 0; i < rows; i++) {
-            grid[i] = [];
-            for (let j = 0; j < cols; j++) {
-                const char = document.createElement('span');
-                char.className = 'char';
-                char.textContent = '0';
-                char.style.left = `${j * charSize}px`;
-                char.style.top = `${i * charSize}px`;
-                canvas.appendChild(char);
-                grid[i][j] = char;
+        function typeText() {
+            if (charIndex < terminalText.length) {
+                terminalElement.textContent = terminalText.substring(0, charIndex + 1);
+                charIndex++;
+                setTimeout(typeText, Math.random() * 50 + 20);
             }
         }
 
-        const pattern = [
-            [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
-            [1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-            [0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
-            [0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1],
-            [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1],
-        ];
+        // Matrix rain effect
+        function createMatrixRain() {
+            const matrix = document.getElementById('matrix');
+            const columns = Math.floor(window.innerWidth / 20);
 
-        let posX = cols / 2;
-        let posY = rows / 2;
-        let velX = 0.1;
-        let velY = 0.08;
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = i * 20 + 'px';
+                column.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                column.style.animationDelay = Math.random() * 5 + 's';
 
-        function animate() {
-            // Clear all characters
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < cols; j++) {
-                    grid[i][j].textContent = '0';
-                    grid[i][j].style.color = '#1a4a1a';
+                // Generate random characters
+                let chars = '';
+                for (let j = 0; j < 50; j++) {
+                    chars += String.fromCharCode(33 + Math.floor(Math.random() * 94)) + '<br>';
                 }
+                column.innerHTML = chars;
+
+                matrix.appendChild(column);
             }
-
-            // Update position
-            posX += velX;
-            posY += velY;
-
-            // Bounce off walls
-            if (posX + pattern[0].length >= cols || posX <= 0) {
-                velX = -velX;
-            }
-            if (posY + pattern.length >= rows || posY <= 0) {
-                velY = -velY;
-            }
-
-            // Draw 404 pattern
-            for (let i = 0; i < pattern.length; i++) {
-                for (let j = 0; j < pattern[i].length; j++) {
-                    if (pattern[i][j] === 1) {
-                        const gridX = Math.floor(posX + j);
-                        const gridY = Math.floor(posY + i);
-
-                        if (gridY >= 0 && gridY < rows && gridX >= 0 && gridX < cols) {
-                            grid[gridY][gridX].textContent = '4';
-                            grid[gridY][gridX].style.color = '#40ff40';
-                        }
-                    }
-                }
-            }
-
-            requestAnimationFrame(animate);
         }
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            location.reload();
-        });
+        // Initialize effects
+        typeText();
+        createMatrixRain();
 
-        animate();
+        // Log 404 to console with style
+        console.log('%c404 - Page Not Found', 'color: #ff6b6b; font-size: 24px; font-weight: bold;');
+        console.log(`%cThe requested path "${window.location.pathname}" could not be found.`, 'color: #c99999;');
     </script>
 </body>
 
