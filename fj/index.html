@@ -70,12 +70,21 @@
         .button-group {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         hr {
             border: none;
             border-top: 1px solid #3d3d3d;
             margin: 20px 0;
+        }
+
+        #openInTab {
+            background-color: #1a4444;
+        }
+
+        #openInTab:hover:not(:disabled) {
+            background-color: #226666;
         }
     </style>
 </head>
@@ -112,6 +121,7 @@
         <button id="formatJson">Format JSON</button>
         <button id="minifyJson">Minify JSON</button>
         <button id="copyOutput">Copy to Clipboard</button>
+        <button id="openInTab">Open in New Tab</button>
         <button id="clearAll">Clear All</button>
     </div>
 
@@ -126,6 +136,10 @@
         Use this tool to format messy JSON for readability or minify formatted JSON to save space.
         The formatter can also sort object keys alphabetically if needed.
     </p>
+    <p>
+        <strong>Open in New Tab:</strong> Opens the JSON in a new browser tab as a blob URL. This is especially useful
+        in Firefox, which has a built-in JSON viewer.
+    </p>
 
     <script>
         // DOM elements
@@ -135,10 +149,14 @@
         const minifyBtn = document.getElementById('minifyJson');
         const copyBtn = document.getElementById('copyOutput');
         const clearBtn = document.getElementById('clearAll');
+        const openInTabBtn = document.getElementById('openInTab');
         const indentSize = document.getElementById('indentSize');
         const sortKeys = document.getElementById('sortKeys');
         const errorMessage = document.getElementById('errorMessage');
         const infoMessage = document.getElementById('infoMessage');
+
+        // Store the last parsed JSON
+        let lastParsedJson = null;
 
         // Function to adjust textarea height based on content
         function adjustTextareaHeight(textarea) {
@@ -157,6 +175,7 @@
             try {
                 // Parse the JSON
                 let parsed = JSON.parse(input);
+                lastParsedJson = parsed;
 
                 // Sort keys if requested
                 if (sortKeys.checked) {
@@ -178,6 +197,7 @@
 
                 showInfo(`JSON formatted successfully with ${indentSize.value === 'tab' ? 'tabs' : indentSize.value + ' spaces'} indentation.`);
             } catch (err) {
+                lastParsedJson = null;
                 showError(`Invalid JSON: ${err.message}`);
             }
         });
@@ -193,6 +213,7 @@
             try {
                 // Parse the JSON
                 let parsed = JSON.parse(input);
+                lastParsedJson = parsed;
 
                 // Minify the JSON
                 const minified = JSON.stringify(parsed);
@@ -202,6 +223,38 @@
                 const savedBytes = input.length - minified.length;
                 const percentSaved = ((savedBytes / input.length) * 100).toFixed(1);
                 showInfo(`JSON minified successfully. Saved ${savedBytes} bytes (${percentSaved}%).`);
+            } catch (err) {
+                lastParsedJson = null;
+                showError(`Invalid JSON: ${err.message}`);
+            }
+        });
+
+        // Open JSON in new tab
+        openInTabBtn.addEventListener('click', () => {
+            const input = jsonInput.value.trim();
+            if (!input) {
+                showError('Please enter some JSON to open.');
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(input);
+
+                // Create a blob with the JSON content and open it in a new tab
+                const blob = new Blob([JSON.stringify(parsed, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const newTab = window.open(url, '_blank');
+
+                if (newTab) {
+                    showInfo('JSON opened in new tab.');
+
+                    // Clean up the blob URL after a short delay
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                } else {
+                    showError('Failed to open new tab. Please check your popup blocker settings.');
+                }
             } catch (err) {
                 showError(`Invalid JSON: ${err.message}`);
             }
@@ -229,6 +282,7 @@
             jsonOutput.value = '';
             errorMessage.textContent = '';
             infoMessage.textContent = '';
+            lastParsedJson = null;
         });
 
         // Show error message
@@ -285,6 +339,24 @@
         jsonInput.addEventListener('input', () => {
             adjustTextareaHeight(jsonInput);
         });
+
+        // Enable/disable open in tab button based on valid JSON
+        jsonInput.addEventListener('input', () => {
+            const input = jsonInput.value.trim();
+            if (input) {
+                try {
+                    JSON.parse(input);
+                    openInTabBtn.disabled = false;
+                } catch {
+                    openInTabBtn.disabled = true;
+                }
+            } else {
+                openInTabBtn.disabled = true;
+            }
+        });
+
+        // Initial state
+        openInTabBtn.disabled = true;
     </script>
 </body>
 
