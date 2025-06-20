@@ -6,8 +6,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>localhost.beer</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2"
-        rel="stylesheet" as="font" type="font/woff2" crossorigin>
     <script>
         async function fetchInfo() {
             try {
@@ -44,6 +42,138 @@
 
         document.addEventListener('DOMContentLoaded', fetchInfo);
     </script>
+
+    <style>
+        @font-face {
+            font-family: 'JetBrains Mono';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2') format('woff2');
+        }
+
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #dacdac;
+            --info-color: #c99999;
+            --link-color: #577577;
+            --link-hover: #60aaaa;
+            --text-color: #e0e0e0;
+            --muted-color: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+            letter-spacing: -1px;
+        }
+
+        .info-box {
+            background: var(--card-color);
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item {
+            padding: 0.5rem 0;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item:last-of-type {
+            border-bottom: none;
+        }
+
+        .info-item strong {
+            color: var(--info-color);
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .links a {
+            color: var(--link-color);
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+        }
+
+        .links a:hover {
+            color: var(--link-hover);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: var(--muted-color);
+            padding: 1rem;
+        }
+
+        footer a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--link-hover);
+        }
+
+        @media (max-width: 600px) {
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .links a {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -90,136 +220,5 @@
         Hosted on <a href="https://github.io" target="_blank">GitHub Pages</a>
     </footer>
 </body>
-<style>
-    @font-face {
-        font-family: 'JetBrains Mono';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url('https://cdnjs.cloudflare.com/ajax/libs/jetbrains-mono/2.304/web/woff2/JetBrainsMono-Regular.woff2') format('woff2');
-    }
-
-    :root {
-        --bg-color: #121212;
-        --card-color: #1e1e1e;
-        --accent-color: #dacdac;
-        --info-color: #c99999;
-        --link-color: #577577;
-        --link-hover: #60aaaa;
-        --text-color: #e0e0e0;
-        --muted-color: #999;
-    }
-
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        font-family: 'JetBrains Mono', monospace;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        line-height: 1.6;
-    }
-
-    h1 {
-        font-size: 2.5rem;
-        margin-bottom: 1.5rem;
-        color: var(--accent-color);
-        letter-spacing: -1px;
-    }
-
-    .info-box {
-        background: var(--card-color);
-        padding: 1.5rem 2rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        max-width: 600px;
-        width: 90%;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .info-item {
-        padding: 0.5rem 0;
-        font-size: 1.1rem;
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .info-item:last-of-type {
-        border-bottom: none;
-    }
-
-    .info-item strong {
-        color: var(--info-color);
-    }
-
-    .links {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1.5rem;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .links a {
-        color: var(--link-color);
-        text-decoration: none;
-        padding: 0.5rem 0.75rem;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.03);
-        transition: all 0.2s ease;
-    }
-
-    .links a:hover {
-        color: var(--link-hover);
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateY(-2px);
-    }
-
-    footer {
-        margin-top: 2rem;
-        font-size: 0.9rem;
-        color: var(--muted-color);
-        padding: 1rem;
-    }
-
-    footer a {
-        color: var(--link-color);
-        text-decoration: none;
-    }
-
-    footer a:hover {
-        color: var(--link-hover);
-    }
-
-    @media (max-width: 600px) {
-        .info-item {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .links {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .links a {
-            width: 100%;
-            text-align: center;
-        }
-    }
-</style>
 
 </html>
