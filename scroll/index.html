@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll Wheel Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .test-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .scroll-box {
+            width: 250px;
+            height: 250px;
+            background-color: #2d5a2d;
+            border: 3px solid #1a3a1a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+            position: relative;
+            user-select: none;
+        }
+
+        .scroll-box.active {
+            background-color: #3a6a3a;
+        }
+
+        .scroll-box.failed {
+            background-color: #5a2d2d;
+            border-color: #3a1a1a;
+        }
+
+        .arrow {
+            font-size: 80px;
+            color: #a0d0a0;
+            line-height: 1;
+        }
+
+        .scroll-box.failed .arrow {
+            display: none;
+        }
+
+        .error-x {
+            display: none;
+            font-size: 100px;
+            color: #d0a0a0;
+            font-weight: bold;
+        }
+
+        .scroll-box.failed .error-x {
+            display: block;
+        }
+
+        .disclaimer {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .disclaimer h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #60c8c5;
+            font-size: 16px;
+        }
+
+        .disclaimer p {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+
+        .reset-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 30px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            transition: background-color 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background-color: #255555;
+        }
+
+        .pulse {
+            animation: pulse 0.15s ease-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(0.95);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .status {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            color: #60c8c5;
+        }
+
+        .counter {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 14px;
+            color: #70a070;
+            opacity: 0.8;
+        }
+
+        .scroll-box.failed .counter {
+            color: #d0a0a0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Scroll Wheel Tester</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+
+    <p style="margin: 0;">Test your mouse scroll wheel for unwanted reverse scrolling.</p>
+
+    <div class="test-container">
+        <div class="scroll-box" id="upBox" data-direction="up">
+            <div class="arrow">↑</div>
+            <div class="error-x">✕</div>
+            <div class="counter" id="upCounter">0</div>
+        </div>
+
+        <div class="scroll-box" id="downBox" data-direction="down">
+            <div class="arrow">↓</div>
+            <div class="error-x">✕</div>
+            <div class="counter" id="downCounter">0</div>
+        </div>
+    </div>
+
+    <div class="status" id="status">Ready to test - hover over a box and scroll in the indicated direction</div>
+
+    <button class="reset-button" id="resetButton">Reset Test</button>
+
+    <div class="disclaimer">
+        <h3>How This Test Works</h3>
+        <p>Hover over a box and scroll in the arrow's direction. The box pulses green for correct scrolls. If your
+            scroll wheel registers the opposite direction, the box turns red with an X, indicating a faulty scroll wheel
+            that needs cleaning or replacement.</p>
+    </div>
+
+    <script>
+        const upBox = document.getElementById('upBox');
+        const downBox = document.getElementById('downBox');
+        const upCounter = document.getElementById('upCounter');
+        const downCounter = document.getElementById('downCounter');
+        const status = document.getElementById('status');
+        const resetButton = document.getElementById('resetButton');
+
+        let upCount = 0;
+        let downCount = 0;
+        let upFailed = false;
+        let downFailed = false;
+
+        function handleWheel(event, box, expectedDirection) {
+            event.preventDefault();
+
+            if ((box === upBox && upFailed) || (box === downBox && downFailed)) {
+                return;
+            }
+
+            const actualDirection = event.deltaY < 0 ? 'up' : 'down';
+
+            if (actualDirection === expectedDirection) {
+                // Correct direction
+                box.classList.add('pulse');
+                box.classList.add('active');
+
+                setTimeout(() => {
+                    box.classList.remove('pulse');
+                    box.classList.remove('active');
+                }, 150);
+
+                if (box === upBox) {
+                    upCount++;
+                    upCounter.textContent = upCount;
+                } else {
+                    downCount++;
+                    downCounter.textContent = downCount;
+                }
+
+                status.textContent = `Good! ${expectedDirection === 'up' ? 'Upward' : 'Downward'} scroll detected (${expectedDirection === 'up' ? upCount : downCount} successful)`;
+                status.style.color = '#60c8c5';
+            } else {
+                // Wrong direction - fail the test
+                box.classList.add('failed');
+
+                if (box === upBox) {
+                    upFailed = true;
+                } else {
+                    downFailed = true;
+                }
+
+                status.textContent = `Failed! ${expectedDirection === 'up' ? 'Upward' : 'Downward'} box detected ${actualDirection === 'up' ? 'upward' : 'downward'} scroll`;
+                status.style.color = '#ff6b6b';
+            }
+        }
+
+        upBox.addEventListener('wheel', (e) => handleWheel(e, upBox, 'up'));
+        downBox.addEventListener('wheel', (e) => handleWheel(e, downBox, 'down'));
+
+        resetButton.addEventListener('click', () => {
+            upBox.classList.remove('failed', 'active');
+            downBox.classList.remove('failed', 'active');
+            upCount = 0;
+            downCount = 0;
+            upFailed = false;
+            downFailed = false;
+            upCounter.textContent = '0';
+            downCounter.textContent = '0';
+            status.textContent = 'Ready to test - hover over a box and scroll in the indicated direction';
+            status.style.color = '#60c8c5';
+        });
+
+        // Prevent page scrolling
+        document.body.addEventListener('wheel', (e) => {
+            if (e.target === upBox || e.target === downBox || upBox.contains(e.target) || downBox.contains(e.target)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+
+</html>
