@@ -163,6 +163,15 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
+            align-items: start;
+        }
+
+        /* Column stability */
+        .two-column>div {
+            min-width: 0;
+            /* Prevent grid blowout */
+            overflow: hidden;
+            /* Contain content */
         }
 
         @media (max-width: 768px) {
@@ -184,6 +193,8 @@
             border-radius: 4px;
             cursor: pointer;
             border: 1px solid #444;
+            flex-shrink: 0;
+            /* Prevent shrinking */
         }
 
         .preset-color:hover {
@@ -199,6 +210,33 @@
             border-radius: 4px;
             padding: 10px;
             margin-bottom: 20px;
+            max-height: 400px;
+            /* Add max height */
+            overflow-y: auto;
+            /* Enable scrolling when needed */
+        }
+
+        /* Scrollbar styling for segmented editor */
+        .segmented-editor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .segmented-editor::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .segmented-editor::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .segmented-editor::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        #segmentContainer {
+            min-height: 100px;
+            /* Minimum height to prevent jumping */
         }
 
         .segment-controls {
@@ -221,6 +259,8 @@
             margin-bottom: 15px;
             font-family: sans-serif;
             border: 1px solid #333;
+            min-height: 60px;
+            /* Consistent minimum height */
         }
 
         .tooltip {
@@ -258,6 +298,11 @@
             margin-top: 10px;
         }
 
+        .actions button {
+            white-space: nowrap;
+            /* Prevent button text wrapping */
+        }
+
         .segment-handle {
             cursor: move;
             padding: 5px;
@@ -280,12 +325,26 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;
+            /* Allow text truncation */
+        }
+
+        .segment-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .segment-preview {
+            word-break: break-word;
+            /* Allow long words to break */
         }
 
         .text-segment-actions {
             display: flex;
             gap: 5px;
             margin-left: 10px;
+            flex-shrink: 0;
+            /* Prevent action buttons from shrinking */
         }
 
         .icon-button {
@@ -296,6 +355,7 @@
             padding: 5px;
             font-size: 14px;
             margin: 0;
+            white-space: nowrap;
         }
 
         .icon-button:hover {
@@ -310,6 +370,8 @@
             border-radius: 3px;
             margin-right: 8px;
             vertical-align: middle;
+            flex-shrink: 0;
+            /* Prevent shrinking */
         }
 
         .segment-edit-form {
@@ -338,6 +400,8 @@
             border-bottom: none;
             margin-right: 2px;
             border-radius: 4px 4px 0 0;
+            white-space: nowrap;
+            /* Prevent tab text wrapping */
         }
 
         .color-tab.active {
@@ -376,10 +440,22 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .segment-edit-form-buttons button {
+            white-space: nowrap;
         }
 
         input[type="checkbox"] {
             accent-color: #4cafac;
+        }
+
+        /* Ensure consistent textarea sizing */
+        #outputCode {
+            width: 100%;
+            resize: vertical;
+            min-height: 100px;
         }
     </style>
 </head>
@@ -387,7 +463,7 @@
 <body>
     <div class="header-top">
         <h1 style="font-family: 'TF2Build', monospace; margin: 0;">TF2 Chat <span
-            style="background: linear-gradient(to right, #ff6666, #6666ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Colorizer</span>
+                style="background: linear-gradient(to right, #ff6666, #6666ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Colorizer</span>
         </h1>
         <a href="https://localhost.beer" class="home-link">
             ← home
@@ -497,6 +573,13 @@
                             data-color="#D32CE6"></div>
                         <div class="preset-color" style="background-color: #EB4B4B" title="Elite Grade"
                             data-color="#EB4B4B"></div>
+                        <div class="preset-color" style="background-color: transparent; border: none; pointer-events: none;"></div>
+                        <div class="preset-color" style="background-color: #ECE4CC" title="Chat White"
+                            data-color="#ECE4CC"></div>
+                        <div class="preset-color" style="background-color: #ff4040" title="Red Team"
+                            data-color="#ff4040"></div>
+                        <div class="preset-color" style="background-color: #99ccff" title="Blue Team"
+                            data-color="#99ccff"></div>
                     </div>
                 </div>
 
