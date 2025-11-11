@@ -307,6 +307,111 @@
                 "Char": "͏",
                 "CodePoint": "U+034F",
                 "Name": "COMBINING GRAPHEME JOINER"
+            },
+            {
+                "Char": "︎",
+                "CodePoint": "U+FE0E",
+                "Name": "VARIATION SELECTOR-15"
+            },
+            {
+                "Char": " ",
+                "CodePoint": "U+00A0",
+                "Name": "NO-BREAK SPACE"
+            },
+            {
+                "Char": "؜",
+                "CodePoint": "U+061C",
+                "Name": "ARABIC LETTER MARK"
+            },
+            {
+                "Char": " ",
+                "CodePoint": "U+2028",
+                "Name": "LINE SEPARATOR"
+            },
+            {
+                "Char": " ",
+                "CodePoint": "U+2029",
+                "Name": "PARAGRAPH SEPARATOR"
+            },
+            {
+                "Char": "­",
+                "CodePoint": "U+00AD",
+                "Name": "SOFT HYPHEN"
+            },
+            {
+                "Char": "�",
+                "CodePoint": "U+0000",
+                "Name": "NULL"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0007",
+                "Name": "BELL"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0008",
+                "Name": "BACKSPACE"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+000B",
+                "Name": "VERTICAL TAB"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+000C",
+                "Name": "FORM FEED"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+000E",
+                "Name": "SHIFT OUT"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+000F",
+                "Name": "SHIFT IN"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0016",
+                "Name": "SYNCHRONOUS IDLE"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0017",
+                "Name": "END OF TRANSMISSION BLOCK"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0018",
+                "Name": "CANCEL"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+0019",
+                "Name": "END OF MEDIUM"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+001A",
+                "Name": "SUBSTITUTE"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+001F",
+                "Name": "UNIT SEPARATOR"
+            },
+            {
+                "Char": "",
+                "CodePoint": "U+007F",
+                "Name": "DELETE"
+            },
+            {
+                "Char": "￿",
+                "CodePoint": "U+FFFF",
+                "Name": "NONCHARACTER"
             }
         ];
 
@@ -329,7 +434,9 @@
                 // For zero-width and other invisible characters, add a notice
                 const isInvisible = char.Name.includes('ZERO WIDTH') ||
                     char.Name.includes('INVISIBLE') ||
-                    char.Name.includes('JOINER');
+                    char.Name.includes('JOINER') ||
+                    char.Name.includes('SEPARATOR') ||
+                    char.Name.includes('VARIATION SELECTOR');
 
                 card.innerHTML = `
                     <div class="char-display">
