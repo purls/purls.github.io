@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text Trimmer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        select,
+        input[type="text"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        /* Character selector styles */
+        .char-selector-container {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .line-preview {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #252525;
+            border-radius: 4px;
+        }
+
+        .line-preview-label {
+            color: #4cafac;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .line-preview-text {
+            font-family: 'JetBrains Mono', monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .char-boxes {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 1px;
+            margin: 10px 0;
+            min-height: 50px;
+        }
+
+        .char-box {
+            width: 22px;
+            min-width: 22px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #444;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            font-size: 12px;
+            padding: 2px;
+            background-color: #2d2d2d;
+        }
+
+        .char-box:hover {
+            background-color: #3a3a3a;
+        }
+
+        .char-box.selected {
+            background-color: #335533;
+            border-color: #4cafac;
+        }
+
+        .char-box.deselected {
+            background-color: #553333;
+            border-color: #aa5555;
+        }
+
+        .char-box.arrow-mode {
+            background-color: #445566;
+            border-color: #6699cc;
+            box-shadow: 0 0 5px #6699cc;
+        }
+
+        .char-box .char-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .char-box .char-index {
+            font-size: 9px;
+            color: #777;
+        }
+
+        .char-box.ellipsis {
+            width: 30px;
+            min-width: 30px;
+            background-color: #333344;
+        }
+
+        .char-box.ellipsis.selected {
+            background-color: #334455;
+        }
+
+        .char-box.ellipsis.deselected {
+            background-color: #443344;
+        }
+
+        /* Range input */
+        .range-input-container {
+            margin: 15px 0;
+        }
+
+        #rangeInput {
+            width: 100%;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+        }
+
+        .range-help {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Stats panel */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .stat-item {
+            padding: 8px;
+            background-color: #252525;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            color: #4cafac;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            font-size: 12px;
+            color: #888;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            border-left: 3px solid #4cafac;
+        }
+
+        .keyboard-hint kbd {
+            background-color: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #555;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Preview lines section */
+        .preview-lines {
+            margin: 15px 0;
+        }
+
+        .preview-toggle {
+            cursor: pointer;
+            color: #4cafac;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .preview-toggle:hover {
+            text-decoration: underline;
+        }
+
+        .preview-content {
+            display: none;
+        }
+
+        .preview-content.visible {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Text Trimmer</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Trim multi-line text by selecting which character positions to keep or remove across all
+        lines.</p>
+    <br />
+
+    <h2>Input Text</h2>
+    <textarea id="textInput" rows="8" placeholder="Paste your multi-line text here..."></textarea>
+
+    <div class="button-group" style="margin-top: 10px;">
+        <button id="analyzeBtn">Analyze Text</button>
+        <button id="clearInputBtn">Clear Input</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <div id="analysisSection" style="display: none;">
+        <hr>
+
+        <h2>Text Statistics</h2>
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">Total Lines</div>
+                <div class="stat-value" id="statTotalLines">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Shortest Line Length</div>
+                <div class="stat-value" id="statShortestLen">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Longest Line Length</div>
+                <div class="stat-value" id="statLongestLen">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Average Line Length</div>
+                <div class="stat-value" id="statAvgLen">0</div>
+            </div>
+        </div>
+
+        <div class="preview-lines">
+            <div class="preview-toggle" id="previewToggle">▶ Show Sample Lines (First, Shortest, Longest, Last)</div>
+            <div class="preview-content" id="previewContent">
+                <div class="line-preview">
+                    <div class="line-preview-label">First Line:</div>
+                    <div class="line-preview-text" id="previewFirst"></div>
+                </div>
+                <div class="line-preview">
+                    <div class="line-preview-label">Shortest Line:</div>
+                    <div class="line-preview-text" id="previewShortest"></div>
+                </div>
+                <div class="line-preview">
+                    <div class="line-preview-label">Longest Line:</div>
+                    <div class="line-preview-text" id="previewLongest"></div>
+                </div>
+                <div class="line-preview">
+                    <div class="line-preview-label">Last Line:</div>
+                    <div class="line-preview-text" id="previewLast"></div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <h2>Character Selector</h2>
+        <div class="keyboard-hint">
+            <strong>Controls:</strong><br>
+            • <strong>Click</strong> a box to toggle that position on/off<br>
+            • <kbd>Ctrl</kbd>+<strong>Click</strong> to enter arrow mode, then press <kbd>←</kbd> to delete that
+            position and everything before, or <kbd>→</kbd> to delete that position and everything after<br>
+            • Click <strong>[...]</strong> to toggle keeping/removing characters beyond the shortest line<br>
+            • Press <kbd>Esc</kbd> to exit arrow mode
+        </div>
+
+        <div class="char-selector-container">
+            <div class="line-preview-label">Based on shortest line:</div>
+            <div class="char-boxes" id="charBoxes"></div>
+        </div>
+
+        <h2>Range Expression</h2>
+        <div class="range-input-container">
+            <input type="text" id="rangeInput" placeholder="e.g., {0}{4:7}{10:}">
+            <div class="range-help">
+                Format: <code>{index}</code> for single character, <code>{start:end}</code> for range (exclusive end),
+                <code>{start:}</code> for start to end of line.<br>
+                Example: <code>{1}{4:7}</code> keeps character at index 1 and characters from index 4 to 6.
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="applyRangeBtn">Apply Range Expression</button>
+            <button id="selectAllBtn">Select All</button>
+            <button id="deselectAllBtn">Deselect All</button>
+            <button id="invertBtn">Invert Selection</button>
+        </div>
+
+        <hr>
+
+        <h2>Trimmed Output</h2>
+        <div class="button-group" style="margin-bottom: 10px;">
+            <button id="trimBtn">Trim Text</button>
+            <button id="copyOutputBtn">Copy to Clipboard</button>
+            <button id="clearOutputBtn">Clear Output</button>
+        </div>
+
+        <textarea id="textOutput" rows="12" readonly placeholder="Trimmed text will appear here..."></textarea>
+    </div>
+
+    <hr>
+    <p>
+        Use this tool to extract specific columns or character positions from multi-line text.
+        Useful for working with fixed-width data, logs, or any text where you need to extract
+        consistent positions across many lines.
+    </p>
+    <p>
+        <strong>Tip:</strong> The character selector shows the shortest line as a reference.
+        Characters beyond the shortest line can be toggled with the [...] button.
+    </p>
+
+    <script>
+        // DOM elements
+        const textInput = document.getElementById('textInput');
+        const textOutput = document.getElementById('textOutput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const trimBtn = document.getElementById('trimBtn');
+        const copyOutputBtn = document.getElementById('copyOutputBtn');
+        const clearOutputBtn = document.getElementById('clearOutputBtn');
+        const applyRangeBtn = document.getElementById('applyRangeBtn');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const invertBtn = document.getElementById('invertBtn');
+        const rangeInput = document.getElementById('rangeInput');
+        const charBoxes = document.getElementById('charBoxes');
+        const analysisSection = document.getElementById('analysisSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
+        const previewToggle = document.getElementById('previewToggle');
+        const previewContent = document.getElementById('previewContent');
+
+        // State
+        let lines = [];
+        let shortestLine = '';
+        let longestLine = '';
+        let selection = []; // Array of booleans for each character position
+        let keepBeyondShortest = false;
+        let arrowModeIndex = -1;
+
+        // Initialize
+        analyzeBtn.addEventListener('click', analyzeText);
+        clearInputBtn.addEventListener('click', () => {
+            textInput.value = '';
+            analysisSection.style.display = 'none';
+            showInfo('');
+        });
+        trimBtn.addEventListener('click', trimText);
+        copyOutputBtn.addEventListener('click', copyOutput);
+        clearOutputBtn.addEventListener('click', () => {
+            textOutput.value = '';
+        });
+        applyRangeBtn.addEventListener('click', applyRangeExpression);
+        selectAllBtn.addEventListener('click', () => {
+            selection = selection.map(() => true);
+            keepBeyondShortest = true;
+            updateCharBoxes();
+            updateRangeFromSelection();
+        });
+        deselectAllBtn.addEventListener('click', () => {
+            selection = selection.map(() => false);
+            keepBeyondShortest = false;
+            updateCharBoxes();
+            updateRangeFromSelection();
+        });
+        invertBtn.addEventListener('click', () => {
+            selection = selection.map(s => !s);
+            keepBeyondShortest = !keepBeyondShortest;
+            updateCharBoxes();
+            updateRangeFromSelection();
+        });
+
+        previewToggle.addEventListener('click', () => {
+            previewContent.classList.toggle('visible');
+            previewToggle.textContent = previewContent.classList.contains('visible')
+                ? '▼ Hide Sample Lines'
+                : '▶ Show Sample Lines (First, Shortest, Longest, Last)';
+        });
+
+        // Keyboard handler for arrow mode
+        document.addEventListener('keydown', (e) => {
+            if (arrowModeIndex === -1) return;
+
+            if (e.key === 'Escape') {
+                exitArrowMode();
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                // Delete this position and everything before
+                for (let i = 0; i <= arrowModeIndex; i++) {
+                    selection[i] = false;
+                }
+                exitArrowMode();
+                updateCharBoxes();
+                updateRangeFromSelection();
+                trimText();
+            } else if (e.key === 'ArrowRight') {
+                // Delete this position and everything after
+                for (let i = arrowModeIndex; i < selection.length; i++) {
+                    selection[i] = false;
+                }
+                keepBeyondShortest = false;
+                exitArrowMode();
+                updateCharBoxes();
+                updateRangeFromSelection();
+                trimText();
+            }
+        });
+
+        function exitArrowMode() {
+            arrowModeIndex = -1;
+            updateCharBoxes();
+        }
+
+        function analyzeText() {
+            const text = textInput.value;
+            if (!text.trim()) {
+                showError('Please enter some text to analyze.');
+                return;
+            }
+
+            lines = text.split('\n').filter(line => line.length > 0);
+            if (lines.length === 0) {
+                showError('No non-empty lines found.');
+                return;
+            }
+
+            // Find shortest and longest lines
+            let shortestIdx = 0;
+            let longestIdx = 0;
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].length < lines[shortestIdx].length) shortestIdx = i;
+                if (lines[i].length > lines[longestIdx].length) longestIdx = i;
+            }
+            shortestLine = lines[shortestIdx];
+            longestLine = lines[longestIdx];
+
+            // Update stats
+            document.getElementById('statTotalLines').textContent = lines.length;
+            document.getElementById('statShortestLen').textContent = shortestLine.length;
+            document.getElementById('statLongestLen').textContent = longestLine.length;
+            const avgLen = lines.reduce((sum, l) => sum + l.length, 0) / lines.length;
+            document.getElementById('statAvgLen').textContent = avgLen.toFixed(1);
+
+            // Update preview lines
+            document.getElementById('previewFirst').textContent = lines[0];
+            document.getElementById('previewShortest').textContent = shortestLine;
+            document.getElementById('previewLongest').textContent = longestLine;
+            document.getElementById('previewLast').textContent = lines[lines.length - 1];
+
+            // Initialize selection (all selected by default)
+            selection = new Array(shortestLine.length).fill(true);
+            keepBeyondShortest = true;
+
+            // Build character boxes
+            buildCharBoxes();
+            updateRangeFromSelection();
+
+            analysisSection.style.display = 'block';
+            showInfo(`Analyzed ${lines.length} lines. Select characters to keep.`);
+        }
+
+        function buildCharBoxes() {
+            charBoxes.innerHTML = '';
+
+            for (let i = 0; i < shortestLine.length; i++) {
+                const box = createCharBox(i, shortestLine[i]);
+                charBoxes.appendChild(box);
+            }
+
+            // Add ellipsis box for characters beyond shortest line
+            const ellipsisBox = document.createElement('div');
+            ellipsisBox.className = 'char-box ellipsis' + (keepBeyondShortest ? ' selected' : ' deselected');
+            ellipsisBox.innerHTML = `
+                <div class="char-display">...</div>
+                <div class="char-index">+${longestLine.length - shortestLine.length}</div>
+            `;
+            ellipsisBox.addEventListener('click', () => {
+                keepBeyondShortest = !keepBeyondShortest;
+                ellipsisBox.classList.toggle('selected', keepBeyondShortest);
+                ellipsisBox.classList.toggle('deselected', !keepBeyondShortest);
+                updateRangeFromSelection();
+            });
+            charBoxes.appendChild(ellipsisBox);
+        }
+
+        function createCharBox(index, char) {
+            const box = document.createElement('div');
+            box.className = 'char-box' + (selection[index] ? ' selected' : ' deselected');
+            box.dataset.index = index;
+
+            // Display space as visible character
+            const displayChar = char === ' ' ? '␣' : char;
+
+            box.innerHTML = `
+                <div class="char-display">${escapeHtml(displayChar)}</div>
+                <div class="char-index">${index}</div>
+            `;
+
+            box.addEventListener('click', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    // Enter arrow mode
+                    arrowModeIndex = index;
+                    updateCharBoxes();
+                    showInfo(`Arrow mode: Press ← to delete positions 0-${index}, or → to delete positions ${index}+. Press Esc to cancel.`);
+                } else {
+                    // Toggle selection
+                    selection[index] = !selection[index];
+                    box.classList.toggle('selected', selection[index]);
+                    box.classList.toggle('deselected', !selection[index]);
+                    updateRangeFromSelection();
+                }
+            });
+
+            return box;
+        }
+
+        function updateCharBoxes() {
+            const boxes = charBoxes.querySelectorAll('.char-box:not(.ellipsis)');
+            boxes.forEach((box, i) => {
+                box.classList.toggle('selected', selection[i]);
+                box.classList.toggle('deselected', !selection[i]);
+                box.classList.toggle('arrow-mode', i === arrowModeIndex);
+            });
+
+            const ellipsisBox = charBoxes.querySelector('.char-box.ellipsis');
+            if (ellipsisBox) {
+                ellipsisBox.classList.toggle('selected', keepBeyondShortest);
+                ellipsisBox.classList.toggle('deselected', !keepBeyondShortest);
+            }
+        }
+
+        function updateRangeFromSelection() {
+            // Convert selection array to range expression
+            const ranges = [];
+            let i = 0;
+
+            while (i < selection.length) {
+                if (selection[i]) {
+                    // Find end of consecutive selected range
+                    let start = i;
+                    while (i < selection.length && selection[i]) {
+                        i++;
+                    }
+                    let end = i;
+
+                    if (end - start === 1) {
+                        ranges.push(`{${start}}`);
+                    } else {
+                        ranges.push(`{${start}:${end}}`);
+                    }
+                } else {
+                    i++;
+                }
+            }
+
+            // Add beyond-shortest indicator
+            if (keepBeyondShortest && longestLine.length > shortestLine.length) {
+                // Check if last range can be extended
+                if (ranges.length > 0) {
+                    const lastRange = ranges[ranges.length - 1];
+                    const match = lastRange.match(/\{(\d+):(\d+)\}/);
+                    if (match && parseInt(match[2]) === shortestLine.length) {
+                        ranges[ranges.length - 1] = `{${match[1]}:}`;
+                    } else if (lastRange === `{${shortestLine.length - 1}}`) {
+                        ranges[ranges.length - 1] = `{${shortestLine.length - 1}:}`;
+                    } else {
+                        ranges.push(`{${shortestLine.length}:}`);
+                    }
+                } else {
+                    ranges.push(`{${shortestLine.length}:}`);
+                }
+            }
+
+            rangeInput.value = ranges.join('');
+        }
+
+        function applyRangeExpression() {
+            const expr = rangeInput.value.trim();
+            if (!expr) {
+                showError('Please enter a range expression.');
+                return;
+            }
+
+            // Reset selection
+            selection = new Array(shortestLine.length).fill(false);
+            keepBeyondShortest = false;
+
+            // Parse range expression
+            const rangeRegex = /\{(\d+)(?::(\d*))?\}/g;
+            let match;
+
+            try {
+                while ((match = rangeRegex.exec(expr)) !== null) {
+                    const start = parseInt(match[1]);
+
+                    if (match[2] === undefined) {
+                        // Single index
+                        if (start < selection.length) {
+                            selection[start] = true;
+                        }
+                    } else if (match[2] === '') {
+                        // Open-ended range (start:)
+                        for (let i = start; i < selection.length; i++) {
+                            selection[i] = true;
+                        }
+                        keepBeyondShortest = true;
+                    } else {
+                        // Explicit range (start:end)
+                        const end = parseInt(match[2]);
+                        for (let i = start; i < Math.min(end, selection.length); i++) {
+                            selection[i] = true;
+                        }
+                        if (end > selection.length) {
+                            keepBeyondShortest = true;
+                        }
+                    }
+                }
+
+                updateCharBoxes();
+                showInfo('Range expression applied.');
+            } catch (e) {
+                showError('Invalid range expression format.');
+            }
+        }
+
+        function trimText() {
+            if (lines.length === 0) {
+                showError('Please analyze text first.');
+                return;
+            }
+
+            const trimmedLines = lines.map(line => {
+                let result = '';
+
+                // Apply selection to characters within shortest line length
+                for (let i = 0; i < Math.min(line.length, selection.length); i++) {
+                    if (selection[i]) {
+                        result += line[i];
+                    }
+                }
+
+                // Handle characters beyond shortest line
+                if (keepBeyondShortest && line.length > shortestLine.length) {
+                    result += line.substring(shortestLine.length);
+                }
+
+                return result;
+            });
+
+            textOutput.value = trimmedLines.join('\n');
+            showInfo(`Trimmed ${lines.length} lines.`);
+        }
+
+        async function copyOutput() {
+            const output = textOutput.value;
+            if (!output) {
+                showInfo('Nothing to copy.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                showInfo('Copied to clipboard!');
+            } catch (err) {
+                showError('Failed to copy to clipboard.');
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            infoMessage.textContent = '';
+        }
+
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            errorMessage.textContent = '';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-analyze on paste
+        textInput.addEventListener('paste', () => {
+            setTimeout(() => {
+                if (textInput.value.trim()) {
+                    analyzeText();
+                }
+            }, 0);
+        });
+    </script>
+</body>
+
+</html>
