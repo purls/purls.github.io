@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AZ DOR 1099-S E-File Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        :root { --accent: #4cafac; --accent-dim: #2d7a78; --warning: #e6a23c; --error: #ff6b6b; --success: #67c23a; --highlight-2: #3d6a5c; --highlight-5: #5c5a3d; --section-bg: #1a1a1a; --input-bg: #2d2d2d; --border: #3d3d3d; }
+        * { box-sizing: border-box; }
+        body { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .disclaimer { background: linear-gradient(135deg, #2a1a1a 0%, #1a1a2a 100%); border: 1px solid var(--warning); border-radius: 6px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #ccc; }
+        .disclaimer strong { color: var(--warning); }
+        .tabs { display: flex; gap: 2px; margin-bottom: 0; flex-wrap: wrap; }
+        .tab { padding: 12px 20px; background: var(--input-bg); border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; cursor: pointer; font-family: 'JetBrains Mono', monospace; color: #888; transition: all 0.2s; }
+        .tab:hover { background: #3a3a3a; color: #aaa; }
+        .tab.active { background: var(--section-bg); color: var(--accent); border-color: var(--accent); }
+        .tab-content { display: none; background: var(--section-bg); border: 1px solid var(--border); border-radius: 0 6px 6px 6px; padding: 20px; }
+        .tab-content.active { display: block; }
+        .section { margin-bottom: 25px; padding: 15px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; }
+        .section-title { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; color: #999; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+        .form-group label .field-pos { font-size: 10px; color: #666; background: #333; padding: 2px 5px; border-radius: 3px; }
+        .form-group label .required { color: var(--error); }
+        .form-group input, .form-group select { background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+        .form-group .hint { font-size: 11px; color: #666; margin-top: 4px; }
+        .form-group .char-count { font-size: 10px; color: #555; text-align: right; margin-top: 2px; }
+        .form-group .char-count.over { color: var(--error); }
+        .payment-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .payment-field { position: relative; }
+        .payment-field.highlight-2 { background: var(--highlight-2); border-radius: 4px; padding: 8px; }
+        .payment-field.highlight-5 { background: var(--highlight-5); border-radius: 4px; padding: 8px; }
+        .payment-field label { font-size: 11px; }
+        .record-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 15px; }
+        .record-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .record-card-title { font-weight: 600; color: #ddd; }
+        .btn { padding: 8px 15px; border-radius: 4px; border: none; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 12px; transition: all 0.2s; }
+        .btn-primary { background: var(--accent-dim); color: #fff; }
+        .btn-primary:hover { background: var(--accent); }
+        .btn-secondary { background: var(--input-bg); color: #ccc; border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #3a3a3a; }
+        .btn-danger { background: #4a2a2a; color: #ff8888; }
+        .btn-danger:hover { background: #5a3a3a; }
+        .btn-small { padding: 5px 10px; font-size: 11px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .seq-override { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); }
+        .seq-override summary { cursor: pointer; color: #888; font-size: 12px; }
+        .seq-override summary:hover { color: var(--accent); }
+        .output-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 4px; text-align: center; }
+        .stat-box .value { font-size: 24px; font-weight: 700; color: var(--accent); }
+        .stat-box .label { font-size: 11px; color: #888; margin-top: 4px; }
+        .output-textarea { width: 100%; min-height: 300px; background: #0a0a0a; border: 1px solid var(--border); border-radius: 4px; padding: 15px; color: #0f0; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.5; white-space: pre; overflow-x: auto; }
+        .toggle-option { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 4px; margin-bottom: 10px; }
+        .toggle-option label { font-size: 13px; color: #ccc; cursor: pointer; }
+        .toggle-option input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .toggle-option .note { font-size: 11px; color: #888; margin-left: auto; }
+        .validation-msg { padding: 10px 15px; border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
+        .validation-msg.error { background: rgba(255, 107, 107, 0.1); border: 1px solid var(--error); color: var(--error); }
+        .validation-msg.warning { background: rgba(230, 162, 60, 0.1); border: 1px solid var(--warning); color: var(--warning); }
+        .validation-msg.success { background: rgba(103, 194, 58, 0.1); border: 1px solid var(--success); color: var(--success); }
+        .json-area { width: 100%; min-height: 200px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+        .payees-container { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); }
+        .payees-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .payees-title { font-size: 13px; color: var(--accent); }
+        .quick-ref { font-size: 11px; color: #777; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .quick-ref code { background: #333; padding: 2px 5px; border-radius: 3px; color: var(--accent); }
+        hr { border: none; border-top: 1px solid var(--border); margin: 25px 0; }
+        .record-length { font-size: 11px; color: #666; text-align: right; margin-top: 5px; }
+        .record-length.valid { color: var(--success); }
+        .record-length.invalid { color: var(--error); }
+        @media (max-width: 768px) { .tabs { flex-direction: column; } .tab { border-radius: 4px; border: 1px solid var(--border); } .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">AZ DOR 1099-S E-File Generator</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 15px 0;">Generate Arizona Department of Revenue 1099-S E-File format (750-character fixed-width records)</p>
+
+    <div class="disclaimer">
+        <strong>⚠️ Privacy Notice:</strong> All data processing occurs entirely in your browser. No information entered on this page is transmitted, stored, or saved anywhere outside of your device. This is a client-side tool only. Always verify output in a trusted text editor before submission.
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="transmitter">T - Transmitter</div>
+        <div class="tab" data-tab="issuers">A - Issuers</div>
+        <div class="tab" data-tab="output">Output</div>
+        <div class="tab" data-tab="json">Import/Export</div>
+        <div class="tab" data-tab="help">Help</div>
+    </div>
+
+    <!-- TRANSMITTER TAB -->
+    <div id="tab-transmitter" class="tab-content active">
+        <div class="quick-ref">
+            <strong>Formatting Rules:</strong> Names/addresses have spaces, periods, and commas removed (only <code>&</code> and <code>-</code> allowed). Fields are left-justified with trailing spaces unless noted. TINs are 9 digits, no hyphens.
+        </div>
+        <div class="section">
+            <div class="section-title">Basic Information</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">2-5</span> Payment Year <span class="required">*</span></label>
+                    <input type="number" id="t-year" value="2025" min="2020" max="2030">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">6</span> Prior Year Data</label>
+                    <select id="t-priorYear"><option value="">No</option><option value="P">Yes (P)</option></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">7-15</span> Transmitter TIN <span class="required">*</span></label>
+                    <input type="text" id="t-tin" maxlength="9" placeholder="123456789">
+                    <div class="hint">9 digits, no hyphens</div>
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">16-20</span> TCC</label>
+                    <input type="text" id="t-tcc" maxlength="5" placeholder="00000">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">28</span> Test File</label>
+                    <select id="t-testFile"><option value="">No</option><option value="T">Yes (T)</option></select>
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">29</span> Foreign Entity</label>
+                    <select id="t-foreignEntity"><option value="">No</option><option value="1">Yes (1)</option></select>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Transmitter Name</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">30-69</span> Name <span class="required">*</span></label>
+                    <input type="text" id="t-name" maxlength="60" placeholder="Foobar Title Agency LLC">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">70-109</span> Name Continuation</label>
+                    <input type="text" id="t-nameCont" maxlength="60">
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Company Information</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">110-149</span> Company Name <span class="required">*</span></label>
+                    <input type="text" id="t-companyName" maxlength="60" placeholder="Foobar Title & Escrow LLC">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">150-189</span> Company Name Cont</label>
+                    <input type="text" id="t-companyNameCont" maxlength="60">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">190-229</span> Address <span class="required">*</span></label>
+                    <input type="text" id="t-address" maxlength="60" placeholder="123 Main Street Suite 100">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">230-269</span> City <span class="required">*</span></label>
+                    <input type="text" id="t-city" maxlength="60" placeholder="Phoenix">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">270-271</span> State <span class="required">*</span></label>
+                    <input type="text" id="t-state" maxlength="2" placeholder="AZ" style="text-transform:uppercase">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">272-280</span> ZIP <span class="required">*</span></label>
+                    <input type="text" id="t-zip" maxlength="9" placeholder="850010000">
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Contact Information</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">304-343</span> Contact Name <span class="required">*</span></label>
+                    <input type="text" id="t-contactName" maxlength="60" placeholder="Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label><span class="field-pos">344-358</span> Phone <span class="required">*</span></label>
+                    <input type="text" id="t-phone" maxlength="15" placeholder="5551234567">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="field-pos">359-408</span> Email</label>
+                    <input type="email" id="t-email" maxlength="50" placeholder="contact@example.com">
+                </div>
+            </div>
+        </div>
+        <details class="seq-override">
+            <summary>Sequence Override (Advanced)</summary>
+            <div class="form-row" style="margin-top:10px">
+                <div class="form-group">
+                    <label><span class="field-pos">500-507</span> Sequence</label>
+                    <input type="text" id="t-seqOverride" maxlength="8" placeholder="Auto: 00000001">
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- ISSUERS TAB -->
+    <div id="tab-issuers" class="tab-content">
+        <div class="quick-ref">
+            <strong>Structure:</strong> Each Issuer (A) has Payees (B). C Record auto-generated.
+            <strong>1099-S Codes:</strong> <code>2</code>=Gross Proceeds, <code>5</code>=Buyer RE Tax
+        </div>
+        <div id="issuers-container"></div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="addIssuer()">+ Add Issuer (A Record)</button>
+        </div>
+    </div>
+
+    <!-- OUTPUT TAB -->
+    <div id="tab-output" class="tab-content">
+        <div class="section">
+            <div class="section-title">Generation Options</div>
+            <div class="toggle-option">
+                <input type="checkbox" id="opt-typeOfReturn-rightAlign">
+                <label for="opt-typeOfReturn-rightAlign">Type of Return right-aligned (" S" vs "S ")</label>
+                <span class="note">Toggle if rejected</span>
+            </div>
+            <div class="toggle-option">
+                <input type="checkbox" id="opt-transferAgent-blank" checked>
+                <label for="opt-transferAgent-blank">Transfer Agent blank instead of "0"</label>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="generateOutput()">Generate E-File</button>
+            <button class="btn btn-secondary" onclick="validateAll()">Validate Only</button>
+        </div>
+        <div id="validation-messages" style="margin-top:15px"></div>
+        <div id="output-container" style="display:none;margin-top:20px">
+            <div class="output-stats">
+                <div class="stat-box"><div class="value" id="stat-records">0</div><div class="label">Records</div></div>
+                <div class="stat-box"><div class="value" id="stat-issuers">0</div><div class="label">Issuers</div></div>
+                <div class="stat-box"><div class="value" id="stat-payees">0</div><div class="label">Payees</div></div>
+                <div class="stat-box"><div class="value" id="stat-bytes">0</div><div class="label">Bytes</div></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="downloadFile()">Download .txt</button>
+                <button class="btn btn-secondary" onclick="copyOutput()">Copy to Clipboard</button>
+            </div>
+            <textarea class="output-textarea" id="output-text" readonly></textarea>
+            <div class="record-length" id="record-lengths"></div>
+        </div>
+    </div>
+
+    <!-- JSON TAB -->
+    <div id="tab-json" class="tab-content">
+        <div class="section">
+            <div class="section-title">Import JSON</div>
+            <textarea class="json-area" id="json-import" placeholder="Paste JSON here..."></textarea>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="importJSON()">Import</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('json-import').value=''">Clear</button>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Export</div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="exportJSON()">Export JSON</button>
+                <button class="btn btn-secondary" onclick="downloadEmptyTemplate()">Empty Template</button>
+                <button class="btn btn-secondary" onclick="copyJSON()">Copy JSON</button>
+            </div>
+            <textarea class="json-area" id="json-export" readonly></textarea>
+        </div>
+    </div>
+
+    <!-- HELP TAB -->
+    <div id="tab-help" class="tab-content">
+        <div class="section">
+            <div class="section-title">File Structure</div>
+            <p>Each record is exactly <strong>750 characters</strong> + CR+LF.</p>
+            <ul>
+                <li><strong>T:</strong> Transmitter (1 per file)</li>
+                <li><strong>A:</strong> Issuer (1+ per file)</li>
+                <li><strong>B:</strong> Payee (1+ per A)</li>
+                <li><strong>C:</strong> End of Issuer (1 per A, auto-calc)</li>
+                <li><strong>F:</strong> End of Transmission (1 per file, auto-calc)</li>
+            </ul>
+        </div>
+        <div class="section">
+            <div class="section-title">Formatting Rules</div>
+            <ul>
+                <li>Text: left-justified, spaces padded. Only <code>&</code> and <code>-</code> allowed.</li>
+                <li>Numbers: right-justified, zero-padded.</li>
+                <li>TINs: 9 digits, no hyphens.</li>
+                <li>Amounts: 12 digits (B), 18 digits (C), implied cents. $525,000.00 = <code>000052500000</code></li>
+                <li>Dates: YYYYMMDD</li>
+                <li>Names: "John Smith" → "JohnSmith"</li>
+            </ul>
+        </div>
+        <div class="section">
+            <div class="section-title">1099-S Fields</div>
+            <ul>
+                <li>Amount 2: Gross Proceeds</li>
+                <li>Amount 5: Buyer's RE Tax</li>
+                <li>Date of Closing: Required</li>
+                <li>Property Description: Required</li>
+            </ul>
+        </div>
+    </div>
+
+    <hr>
+    <p style="font-size:12px;color:#666">Based on AZ DOR EFILE 1099-S Layout TY2025. Verify before submission.</p>
+
+    <script>
+// AZ DOR 1099-S E-File Generator - All client-side processing
+let issuerCounter = 0, payeeCounters = {};
+
+// Tab navigation
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// Utilities
+function cleanText(text) {
+    if (!text) return '';
+    let r = '';
+    for (let c of text) if (/[a-zA-Z0-9&-]/.test(c)) r += c;
+    return r;
+}
+function cleanNum(t) { return (t||'').replace(/\D/g, ''); }
+function padR(s, n) { s = String(s||''); return s.length >= n ? s.substring(0,n) : s + ' '.repeat(n - s.length); }
+function padL(s, n, c='0') { s = String(s||''); return s.length >= n ? s.substring(0,n) : c.repeat(n - s.length) + s; }
+function fmtAmt12(a) { return padL(String(Math.round(Math.abs(parseFloat(a||0))*100)), 12, '0'); }
+function fmtAmt18(a) { return padL(String(Math.round(Math.abs(parseFloat(a||0))*100)), 18, '0'); }
+function fmtDate(d) {
+    if (!d) return '        ';
+    const dt = new Date(d);
+    if (isNaN(dt)) return '        ';
+    return dt.getUTCFullYear() + String(dt.getUTCMonth()+1).padStart(2,'0') + String(dt.getUTCDate()).padStart(2,'0');
+}
+
+// Add Issuer
+function addIssuer() {
+    issuerCounter++;
+    const id = 'issuer-' + issuerCounter;
+    payeeCounters[id] = 0;
+    const c = document.createElement('div');
+    c.className = 'record-card'; c.id = id;
+    c.innerHTML = `
+        <div class="record-card-header"><span class="record-card-title">Issuer #${issuerCounter}</span>
+        <button class="btn btn-danger btn-small" onclick="if(confirm('Remove?'))this.closest('.record-card').remove()">Remove</button></div>
+        <div class="section"><div class="section-title">Issuer Info</div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">2-5</span> Year</label><input type="number" class="a-year" value="2025"></div>
+            <div class="form-group"><label><span class="field-pos">12-20</span> TIN <span class="required">*</span></label><input type="text" class="a-tin" maxlength="9" placeholder="987654321"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">6</span> Combined Federal/State Filing</label><select class="a-cfsf"><option value="">No</option><option value="1">Yes</option></select></div>
+            <div class="form-group"><label><span class="field-pos">28-45</span> Amount Codes</label><input type="text" class="a-amountCodes" value="25" maxlength="18"><div class="hint">2=Gross, 5=RE Tax</div></div>
+        </div></div>
+        <div class="section"><div class="section-title">Name & Address</div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">53-92</span> Name <span class="required">*</span></label><input type="text" class="a-name1" maxlength="60" placeholder="Foobar Title LLC"></div>
+            <div class="form-group"><label><span class="field-pos">93-132</span> Name 2</label><input type="text" class="a-name2" maxlength="60"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">133</span> Transfer Agent</label><select class="a-transferAgent"><option value="0">0 - No</option><option value="1">1 - Yes</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">134-173</span> Address <span class="required">*</span></label><input type="text" class="a-address" maxlength="60" placeholder="123 Main St"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">174-213</span> City <span class="required">*</span></label><input type="text" class="a-city" maxlength="60" placeholder="Phoenix"></div>
+            <div class="form-group"><label><span class="field-pos">214-215</span> State <span class="required">*</span></label><input type="text" class="a-state" maxlength="2" placeholder="AZ" style="text-transform:uppercase"></div>
+            <div class="form-group"><label><span class="field-pos">216-224</span> ZIP <span class="required">*</span></label><input type="text" class="a-zip" maxlength="9" placeholder="85001"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">225-239</span> Phone</label><input type="text" class="a-phone" maxlength="15"></div>
+        </div></div>
+        <details class="seq-override"><summary>Sequence Override</summary>
+        <div class="form-row" style="margin-top:10px"><div class="form-group"><label>Sequence</label><input type="text" class="a-seqOverride" maxlength="8" placeholder="Auto"></div></div></details>
+        <div class="payees-container"><div class="payees-header"><span class="payees-title">Payees (B Records)</span>
+        <button class="btn btn-primary btn-small" onclick="addPayee('${id}')">+ Add Payee</button></div>
+        <div class="payees-list" id="${id}-payees"></div></div>`;
+    document.getElementById('issuers-container').appendChild(c);
+}
+
+// Add Payee
+function addPayee(iid) {
+    payeeCounters[iid]++;
+    const n = payeeCounters[iid], pid = iid + '-payee-' + n;
+    const c = document.createElement('div');
+    c.className = 'record-card'; c.id = pid;
+    c.innerHTML = `
+        <div class="record-card-header"><span class="record-card-title">Payee #${n}</span>
+        <button class="btn btn-danger btn-small" onclick="if(confirm('Remove?'))this.closest('.record-card').remove()">Remove</button></div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">2-5</span> Year</label><input type="number" class="b-year" value="2025"></div>
+            <div class="form-group"><label><span class="field-pos">6</span> Corrected</label><select class="b-corrected"><option value="">Original (blank)</option><option value="G">One-transaction correction or the first of a two-transaction correction (G)</option><option value="C">Second transaction of a two-transaction correction (C)</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">7-10</span> Name Ctrl</label><input type="text" class="b-nameControl" maxlength="4" placeholder="Smit"></div>
+            <div class="form-group"><label><span class="field-pos">11</span> TIN Type</label><select class="b-tinType"><option value="">Undetermined (blank)</option><option value="1">EIN (1)</option><option value="2">SSN/ITIN/ATIN (2)</option></select></div>
+            <div class="form-group"><label><span class="field-pos">12-20</span> TIN <span class="required">*</span></label><input type="text" class="b-tin" maxlength="9" placeholder="111222333"></div>
+        </div>
+        <div class="section"><div class="section-title">Payment Amounts (enter dollars)</div>
+        <div class="payment-grid">
+            <div class="payment-field"><label>Amt 1</label><input type="number" class="b-amt1" step="0.01" value="0"></div>
+            <div class="payment-field highlight-2"><label><strong>Amt 2 (Gross)</strong></label><input type="number" class="b-amt2" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 3</label><input type="number" class="b-amt3" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 4</label><input type="number" class="b-amt4" step="0.01" value="0"></div>
+            <div class="payment-field highlight-5"><label><strong>Amt 5 (RE Tax)</strong></label><input type="number" class="b-amt5" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 6</label><input type="number" class="b-amt6" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 7</label><input type="number" class="b-amt7" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 8</label><input type="number" class="b-amt8" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt 9</label><input type="number" class="b-amt9" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt A</label><input type="number" class="b-amtA" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt B</label><input type="number" class="b-amtB" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt C</label><input type="number" class="b-amtC" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt D</label><input type="number" class="b-amtD" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt E</label><input type="number" class="b-amtE" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt F</label><input type="number" class="b-amtF" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt G</label><input type="number" class="b-amtG" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt H</label><input type="number" class="b-amtH" step="0.01" value="0"></div>
+            <div class="payment-field"><label>Amt J</label><input type="number" class="b-amtJ" step="0.01" value="0"></div>
+        </div></div>
+        <div class="section"><div class="section-title">Payee Name & Address</div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">288-327</span> Name <span class="required">*</span></label><input type="text" class="b-name1" maxlength="60" placeholder="John Smith"></div>
+            <div class="form-group"><label><span class="field-pos">328-367</span> Name 2</label><input type="text" class="b-name2" maxlength="60"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">368-407</span> Address <span class="required">*</span></label><input type="text" class="b-address" maxlength="60" placeholder="1234 Oak Lane"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">448-487</span> City <span class="required">*</span></label><input type="text" class="b-city" maxlength="60" placeholder="Scottsdale"></div>
+            <div class="form-group"><label><span class="field-pos">488-489</span> State <span class="required">*</span></label><input type="text" class="b-state" maxlength="2" placeholder="AZ" style="text-transform:uppercase"></div>
+            <div class="form-group"><label><span class="field-pos">490-498</span> ZIP <span class="required">*</span></label><input type="text" class="b-zip" maxlength="9" placeholder="85250"></div>
+        </div></div>
+        <div class="section"><div class="section-title">1099-S Fields</div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">287</span> Foreign</label><select class="b-foreignCountry"><option value="">No</option><option value="1">Yes</option></select></div>
+            <div class="form-group"><label><span class="field-pos">547</span> Prop/Svc</label><select class="b-propServices"><option value="">No</option><option value="1">Yes</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">548-555</span> Closing Date <span class="required">*</span></label><input type="date" class="b-closingDate"></div>
+            <div class="form-group"><label><span class="field-pos">556-594</span> Property Desc <span class="required">*</span></label><input type="text" class="b-propDesc" maxlength="60" placeholder="123 Main St Phoenix AZ"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label><span class="field-pos">595</span> Foreign Transferor</label><select class="b-foreignTransferor"><option value="">No</option><option value="1">Yes</option></select></div>
+        </div></div>
+        <div class="section"><div class="section-title">Optional</div>
+        <div class="form-row">
+            <div class="form-group"><label>Special Data</label><input type="text" class="b-specialData" maxlength="60"></div>
+            <div class="form-group"><label>State Tax</label><input type="number" class="b-stateTax" step="0.01" value="0"></div>
+            <div class="form-group"><label>Local Tax</label><input type="number" class="b-localTax" step="0.01" value="0"></div>
+        </div></div>
+        <details class="seq-override"><summary>Sequence Override</summary>
+        <div class="form-row" style="margin-top:10px"><div class="form-group"><label>Sequence</label><input type="text" class="b-seqOverride" maxlength="8" placeholder="Auto"></div></div></details>`;
+    document.getElementById(iid + '-payees').appendChild(c);
+}
+
+// Data collection
+function getT() {
+    return {
+        year: document.getElementById('t-year').value,
+        priorYear: document.getElementById('t-priorYear').value,
+        tin: cleanNum(document.getElementById('t-tin').value),
+        tcc: document.getElementById('t-tcc').value,
+        testFile: document.getElementById('t-testFile').value,
+        foreignEntity: document.getElementById('t-foreignEntity').value,
+        name: document.getElementById('t-name').value,
+        nameCont: document.getElementById('t-nameCont').value,
+        companyName: document.getElementById('t-companyName').value,
+        companyNameCont: document.getElementById('t-companyNameCont').value,
+        address: document.getElementById('t-address').value,
+        city: document.getElementById('t-city').value,
+        state: document.getElementById('t-state').value.toUpperCase(),
+        zip: cleanNum(document.getElementById('t-zip').value),
+        contactName: document.getElementById('t-contactName').value,
+        phone: cleanNum(document.getElementById('t-phone').value),
+        email: document.getElementById('t-email').value,
+        seqOverride: document.getElementById('t-seqOverride').value
+    };
+}
+
+function getA(el) {
+    const payees = [];
+    el.querySelectorAll('.payees-list > .record-card').forEach(p => payees.push(getB(p)));
+    return {
+        year: el.querySelector('.a-year').value,
+        cfsf: el.querySelector('.a-cfsf').value,
+        tin: cleanNum(el.querySelector('.a-tin').value),
+        amountCodes: el.querySelector('.a-amountCodes').value,
+        name1: el.querySelector('.a-name1').value,
+        name2: el.querySelector('.a-name2').value,
+        transferAgent: el.querySelector('.a-transferAgent').value,
+        address: el.querySelector('.a-address').value,
+        city: el.querySelector('.a-city').value,
+        state: el.querySelector('.a-state').value.toUpperCase(),
+        zip: cleanNum(el.querySelector('.a-zip').value),
+        phone: cleanNum(el.querySelector('.a-phone').value),
+        seqOverride: el.querySelector('.a-seqOverride').value,
+        payees: payees
+    };
+}
+
+function getB(el) {
+    return {
+        year: el.querySelector('.b-year').value,
+        corrected: el.querySelector('.b-corrected').value,
+        nameControl: el.querySelector('.b-nameControl').value,
+        tinType: el.querySelector('.b-tinType').value,
+        tin: cleanNum(el.querySelector('.b-tin').value),
+        amt1: parseFloat(el.querySelector('.b-amt1').value)||0,
+        amt2: parseFloat(el.querySelector('.b-amt2').value)||0,
+        amt3: parseFloat(el.querySelector('.b-amt3').value)||0,
+        amt4: parseFloat(el.querySelector('.b-amt4').value)||0,
+        amt5: parseFloat(el.querySelector('.b-amt5').value)||0,
+        amt6: parseFloat(el.querySelector('.b-amt6').value)||0,
+        amt7: parseFloat(el.querySelector('.b-amt7').value)||0,
+        amt8: parseFloat(el.querySelector('.b-amt8').value)||0,
+        amt9: parseFloat(el.querySelector('.b-amt9').value)||0,
+        amtA: parseFloat(el.querySelector('.b-amtA').value)||0,
+        amtB: parseFloat(el.querySelector('.b-amtB').value)||0,
+        amtC: parseFloat(el.querySelector('.b-amtC').value)||0,
+        amtD: parseFloat(el.querySelector('.b-amtD').value)||0,
+        amtE: parseFloat(el.querySelector('.b-amtE').value)||0,
+        amtF: parseFloat(el.querySelector('.b-amtF').value)||0,
+        amtG: parseFloat(el.querySelector('.b-amtG').value)||0,
+        amtH: parseFloat(el.querySelector('.b-amtH').value)||0,
+        amtJ: parseFloat(el.querySelector('.b-amtJ').value)||0,
+        foreignCountry: el.querySelector('.b-foreignCountry').value,
+        name1: el.querySelector('.b-name1').value,
+        name2: el.querySelector('.b-name2').value,
+        address: el.querySelector('.b-address').value,
+        city: el.querySelector('.b-city').value,
+        state: el.querySelector('.b-state').value.toUpperCase(),
+        zip: cleanNum(el.querySelector('.b-zip').value),
+        propServices: el.querySelector('.b-propServices').value,
+        closingDate: el.querySelector('.b-closingDate').value,
+        propDesc: el.querySelector('.b-propDesc').value,
+        foreignTransferor: el.querySelector('.b-foreignTransferor').value,
+        specialData: el.querySelector('.b-specialData').value,
+        stateTax: parseFloat(el.querySelector('.b-stateTax').value)||0,
+        localTax: parseFloat(el.querySelector('.b-localTax').value)||0,
+        seqOverride: el.querySelector('.b-seqOverride').value
+    };
+}
+
+function getAllData() {
+    const data = { transmitter: getT(), issuers: [] };
+    document.querySelectorAll('#issuers-container > .record-card').forEach(el => data.issuers.push(getA(el)));
+    return data;
+}
+
+// Validation
+function validateAll() {
+    const d = getAllData(), errs = [], warns = [];
+    const t = d.transmitter;
+    if (!t.tin || t.tin.length !== 9) errs.push('Transmitter TIN must be 9 digits');
+    if (!t.name) errs.push('Transmitter name required');
+    if (!t.companyName) errs.push('Company name required');
+    if (!t.address) errs.push('Company address required');
+    if (!t.city) errs.push('Company city required');
+    if (!t.state || t.state.length !== 2) errs.push('Company state must be 2 chars');
+    if (!t.zip || t.zip.length < 5) errs.push('Company ZIP required');
+    if (!t.contactName) errs.push('Contact name required');
+    if (!t.phone || t.phone.length < 10) errs.push('Contact phone required');
+    if (d.issuers.length === 0) errs.push('At least one issuer required');
+    
+    d.issuers.forEach((iss, i) => {
+        const pre = 'Issuer #' + (i+1);
+        if (!iss.tin || iss.tin.length !== 9) errs.push(pre + ': TIN must be 9 digits');
+        if (!iss.name1) errs.push(pre + ': Name required');
+        if (!iss.address) errs.push(pre + ': Address required');
+        if (!iss.city) errs.push(pre + ': City required');
+        if (!iss.state || iss.state.length !== 2) errs.push(pre + ': State must be 2 chars');
+        if (!iss.zip || iss.zip.length < 5) errs.push(pre + ': ZIP required');
+        if (iss.payees.length === 0) warns.push(pre + ': No payees');
+        
+        iss.payees.forEach((p, j) => {
+            const pp = pre + ' Payee #' + (j+1);
+            if (!p.tin || p.tin.length !== 9) errs.push(pp + ': TIN must be 9 digits');
+            if (!p.name1) errs.push(pp + ': Name required');
+            if (!p.address) errs.push(pp + ': Address required');
+            if (!p.city) errs.push(pp + ': City required');
+            if (!p.state || p.state.length !== 2) errs.push(pp + ': State must be 2 chars');
+            if (!p.zip || p.zip.length < 5) errs.push(pp + ': ZIP required');
+            if (!p.closingDate) errs.push(pp + ': Closing date required');
+            if (!p.propDesc) errs.push(pp + ': Property desc required');
+        });
+    });
+    
+    const c = document.getElementById('validation-messages');
+    c.innerHTML = '';
+    if (errs.length === 0 && warns.length === 0) {
+        c.innerHTML = '<div class="validation-msg success">✓ All validations passed</div>';
+    } else {
+        errs.forEach(e => c.innerHTML += '<div class="validation-msg error">✗ ' + e + '</div>');
+        warns.forEach(w => c.innerHTML += '<div class="validation-msg warning">⚠ ' + w + '</div>');
+    }
+    return errs.length === 0;
+}
+
+// Record generation
+function genT(d, seq) {
+    const t = d.transmitter;
+    let totalPayees = 0;
+    d.issuers.forEach(i => totalPayees += i.payees.length);
+    let r = 'T' + padL(t.year,4) + padR(t.priorYear,1) + padL(t.tin,9) + padR(t.tcc,5);
+    r += ' '.repeat(7) + padR(t.testFile,1) + padR(t.foreignEntity,1);
+    r += padR(cleanText(t.name),40) + padR(cleanText(t.nameCont),40);
+    r += padR(cleanText(t.companyName),40) + padR(cleanText(t.companyNameCont),40);
+    r += padR(cleanText(t.address),40) + padR(cleanText(t.city),40);
+    r += padR(t.state,2) + padR(t.zip,9) + ' '.repeat(15);
+    r += padL(String(totalPayees),8) + padR(cleanText(t.contactName),40);
+    r += padR(t.phone,15) + padR(t.email,50) + ' '.repeat(91);
+    r += padL(t.seqOverride||String(seq),8) + ' '.repeat(10) + 'I';
+    r += ' '.repeat(40+40+40+2+9+40+15+35) + ' ' + ' '.repeat(10);
+    return r;
+}
+
+function genA(iss, seq) {
+    const ra = document.getElementById('opt-typeOfReturn-rightAlign').checked;
+    const tb = document.getElementById('opt-transferAgent-blank').checked;
+    let r = 'A' + padL(iss.year,4) + padR(iss.cfsf,1) + ' '.repeat(5);
+    r += padL(iss.tin,9) + '    ' + ' ';
+    r += ra ? ' S' : 'S ';
+    r += padR(iss.amountCodes,18) + ' '.repeat(6) + ' ';
+    r += padR(cleanText(iss.name1),40) + padR(cleanText(iss.name2),40);
+    r += (tb && iss.transferAgent==='0') ? ' ' : (iss.transferAgent||'0');
+    r += padR(cleanText(iss.address),40) + padR(cleanText(iss.city),40);
+    r += padR(iss.state,2) + padR(iss.zip,9) + padR(iss.phone,15);
+    r += ' '.repeat(260) + padL(iss.seqOverride||String(seq),8) + ' '.repeat(243);
+    return r;
+}
+
+function genB(p, seq) {
+    let r = 'B' + padL(p.year,4) + padR(p.corrected,1);
+    r += padR(cleanText(p.nameControl),4) + padR(p.tinType,1) + padL(p.tin,9);
+    r += ' '.repeat(20) + ' '.repeat(4) + ' '.repeat(10);
+    r += fmtAmt12(p.amt1) + fmtAmt12(p.amt2) + fmtAmt12(p.amt3) + fmtAmt12(p.amt4);
+    r += fmtAmt12(p.amt5) + fmtAmt12(p.amt6) + fmtAmt12(p.amt7) + fmtAmt12(p.amt8);
+    r += fmtAmt12(p.amt9) + fmtAmt12(p.amtA) + fmtAmt12(p.amtB) + fmtAmt12(p.amtC);
+    r += fmtAmt12(p.amtD) + fmtAmt12(p.amtE) + fmtAmt12(p.amtF) + fmtAmt12(p.amtG);
+    r += fmtAmt12(p.amtH) + fmtAmt12(p.amtJ);
+    r += ' '.repeat(16) + padR(p.foreignCountry,1);
+    r += padR(cleanText(p.name1),40) + padR(cleanText(p.name2),40);
+    r += padR(cleanText(p.address),40) + ' '.repeat(40);
+    r += padR(cleanText(p.city),40) + padR(p.state,2) + padR(p.zip,9) + ' ';
+    r += padL(p.seqOverride||String(seq),8) + ' '.repeat(39);
+    r += padR(p.propServices,1) + fmtDate(p.closingDate);
+    r += padR(cleanText(p.propDesc),39) + padR(p.foreignTransferor,1);
+    r += ' '.repeat(67) + padR(p.specialData,60);
+    r += fmtAmt12(p.stateTax) + fmtAmt12(p.localTax) + ' '.repeat(4);
+    return r;
+}
+
+function genC(iss, seq) {
+    const tot = {amt1:0,amt2:0,amt3:0,amt4:0,amt5:0,amt6:0,amt7:0,amt8:0,amt9:0,amtA:0,amtB:0,amtC:0,amtD:0,amtE:0,amtF:0,amtG:0,amtH:0,amtJ:0};
+    iss.payees.forEach(p => {
+        tot.amt1+=p.amt1; tot.amt2+=p.amt2; tot.amt3+=p.amt3; tot.amt4+=p.amt4;
+        tot.amt5+=p.amt5; tot.amt6+=p.amt6; tot.amt7+=p.amt7; tot.amt8+=p.amt8;
+        tot.amt9+=p.amt9; tot.amtA+=p.amtA; tot.amtB+=p.amtB; tot.amtC+=p.amtC;
+        tot.amtD+=p.amtD; tot.amtE+=p.amtE; tot.amtF+=p.amtF; tot.amtG+=p.amtG;
+        tot.amtH+=p.amtH; tot.amtJ+=p.amtJ;
+    });
+    let r = 'C' + padL(String(iss.payees.length),8) + ' '.repeat(6);
+    r += fmtAmt18(tot.amt1) + fmtAmt18(tot.amt2) + fmtAmt18(tot.amt3) + fmtAmt18(tot.amt4);
+    r += fmtAmt18(tot.amt5) + fmtAmt18(tot.amt6) + fmtAmt18(tot.amt7) + fmtAmt18(tot.amt8);
+    r += fmtAmt18(tot.amt9) + fmtAmt18(tot.amtA) + fmtAmt18(tot.amtB) + fmtAmt18(tot.amtC);
+    r += fmtAmt18(tot.amtD) + fmtAmt18(tot.amtE) + fmtAmt18(tot.amtF) + fmtAmt18(tot.amtG);
+    r += fmtAmt18(tot.amtH) + fmtAmt18(tot.amtJ);
+    r += ' '.repeat(160) + padL(String(seq),8) + ' '.repeat(243);
+    return r;
+}
+
+function genF(numA, numB, seq) {
+    let r = 'F' + padL(String(numA),8) + '0'.repeat(21) + ' '.repeat(19);
+    r += padL(String(numB),8) + ' '.repeat(442) + padL(String(seq),8) + ' '.repeat(243);
+    return r;
+}
+
+function generateOutput() {
+    if (!validateAll()) { document.getElementById('output-container').style.display = 'none'; return; }
+    const d = getAllData(), recs = [];
+    let seq = 1;
+    recs.push(genT(d, seq++));
+    d.issuers.forEach(iss => {
+        recs.push(genA(iss, seq++));
+        iss.payees.forEach(p => recs.push(genB(p, seq++)));
+        recs.push(genC(iss, seq++));
+    });
+    let totalB = 0;
+    d.issuers.forEach(i => totalB += i.payees.length);
+    recs.push(genF(d.issuers.length, totalB, seq));
+    
+    // Validate lengths
+    const info = [];
+    let allOk = true;
+    recs.forEach((r, i) => { if (r.length !== 750) { info.push('Rec ' + (i+1) + ': ' + r.length + ' chars'); allOk = false; }});
+    
+    const out = recs.join('\r\n') + '\r\n';
+    document.getElementById('output-container').style.display = 'block';
+    document.getElementById('output-text').value = out;
+    document.getElementById('stat-records').textContent = recs.length;
+    document.getElementById('stat-issuers').textContent = d.issuers.length;
+    document.getElementById('stat-payees').textContent = totalB;
+    document.getElementById('stat-bytes').textContent = out.length;
+    const el = document.getElementById('record-lengths');
+    el.className = 'record-length ' + (allOk ? 'valid' : 'invalid');
+    el.textContent = allOk ? '✓ All records 750 chars' : '✗ ' + info.join('; ');
+}
+
+function downloadFile() {
+    const out = document.getElementById('output-text').value;
+    if (!out) { alert('Generate first'); return; }
+    const blob = new Blob([out], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '1099S_EFILE_' + (document.getElementById('t-year').value||'2025') + '.txt';
+    a.click();
+}
+
+function copyOutput() {
+    const out = document.getElementById('output-text').value;
+    if (!out) { alert('Generate first'); return; }
+    navigator.clipboard.writeText(out).then(() => alert('Copied!'));
+}
+
+function exportJSON() {
+    document.getElementById('json-export').value = JSON.stringify(getAllData(), null, 2);
+}
+
+function copyJSON() {
+    exportJSON();
+    navigator.clipboard.writeText(document.getElementById('json-export').value).then(() => alert('Copied!'));
+}
+
+function downloadEmptyTemplate() {
+    const t = {transmitter:{year:"2025",priorYear:"",tin:"",tcc:"",testFile:"",foreignEntity:"",name:"",nameCont:"",companyName:"",companyNameCont:"",address:"",city:"",state:"",zip:"",contactName:"",phone:"",email:"",seqOverride:""},issuers:[{year:"2025",cfsf:"",tin:"",amountCodes:"25",name1:"",name2:"",transferAgent:"0",address:"",city:"",state:"",zip:"",phone:"",seqOverride:"",payees:[{year:"2025",corrected:"",nameControl:"",tinType:"",tin:"",amt1:0,amt2:0,amt3:0,amt4:0,amt5:0,amt6:0,amt7:0,amt8:0,amt9:0,amtA:0,amtB:0,amtC:0,amtD:0,amtE:0,amtF:0,amtG:0,amtH:0,amtJ:0,foreignCountry:"",name1:"",name2:"",address:"",city:"",state:"",zip:"",propServices:"",closingDate:"",propDesc:"",foreignTransferor:"",specialData:"",stateTax:0,localTax:0,seqOverride:""}]}]};
+    const blob = new Blob([JSON.stringify(t,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '1099S_template.json';
+    a.click();
+}
+
+function importJSON() {
+    const j = document.getElementById('json-import').value;
+    if (!j.trim()) { alert('Paste JSON first'); return; }
+    try {
+        const d = JSON.parse(j);
+        // Populate transmitter
+        const t = d.transmitter || {};
+        ['year','priorYear','tin','tcc','testFile','foreignEntity','name','nameCont','companyName','companyNameCont','address','city','state','zip','contactName','phone','email','seqOverride'].forEach(k => {
+            const el = document.getElementById('t-'+k);
+            if (el) el.value = t[k] || '';
+        });
+        // Clear and rebuild issuers
+        document.getElementById('issuers-container').innerHTML = '';
+        issuerCounter = 0; payeeCounters = {};
+        (d.issuers || []).forEach(iData => {
+            addIssuer();
+            const iEl = document.getElementById('issuer-' + issuerCounter);
+            iEl.querySelector('.a-year').value = iData.year || '2025';
+            iEl.querySelector('.a-cfsf').value = iData.cfsf || '';
+            iEl.querySelector('.a-tin').value = iData.tin || '';
+            iEl.querySelector('.a-amountCodes').value = iData.amountCodes || '25';
+            iEl.querySelector('.a-name1').value = iData.name1 || '';
+            iEl.querySelector('.a-name2').value = iData.name2 || '';
+            iEl.querySelector('.a-transferAgent').value = iData.transferAgent || '0';
+            iEl.querySelector('.a-address').value = iData.address || '';
+            iEl.querySelector('.a-city').value = iData.city || '';
+            iEl.querySelector('.a-state').value = iData.state || '';
+            iEl.querySelector('.a-zip').value = iData.zip || '';
+            iEl.querySelector('.a-phone').value = iData.phone || '';
+            const iid = 'issuer-' + issuerCounter;
+            (iData.payees || []).forEach(pData => {
+                addPayee(iid);
+                const pEl = document.getElementById(iid + '-payee-' + payeeCounters[iid]);
+                ['year','corrected','nameControl','tinType','tin','foreignCountry','name1','name2','address','city','state','zip','propServices','closingDate','propDesc','foreignTransferor','specialData'].forEach(k => {
+                    const el = pEl.querySelector('.b-'+k);
+                    if (el) el.value = pData[k] || '';
+                });
+                ['amt1','amt2','amt3','amt4','amt5','amt6','amt7','amt8','amt9','amtA','amtB','amtC','amtD','amtE','amtF','amtG','amtH','amtJ','stateTax','localTax'].forEach(k => {
+                    const el = pEl.querySelector('.b-'+k);
+                    if (el) el.value = pData[k] || 0;
+                });
+            });
+        });
+        alert('Imported! Check Transmitter and Issuers tabs.');
+    } catch (e) { alert('Invalid JSON: ' + e.message); }
+}
+
+// Initialize
+addIssuer();
+    </script>
+</body>
+</html>
