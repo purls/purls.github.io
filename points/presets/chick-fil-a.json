@@ -1,0 +1,324 @@
+[
+  {
+    "name": "Icedream Cone",
+    "price": 2.09,
+    "points": 200,
+    "icon": "\ud83c\udf66",
+    "category": "Treats"
+  },
+  {
+    "name": "Cookie",
+    "price": 1.85,
+    "points": 300,
+    "icon": "\ud83c\udf6a",
+    "category": "Treats"
+  },
+  {
+    "name": "Brownie",
+    "price": 2.45,
+    "points": 300,
+    "icon": "\ud83d\udfeb",
+    "category": "Treats"
+  },
+  {
+    "name": "Berry Parfait",
+    "price": 5.15,
+    "points": 800,
+    "icon": "\ud83e\uded0",
+    "category": "Treats"
+  },
+  {
+    "name": "Frosted Beverage",
+    "price": 5.09,
+    "points": 800,
+    "icon": "\ud83e\udd64",
+    "category": "Treats"
+  },
+  {
+    "name": "Milkshake",
+    "price": 5.19,
+    "points": 800,
+    "icon": "\ud83e\udd5b",
+    "category": "Treats"
+  },
+  {
+    "name": "Hash Browns",
+    "price": 1.89,
+    "points": 300,
+    "icon": "\ud83e\udd54",
+    "category": "Sides"
+  },
+  {
+    "name": "Small Waffle Fries",
+    "price": 2.59,
+    "points": 300,
+    "icon": "\ud83c\udf5f",
+    "category": "Sides"
+  },
+  {
+    "name": "Kale Crunch Side",
+    "price": 4.59,
+    "points": 400,
+    "icon": "\ud83e\udd6c",
+    "category": "Sides"
+  },
+  {
+    "name": "Medium Waffle Fries",
+    "price": 2.99,
+    "points": 400,
+    "icon": "\ud83c\udf5f",
+    "category": "Sides"
+  },
+  {
+    "name": "Large Waffle Fries",
+    "price": 3.39,
+    "points": 500,
+    "icon": "\ud83c\udf5f",
+    "category": "Sides"
+  },
+  {
+    "name": "Medium Fruit Cup",
+    "price": 4.59,
+    "points": 800,
+    "icon": "\ud83c\udf47",
+    "category": "Sides"
+  },
+  {
+    "name": "Medium Mac",
+    "price": 4.59,
+    "points": 800,
+    "icon": "\ud83e\uddc0",
+    "category": "Sides"
+  },
+  {
+    "name": "Side Salad",
+    "price": 4.59,
+    "points": 800,
+    "icon": "\ud83e\udd57",
+    "category": "Sides"
+  },
+  {
+    "name": "Cup of Soup",
+    "price": 4.49,
+    "points": 800,
+    "icon": "\ud83e\udd63",
+    "category": "Sides"
+  },
+  {
+    "name": "Bowl of Soup",
+    "price": 6.85,
+    "points": 1200,
+    "icon": "\ud83e\udd63",
+    "category": "Sides"
+  },
+  {
+    "name": "Coffee",
+    "price": 2.39,
+    "points": 400,
+    "icon": "\u2615",
+    "category": "Drinks"
+  },
+  {
+    "name": "Iced Tea",
+    "price": 2.69,
+    "points": 400,
+    "icon": "\ud83e\uddca",
+    "category": "Drinks"
+  },
+  {
+    "name": "Soft Drink",
+    "price": 2.69,
+    "points": 400,
+    "icon": "\ud83e\udd64",
+    "category": "Drinks"
+  },
+  {
+    "name": "Iced Coffee",
+    "price": 4.29,
+    "points": 600,
+    "icon": "\u2615",
+    "category": "Drinks"
+  },
+  {
+    "name": "Lemonade",
+    "price": 3.09,
+    "points": 600,
+    "icon": "\ud83c\udf4b",
+    "category": "Drinks"
+  },
+  {
+    "name": "Sunjoy",
+    "price": 3.09,
+    "points": 600,
+    "icon": "\ud83c\udf1e",
+    "category": "Drinks"
+  },
+  {
+    "name": "5 Nuggets",
+    "price": 3.75,
+    "points": 600,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "2 Chicken Strips",
+    "price": 4.25,
+    "points": 600,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "4 Chicken Minis",
+    "price": 5.39,
+    "points": 700,
+    "icon": "\ud83d\udc14",
+    "category": "Entrees"
+  },
+  {
+    "name": "5 Grilled Nuggets",
+    "price": 4.25,
+    "points": 800,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "Chicken Sandwich",
+    "price": 5.89,
+    "points": 800,
+    "icon": "\ud83d\udc14",
+    "category": "Entrees"
+  },
+  {
+    "name": "Spicy Chicken",
+    "price": 6.19,
+    "points": 800,
+    "icon": "\ud83c\udf36\ufe0f",
+    "category": "Entrees"
+  },
+  {
+    "name": "3 Chicken Strips",
+    "price": 6.09,
+    "points": 900,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "8 Nuggets",
+    "price": 5.99,
+    "points": 900,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "8 Grilled Nuggets",
+    "price": 6.75,
+    "points": 1000,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "Deluxe Sandwich",
+    "price": 6.59,
+    "points": 1000,
+    "icon": "\ud83d\udc14",
+    "category": "Entrees"
+  },
+  {
+    "name": "Spicy Deluxe",
+    "price": 6.89,
+    "points": 1000,
+    "icon": "\ud83c\udf36\ufe0f",
+    "category": "Entrees"
+  },
+  {
+    "name": "12 Nuggets",
+    "price": 8.25,
+    "points": 1200,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "4 Chicken Strips",
+    "price": 7.89,
+    "points": 1200,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "Grilled Chicken Sandwich",
+    "price": 7.35,
+    "points": 1200,
+    "icon": "\ud83d\udc14",
+    "category": "Entrees"
+  },
+  {
+    "name": "12 Grilled Nuggets",
+    "price": 9.65,
+    "points": 1500,
+    "icon": "\ud83c\udf57",
+    "category": "Entrees"
+  },
+  {
+    "name": "Cool Wrap",
+    "price": 9.15,
+    "points": 1500,
+    "icon": "\ud83c\udf2f",
+    "category": "Entrees"
+  },
+  {
+    "name": "Grilled Club",
+    "price": 9.45,
+    "points": 1500,
+    "icon": "\ud83e\udd6a",
+    "category": "Entrees"
+  },
+  {
+    "name": "Salad",
+    "price": 10.09,
+    "points": 2000,
+    "icon": "\ud83e\udd57",
+    "category": "Entrees"
+  },
+  {
+    "name": "Chicken Breakfast",
+    "price": 4.25,
+    "points": 700,
+    "icon": "\ud83c\udf05",
+    "category": "Breakfast"
+  },
+  {
+    "name": "Sausage Breakfast",
+    "price": 4.59,
+    "points": 700,
+    "icon": "\ud83c\udf05",
+    "category": "Breakfast"
+  },
+  {
+    "name": "Egg White Grill",
+    "price": 5.69,
+    "points": 900,
+    "icon": "\ud83c\udf73",
+    "category": "Breakfast"
+  },
+  {
+    "name": "Hash Brown Bowl",
+    "price": 5.69,
+    "points": 900,
+    "icon": "\ud83e\udd54",
+    "category": "Breakfast"
+  },
+  {
+    "name": "Hash Burrito",
+    "price": 5.69,
+    "points": 900,
+    "icon": "\ud83c\udf2f",
+    "category": "Breakfast"
+  },
+  {
+    "name": "Meal",
+    "price": 10.55,
+    "points": 2500,
+    "icon": "\ud83c\udf7d\ufe0f",
+    "category": "Meals"
+  }
+]

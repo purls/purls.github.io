@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Point Redemption Optimizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .entry-form {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-field label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .form-field input {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        .form-field input:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .form-field.grow {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .form-field.small {
+            width: 80px;
+        }
+
+        .form-field.medium {
+            width: 140px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .toolbar select {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .toolbar select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .toolbar label {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        .io-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            background-color: #2a2a2a;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3a3a3a;
+        }
+
+        .btn-danger {
+            background-color: #442424;
+        }
+
+        .btn-danger:hover {
+            background-color: #553030;
+        }
+
+        .btn-accent {
+            background-color: #1a4444;
+        }
+
+        .btn-accent:hover {
+            background-color: #226666;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        /* Results */
+        .category-group {
+            margin-bottom: 20px;
+        }
+
+        .category-header {
+            font-size: 14px;
+            color: #4cafac;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .entry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .entry-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 10px 14px;
+            transition: background-color 0.15s;
+        }
+
+        .entry-card:hover {
+            background-color: #222;
+        }
+
+        .entry-rank {
+            font-size: 13px;
+            color: #555;
+            min-width: 28px;
+            text-align: right;
+        }
+
+        .entry-icon {
+            font-size: 22px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .entry-name-block {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .entry-name {
+            font-size: 14px;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .entry-name a {
+            color: #80cccc;
+            text-decoration: none;
+        }
+
+        .entry-name a:hover {
+            text-decoration: underline;
+        }
+
+        .entry-category-tag {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .entry-stats {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .entry-stat {
+            text-align: right;
+        }
+
+        .entry-stat-label {
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        .entry-stat-value {
+            font-size: 13px;
+            color: #b0b0b0;
+        }
+
+        .entry-ratio {
+            text-align: right;
+        }
+
+        .entry-ratio-label {
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        .entry-ratio-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4cafac;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .entry-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            background-color: #2a2a2a;
+            border-radius: 3px;
+        }
+
+        .entry-actions button:hover {
+            background-color: #3a3a3a;
+        }
+
+        .entry-actions .btn-delete {
+            background-color: #3a2222;
+        }
+
+        .entry-actions .btn-delete:hover {
+            background-color: #4a2828;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #555;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 13px;
+            min-height: 18px;
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            min-height: 18px;
+            margin-bottom: 10px;
+        }
+
+        /* Import/Export modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 6px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal h3 {
+            margin: 0 0 12px 0;
+        }
+
+        .modal textarea {
+            flex: 1;
+            min-height: 200px;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Presets panel */
+        .presets-panel {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .presets-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .preset-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background-color: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        .preset-btn:hover {
+            background-color: #3a3a3a;
+        }
+
+        .summary-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .summary-bar span {
+            color: #4cafac;
+        }
+
+        @media (max-width: 640px) {
+            .entry-stats {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .entry-card {
+                flex-wrap: wrap;
+            }
+
+            .form-field.small,
+            .form-field.medium {
+                width: auto;
+                flex: 1;
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Point Redemption Optimizer</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0;">Find which items give you the best value when redeeming with points.</p>
+    <br />
+
+    <!-- Presets -->
+    <div class="presets-panel" id="presetsPanel">
+        <h3>📂 Quick Load a Preset</h3>
+        <div class="preset-list" id="presetList">
+            <span style="color:#555; font-size:13px;">Loading presets...</span>
+        </div>
+    </div>
+
+    <!-- Add/Edit Entry Form -->
+    <div class="entry-form" id="entryForm">
+        <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #888;" id="formTitle">➕ Add Entry</h3>
+        <div class="form-row">
+            <div class="form-field grow">
+                <label for="fieldName">Name *</label>
+                <input type="text" id="fieldName" placeholder="Cheeseburger" />
+            </div>
+            <div class="form-field medium">
+                <label for="fieldPrice">Price ($) *</label>
+                <input type="number" id="fieldPrice" placeholder="3.99" step="0.01" min="0" />
+            </div>
+            <div class="form-field medium">
+                <label for="fieldPoints">Points *</label>
+                <input type="number" id="fieldPoints" placeholder="500" step="1" min="1" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-field small">
+                <label for="fieldIcon">Icon</label>
+                <input type="text" id="fieldIcon" placeholder="🍔" maxlength="4" />
+            </div>
+            <div class="form-field grow">
+                <label for="fieldCategory">Category</label>
+                <input type="text" id="fieldCategory" placeholder="Entree" />
+            </div>
+            <div class="form-field grow">
+                <label for="fieldLink">Link</label>
+                <input type="text" id="fieldLink" placeholder="https://..." />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button id="btnAddEntry">Add Entry</button>
+            <button id="btnCancelEdit" class="btn-secondary" style="display:none;">Cancel</button>
+        </div>
+    </div>
+
+    <div class="info-message" id="infoMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <label for="sortBy">Sort:</label>
+        <select id="sortBy">
+            <option value="ratio-desc">Best Value ($/pt ↓)</option>
+            <option value="ratio-asc">Worst Value ($/pt ↑)</option>
+            <option value="price-asc">Price (Low → High)</option>
+            <option value="price-desc">Price (High → Low)</option>
+            <option value="points-asc">Points (Low → High)</option>
+            <option value="points-desc">Points (High → Low)</option>
+            <option value="name-asc">Name (A → Z)</option>
+            <option value="name-desc">Name (Z → A)</option>
+        </select>
+
+        <label for="groupBy">Group:</label>
+        <select id="groupBy">
+            <option value="none">No Grouping</option>
+            <option value="category">By Category</option>
+        </select>
+
+        <div class="spacer"></div>
+
+        <div class="io-buttons">
+            <button id="btnImport" class="btn-secondary">Import</button>
+            <button id="btnExport" class="btn-secondary">Export</button>
+            <button id="btnClearAll" class="btn-danger">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-bar" id="summaryBar"></div>
+
+    <!-- Entry List -->
+    <div id="entryContainer"></div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3>Import Entries (JSON)</h3>
+            <textarea id="importTextarea"
+                placeholder='Paste JSON array here, e.g. [{"name":"Foo","price":3.99,"points":500}]'></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btnImportCancel">Cancel</button>
+                <button id="btnImportConfirm">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <h3>Export Entries (JSON)</h3>
+            <textarea id="exportTextarea" readonly></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btnExportClose">Close</button>
+                <button id="btnExportCopy">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <p>
+        Enter items with their dollar price and point cost to find which ones give you the most value
+        per point. A higher $/pt ratio means you save more money by redeeming that item with points.
+    </p>
+    <p>
+        Use <strong>Import/Export</strong> to save and reload your lists as JSON.
+        Presets above load pre-made lists for specific stores.
+    </p>
+
+    <script>
+        // ─── State ───
+        let entries = [];
+        let editingIndex = -1;
+
+        // ─── DOM ───
+        const fieldName = document.getElementById('fieldName');
+        const fieldPrice = document.getElementById('fieldPrice');
+        const fieldPoints = document.getElementById('fieldPoints');
+        const fieldIcon = document.getElementById('fieldIcon');
+        const fieldCategory = document.getElementById('fieldCategory');
+        const fieldLink = document.getElementById('fieldLink');
+        const btnAddEntry = document.getElementById('btnAddEntry');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+        const formTitle = document.getElementById('formTitle');
+        const sortBy = document.getElementById('sortBy');
+        const groupBy = document.getElementById('groupBy');
+        const entryContainer = document.getElementById('entryContainer');
+        const summaryBar = document.getElementById('summaryBar');
+        const infoMessage = document.getElementById('infoMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const importModal = document.getElementById('importModal');
+        const exportModal = document.getElementById('exportModal');
+        const importTextarea = document.getElementById('importTextarea');
+        const exportTextarea = document.getElementById('exportTextarea');
+        const presetList = document.getElementById('presetList');
+
+        // ─── Helpers ───
+        function showInfo(msg) {
+            infoMessage.textContent = msg;
+            errorMessage.textContent = '';
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            infoMessage.textContent = '';
+        }
+
+        function clearMessages() {
+            infoMessage.textContent = '';
+            errorMessage.textContent = '';
+        }
+
+        function ratio(entry) {
+            return entry.price / entry.points;
+        }
+
+        // ─── Sorting ───
+        function sortEntries(list) {
+            const [field, dir] = sortBy.value.split('-');
+            const mult = dir === 'desc' ? -1 : 1;
+
+            return [...list].sort((a, b) => {
+                let va, vb;
+                switch (field) {
+                    case 'ratio':
+                        va = ratio(a);
+                        vb = ratio(b);
+                        break;
+                    case 'price':
+                        va = a.price;
+                        vb = b.price;
+                        break;
+                    case 'points':
+                        va = a.points;
+                        vb = b.points;
+                        break;
+                    case 'name':
+                        va = a.name.toLowerCase();
+                        vb = b.name.toLowerCase();
+                        return mult * va.localeCompare(vb);
+                    default:
+                        return 0;
+                }
+                return mult * (va - vb);
+            });
+        }
+
+        // ─── Rendering ───
+        function render() {
+            entryContainer.innerHTML = '';
+
+            if (entries.length === 0) {
+                entryContainer.innerHTML = '<div class="empty-state">No entries yet. Add items above to get started, or load a preset.</div>';
+                summaryBar.innerHTML = '';
+                return;
+            }
+
+            // Summary
+            const totalItems = entries.length;
+            const categories = new Set(entries.map(e => e.category).filter(Boolean));
+            const bestEntry = [...entries].sort((a, b) => ratio(b) - ratio(a))[0];
+            summaryBar.innerHTML = `
+                Items: <span>${totalItems}</span>
+                ${categories.size > 0 ? `&nbsp;·&nbsp; Categories: <span>${categories.size}</span>` : ''}
+                &nbsp;·&nbsp; Best value: <span>${bestEntry.icon || bestEntry.name} (${(ratio(bestEntry) * 100).toFixed(3)}¢/pt)</span>
+            `;
+
+            const doGroup = groupBy.value === 'category';
+
+            if (doGroup) {
+                // Group by category
+                const groups = {};
+                const uncategorized = [];
+
+                entries.forEach((e, idx) => {
+                    const entry = { ...e, _idx: idx };
+                    if (e.category) {
+                        if (!groups[e.category]) groups[e.category] = [];
+                        groups[e.category].push(entry);
+                    } else {
+                        uncategorized.push(entry);
+                    }
+                });
+
+                const groupNames = Object.keys(groups).sort();
+
+                for (const name of groupNames) {
+                    const sorted = sortEntries(groups[name]);
+                    renderGroup(name, sorted);
+                }
+
+                if (uncategorized.length > 0) {
+                    const sorted = sortEntries(uncategorized);
+                    renderGroup('Uncategorized', sorted);
+                }
+            } else {
+                // Flat list
+                const indexed = entries.map((e, idx) => ({ ...e, _idx: idx }));
+                const sorted = sortEntries(indexed);
+                renderGroup(null, sorted);
+            }
+        }
+
+        function renderGroup(title, items) {
+            const group = document.createElement('div');
+            group.className = 'category-group';
+
+            if (title) {
+                const header = document.createElement('div');
+                header.className = 'category-header';
+                header.textContent = `${title} (${items.length})`;
+                group.appendChild(header);
+            }
+
+            const list = document.createElement('div');
+            list.className = 'entry-list';
+
+            items.forEach((entry, rank) => {
+                const card = document.createElement('div');
+                card.className = 'entry-card';
+
+                const r = ratio(entry);
+                const centsPerPoint = (r * 100).toFixed(3);
+
+                const nameContent = entry.link
+                    ? `<a href="${escapeHtml(entry.link)}" target="_blank" rel="noopener">${escapeHtml(entry.name)}</a>`
+                    : escapeHtml(entry.name);
+
+                card.innerHTML = `
+                    <div class="entry-rank">#${rank + 1}</div>
+                    <div class="entry-icon">${entry.icon || ''}</div>
+                    <div class="entry-name-block">
+                        <div class="entry-name">${nameContent}</div>
+                        ${entry.category && groupBy.value !== 'category' ? `<div class="entry-category-tag">${escapeHtml(entry.category)}</div>` : ''}
+                    </div>
+                    <div class="entry-stats">
+                        <div class="entry-stat">
+                            <div class="entry-stat-label">Price</div>
+                            <div class="entry-stat-value">$${entry.price.toFixed(2)}</div>
+                        </div>
+                        <div class="entry-stat">
+                            <div class="entry-stat-label">Points</div>
+                            <div class="entry-stat-value">${entry.points.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="entry-ratio">
+                        <div class="entry-ratio-label">¢ / pt</div>
+                        <div class="entry-ratio-value">${centsPerPoint}</div>
+                    </div>
+                    <div class="entry-actions">
+                        <button class="btn-edit" data-idx="${entry._idx}">✏️</button>
+                        <button class="btn-delete" data-idx="${entry._idx}">✕</button>
+                    </div>
+                `;
+
+                list.appendChild(card);
+            });
+
+            group.appendChild(list);
+            entryContainer.appendChild(group);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ─── Entry CRUD ───
+        btnAddEntry.addEventListener('click', () => {
+            const name = fieldName.value.trim();
+            const price = parseFloat(fieldPrice.value);
+            const points = parseInt(fieldPoints.value);
+            const icon = fieldIcon.value.trim() || null;
+            const category = fieldCategory.value.trim() || null;
+            const link = fieldLink.value.trim() || null;
+
+            if (!name) return showError('Name is required.');
+            if (isNaN(price) || price < 0) return showError('Valid price is required.');
+            if (isNaN(points) || points < 1) return showError('Points must be at least 1.');
+
+            const entry = { name, price, points, icon, category, link };
+
+            if (editingIndex >= 0) {
+                entries[editingIndex] = entry;
+                showInfo(`Updated "${name}".`);
+                cancelEdit();
+            } else {
+                entries.push(entry);
+                showInfo(`Added "${name}".`);
+            }
+
+            clearForm();
+            render();
+        });
+
+        function clearForm() {
+            fieldName.value = '';
+            fieldPrice.value = '';
+            fieldPoints.value = '';
+            fieldIcon.value = '';
+            fieldCategory.value = '';
+            fieldLink.value = '';
+        }
+
+        function startEdit(idx) {
+            const e = entries[idx];
+            if (!e) return;
+            editingIndex = idx;
+            fieldName.value = e.name;
+            fieldPrice.value = e.price;
+            fieldPoints.value = e.points;
+            fieldIcon.value = e.icon || '';
+            fieldCategory.value = e.category || '';
+            fieldLink.value = e.link || '';
+            btnAddEntry.textContent = 'Save Changes';
+            btnCancelEdit.style.display = '';
+            formTitle.textContent = '✏️ Edit Entry';
+            fieldName.focus();
+        }
+
+        function cancelEdit() {
+            editingIndex = -1;
+            btnAddEntry.textContent = 'Add Entry';
+            btnCancelEdit.style.display = 'none';
+            formTitle.textContent = '➕ Add Entry';
+        }
+
+        btnCancelEdit.addEventListener('click', () => {
+            cancelEdit();
+            clearForm();
+        });
+
+        // Delegated click for edit/delete buttons
+        entryContainer.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.btn-edit');
+            const deleteBtn = e.target.closest('.btn-delete');
+
+            if (editBtn) {
+                startEdit(parseInt(editBtn.dataset.idx));
+            } else if (deleteBtn) {
+                const idx = parseInt(deleteBtn.dataset.idx);
+                const name = entries[idx]?.name;
+                entries.splice(idx, 1);
+                if (editingIndex === idx) cancelEdit();
+                else if (editingIndex > idx) editingIndex--;
+                showInfo(`Removed "${name}".`);
+                render();
+            }
+        });
+
+        // ─── Sort / Group ───
+        sortBy.addEventListener('change', render);
+        groupBy.addEventListener('change', render);
+
+        // ─── Import / Export ───
+        document.getElementById('btnImport').addEventListener('click', () => {
+            importTextarea.value = '';
+            importModal.classList.add('active');
+            importTextarea.focus();
+        });
+
+        document.getElementById('btnImportCancel').addEventListener('click', () => {
+            importModal.classList.remove('active');
+        });
+
+        document.getElementById('btnImportConfirm').addEventListener('click', () => {
+            try {
+                const data = JSON.parse(importTextarea.value);
+                loadEntries(data);
+                importModal.classList.remove('active');
+            } catch (err) {
+                showError('Invalid JSON: ' + err.message);
+                importModal.classList.remove('active');
+            }
+        });
+
+        document.getElementById('btnExport').addEventListener('click', () => {
+            // Export only the meaningful fields (strip _idx etc.)
+            const clean = entries.map(({ name, price, points, icon, category, link }) => {
+                const obj = { name, price, points };
+                if (icon) obj.icon = icon;
+                if (category) obj.category = category;
+                if (link) obj.link = link;
+                return obj;
+            });
+            exportTextarea.value = JSON.stringify(clean, null, 2);
+            exportModal.classList.add('active');
+        });
+
+        document.getElementById('btnExportClose').addEventListener('click', () => {
+            exportModal.classList.remove('active');
+        });
+
+        document.getElementById('btnExportCopy').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(exportTextarea.value);
+                showInfo('Copied to clipboard!');
+                exportModal.classList.remove('active');
+            } catch {
+                showError('Failed to copy.');
+            }
+        });
+
+        // Close modals on overlay click
+        [importModal, exportModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+        });
+
+        // ─── Clear All ───
+        document.getElementById('btnClearAll').addEventListener('click', () => {
+            if (entries.length === 0) return;
+            if (confirm('Clear all entries?')) {
+                entries = [];
+                cancelEdit();
+                clearForm();
+                clearMessages();
+                render();
+            }
+        });
+
+        // ─── Load entries from data ───
+        function loadEntries(data) {
+            if (!Array.isArray(data)) {
+                showError('Expected a JSON array.');
+                return;
+            }
+
+            const valid = [];
+            for (const item of data) {
+                if (!item.name || item.price == null || item.points == null) continue;
+                valid.push({
+                    name: String(item.name),
+                    price: parseFloat(item.price),
+                    points: parseInt(item.points),
+                    icon: item.icon ? String(item.icon) : null,
+                    category: item.category ? String(item.category) : null,
+                    link: item.link ? String(item.link) : null,
+                });
+            }
+
+            if (valid.length === 0) {
+                showError('No valid entries found in the data.');
+                return;
+            }
+
+            entries = valid;
+            cancelEdit();
+            clearForm();
+            showInfo(`Loaded ${valid.length} entries.`);
+            render();
+        }
+
+        // ─── Presets ───
+        const PRESETS_DIR = 'presets/';
+
+        async function loadPresetIndex() {
+            try {
+                const res = await fetch(PRESETS_DIR + 'index.json');
+                if (!res.ok) throw new Error();
+                const presets = await res.json();
+
+                if (!Array.isArray(presets) || presets.length === 0) {
+                    presetList.innerHTML = '<span style="color:#555; font-size:13px;">No presets available yet.</span>';
+                    return;
+                }
+
+                presetList.innerHTML = '';
+                for (const preset of presets) {
+                    const btn = document.createElement('button');
+                    btn.className = 'preset-btn';
+                    btn.textContent = preset.label || preset.file;
+                    btn.title = preset.description || '';
+                    btn.addEventListener('click', () => loadPresetFile(preset.file, preset.label || preset.file));
+                    presetList.appendChild(btn);
+                }
+            } catch {
+                presetList.innerHTML = '<span style="color:#555; font-size:13px;">No presets available yet.</span>';
+            }
+        }
+
+        async function loadPresetFile(filename, label) {
+            try {
+                const res = await fetch(PRESETS_DIR + filename);
+                if (!res.ok) throw new Error('Could not load preset.');
+                const data = await res.json();
+                loadEntries(data);
+                showInfo(`Loaded preset: ${label}`);
+            } catch (err) {
+                showError('Failed to load preset: ' + err.message);
+            }
+        }
+
+        // ─── Init ───
+        loadPresetIndex();
+        render();
+    </script>
+</body>
+
+</html>

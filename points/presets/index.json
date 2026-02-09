@@ -1,0 +1,12 @@
+[
+  {
+    "file": "chick-fil-a.json",
+    "label": "Chick-fil-A",
+    "description": "Chick-fil-A Rewards menu with point redemption values."
+  },
+  {
+    "file": "example.json",
+    "label": "Example Store",
+    "description": "A sample rewards menu to demonstrate the tool."
+  }
+]

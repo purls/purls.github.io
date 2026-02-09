@@ -1,0 +1,5 @@
+[
+  { "name": "Foo", "price": 3.99, "points": 500, "category": "Misc" },
+  { "name": "Bar", "price": 1.29, "points": 100, "category": "Misc" },
+  { "name": "Baz", "price": 12.99, "points": 1500, "category": "Misc" }
+]
