@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Replace</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Scope toggle */
+        .scope-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 12px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .scope-bar label {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .scope-toggle {
+            display: flex;
+            gap: 0;
+        }
+
+        .scope-toggle button {
+            padding: 5px 14px;
+            font-size: 13px;
+            border-radius: 0;
+            background-color: #2a2a2a;
+            color: #888;
+            border: 1px solid #3d3d3d;
+        }
+
+        .scope-toggle button:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+
+        .scope-toggle button:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .scope-toggle button.active {
+            background-color: #244444;
+            color: #e0e0e0;
+            border-color: #4cafac;
+        }
+
+        /* Pipeline */
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pipeline-header h2 {
+            margin: 0;
+        }
+
+        .pipeline-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pipeline-actions button {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        #addOperation {
+            background-color: #2a5a3a;
+        }
+
+        #addOperation:hover {
+            background-color: #357a4a;
+        }
+
+        .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 50px;
+        }
+
+        .pipeline-empty {
+            color: #555;
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+            border: 1px dashed #333;
+            border-radius: 4px;
+        }
+
+        /* Operation card */
+        .op-card {
+            background-color: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 10px 12px;
+            transition: border-color 0.2s;
+        }
+
+        .op-card:hover {
+            border-color: #3a3a3a;
+        }
+
+        .op-card.flow-control {
+            border-left: 3px solid #b08840;
+        }
+
+        .op-card.flow-control:hover {
+            border-color: #3a3a3a;
+            border-left-color: #d0a850;
+        }
+
+        .op-card.disabled {
+            opacity: 0.45;
+        }
+
+        .op-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .op-card-header .drag-handle {
+            cursor: grab;
+            color: #555;
+            font-size: 14px;
+            user-select: none;
+            padding: 2px 4px;
+        }
+
+        .op-card-header .drag-handle:hover {
+            color: #888;
+        }
+
+        .op-card-header .op-number {
+            color: #4cafac;
+            font-size: 12px;
+            min-width: 20px;
+        }
+
+        .op-type-select {
+            flex: 1;
+        }
+
+        .op-card-header .op-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .op-actions button {
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+            background-color: #2a2a2a;
+            color: #888;
+        }
+
+        .op-actions button:hover {
+            color: #e0e0e0;
+        }
+
+        .op-actions .op-remove {
+            background-color: #3a2020;
+            color: #c66;
+        }
+
+        .op-actions .op-remove:hover {
+            background-color: #4a2828;
+            color: #f88;
+        }
+
+        .op-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 32px;
+        }
+
+        .op-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .op-row label {
+            color: #888;
+            font-size: 12px;
+            min-width: 50px;
+        }
+
+        .op-row input[type="text"],
+        .op-row input[type="number"] {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .op-row input[type="text"] {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .op-row input[type="number"] {
+            width: 70px;
+        }
+
+        .op-row select {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .op-row input[type="checkbox"] {
+            accent-color: #4cafac;
+        }
+
+        .op-row .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #aaa;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Condition */
+        .condition-section {
+            border-top: 1px solid #2a2a2a;
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .condition-toggle {
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .condition-toggle:hover {
+            color: #aaa;
+        }
+
+        .condition-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .condition-row select,
+        .condition-row input {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .condition-row input[type="text"] {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .condition-row input[type="number"] {
+            width: 70px;
+        }
+
+        /* Input/Output area */
+        .io-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .io-section h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .io-section textarea {
+            min-height: 200px;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 13px;
+        }
+
+        .io-stats {
+            font-size: 11px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .run-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #swapIO {
+            padding: 8px 15px;
+            border-radius: 4px;
+            background-color: #2a3a5a;
+        }
+
+        #swapIO:hover {
+            background-color: #3a4a6a;
+        }
+
+        #runPipeline {
+            padding: 8px 20px;
+            background-color: #2a5a3a;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        #runPipeline:hover {
+            background-color: #357a4a;
+        }
+
+        #copyOutput {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        #clearAll {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        .checkbox-inline {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .checkbox-inline input {
+            accent-color: #4cafac;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 700px) {
+            .io-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Add operation dropdown */
+        .add-op-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .add-op-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            min-width: 220px;
+            z-index: 100;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .add-op-menu.show {
+            display: block;
+        }
+
+        .add-op-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 7px 12px;
+            font-size: 12px;
+            background: none;
+            color: #ccc;
+            border-radius: 0;
+        }
+
+        .add-op-menu button:hover {
+            background-color: #2a2a2a;
+        }
+
+        .add-op-menu .menu-divider {
+            border-top: 1px solid #333;
+            margin: 4px 0;
+        }
+
+        .add-op-menu .menu-label {
+            padding: 5px 12px;
+            font-size: 11px;
+            color: #555;
+            pointer-events: none;
+        }
+
+        /* Dragging */
+        .op-card.dragging {
+            opacity: 0.4;
+        }
+
+        .op-card.drag-over {
+            border-color: #4cafac;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Advanced Replace</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0;">Build a pipeline of text operations. Each step feeds into the next.</p>
+    <br />
+
+    <div class="main-layout">
+        <!-- Scope toggle -->
+        <div class="scope-bar">
+            <label>Scope:</label>
+            <div class="scope-toggle">
+                <button class="active" data-scope="line">Per Line</button>
+                <button data-scope="whole">Whole String</button>
+            </div>
+            <span style="color: #555; font-size: 12px;" id="scopeHint">Each operation runs on each line
+                individually</span>
+        </div>
+
+        <!-- Pipeline -->
+        <div>
+            <div class="pipeline-header">
+                <h2 style="font-size: 16px;">Pipeline</h2>
+                <div class="pipeline-actions">
+                    <button id="clearPipeline" style="background-color: #3a2020;">Clear All Ops</button>
+                    <div class="add-op-dropdown">
+                        <button id="addOperation">+ Add Operation</button>
+                        <div class="add-op-menu" id="addOpMenu">
+                            <div class="menu-label">Text Transform</div>
+                            <button data-op="trim">Trim</button>
+                            <button data-op="replace">Replace</button>
+                            <button data-op="prepend">Prepend</button>
+                            <button data-op="append">Append</button>
+                            <button data-op="insert">Insert at Position</button>
+                            <button data-op="wrap">Wrap (Prefix + Suffix)</button>
+                            <button data-op="case">Change Case</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Filter &amp; Deduplicate</div>
+                            <button data-op="charFilter">Character/Substring Filter</button>
+                            <button data-op="unique">Unique / Distinct</button>
+                            <button data-op="blankLines">Blank Line Management</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Reorder</div>
+                            <button data-op="sort">Sort</button>
+                            <button data-op="reverse">Reverse</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Numbering &amp; Padding</div>
+                            <button data-op="number">Numbering</button>
+                            <button data-op="pad">Pad / Align</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Split &amp; Join</div>
+                            <button data-op="split">Split</button>
+                            <button data-op="join">Join</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Encode / Decode</div>
+                            <button data-op="encode">Encode / Decode</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Extract</div>
+                            <button data-op="extract">Extract (Regex)</button>
+                            <div class="menu-divider"></div>
+                            <div class="menu-label">Flow Control</div>
+                            <button data-op="deleteLine">Delete Line</button>
+                            <button data-op="skip">Skip Remaining</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pipeline" id="pipeline">
+                <div class="pipeline-empty">No operations added. Click <strong>+ Add Operation</strong> to start
+                    building your pipeline.</div>
+            </div>
+        </div>
+
+        <!-- Run bar -->
+        <div class="run-bar">
+            <button id="runPipeline">▶ Run Pipeline</button>
+            <button id="copyOutput">Copy Output</button>
+            <button id="swapIO" title="Swap input ↔ output (feed output back as input)">⇄ Swap</button>
+            <button id="clearAll">Clear All</button>
+            <label class="checkbox-inline">
+                <input type="checkbox" id="autoRun"> Auto-run on change
+            </label>
+            <span style="flex:1;"></span>
+            <button id="exportPipeline" title="Export pipeline as JSON"
+                style="font-size:12px; padding:6px 10px; border-radius:4px;">Export</button>
+            <button id="importPipeline" title="Import pipeline from JSON"
+                style="font-size:12px; padding:6px 10px; border-radius:4px;">Import</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;">
+        </div>
+        <div class="info-message" id="infoMessage"></div>
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Input / Output -->
+        <div class="io-section">
+            <div>
+                <h3>Input</h3>
+                <textarea id="textInput" placeholder="Paste or type your text here..."></textarea>
+                <div class="io-stats" id="inputStats">0 lines, 0 chars</div>
+            </div>
+            <div>
+                <h3>Output</h3>
+                <textarea id="textOutput" readonly placeholder="Output will appear here..."></textarea>
+                <div class="io-stats" id="outputStats">0 lines, 0 chars</div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+    <p>
+        Build a chain of text operations that execute in order. Each operation's output feeds into the next.
+        Use <strong>Per Line</strong> mode to process each line individually, or <strong>Whole String</strong> to treat
+        the input as one block.
+        Every operation supports optional conditions (if contains, if length &gt;, etc.) to selectively apply.
+        Press <strong>Ctrl+Enter</strong> to run the pipeline. Use <strong>⇄ Swap</strong> to feed the output back as
+        input.
+        <strong>Export/Import</strong> lets you save and reload pipeline configurations as JSON.
+    </p>
+
+    <script>
+        // State
+        let scope = 'line'; // 'line' or 'whole'
+        let operations = [];
+        let opIdCounter = 0;
+
+        // DOM
+        const textInput = document.getElementById('textInput');
+        const textOutput = document.getElementById('textOutput');
+        const pipelineEl = document.getElementById('pipeline');
+        const addOpBtn = document.getElementById('addOperation');
+        const addOpMenu = document.getElementById('addOpMenu');
+        const infoMsg = document.getElementById('infoMessage');
+        const errorMsg = document.getElementById('errorMessage');
+        const inputStats = document.getElementById('inputStats');
+        const outputStats = document.getElementById('outputStats');
+        const autoRunCb = document.getElementById('autoRun');
+        const scopeHint = document.getElementById('scopeHint');
+
+        // Operation definitions
+        const OP_DEFS = {
+            trim: {
+                label: 'Trim',
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Mode:</label>
+                        <select data-field="mode">
+                            <option value="both" ${op.mode === 'both' ? 'selected' : ''}>Both sides</option>
+                            <option value="leading" ${op.mode === 'leading' ? 'selected' : ''}>Leading only</option>
+                            <option value="trailing" ${op.mode === 'trailing' ? 'selected' : ''}>Trailing only</option>
+                            <option value="chars" ${op.mode === 'chars' ? 'selected' : ''}>Specific characters</option>
+                        </select>
+                    </div>
+                    ${op.mode === 'chars' ? `<div class="op-row"><label>Chars:</label><input type="text" data-field="chars" value="${esc(op.chars || '')}" placeholder="Characters to trim"></div>` : ''}
+                `,
+                defaults: { mode: 'both', chars: '' },
+                run: (text, op) => {
+                    if (op.mode === 'both') return text.trim();
+                    if (op.mode === 'leading') return text.replace(/^\s+/, '');
+                    if (op.mode === 'trailing') return text.replace(/\s+$/, '');
+                    if (op.mode === 'chars' && op.chars) {
+                        const escaped = escRegex(op.chars);
+                        const charClass = `[${escaped}]`;
+                        let r = text;
+                        r = r.replace(new RegExp(`^${charClass}+`), '');
+                        r = r.replace(new RegExp(`${charClass}+$`), '');
+                        return r;
+                    }
+                    return text;
+                }
+            },
+            replace: {
+                label: 'Replace',
+                fields: (op) => `
+                    <div class="op-row"><label>Find:</label><input type="text" data-field="find" value="${esc(op.find || '')}" placeholder="Search string"></div>
+                    <div class="op-row"><label>Replace:</label><input type="text" data-field="replaceWith" value="${esc(op.replaceWith || '')}" placeholder="Replacement"></div>
+                    <div class="op-row">
+                        <label class="checkbox-label"><input type="checkbox" data-field="caseSensitive" ${op.caseSensitive ? 'checked' : ''}> Case sensitive</label>
+                        <label class="checkbox-label"><input type="checkbox" data-field="useRegex" ${op.useRegex ? 'checked' : ''}> Regex</label>
+                        <label class="checkbox-label"><input type="checkbox" data-field="firstOnly" ${op.firstOnly ? 'checked' : ''}> First only</label>
+                    </div>
+                `,
+                defaults: { find: '', replaceWith: '', caseSensitive: true, useRegex: false, firstOnly: false },
+                run: (text, op) => {
+                    if (!op.find) return text;
+                    const flags = (op.caseSensitive ? '' : 'i') + (op.firstOnly ? '' : 'g');
+                    const pattern = op.useRegex ? op.find : escRegex(op.find);
+                    try {
+                        return text.replace(new RegExp(pattern, flags), op.replaceWith || '');
+                    } catch (e) {
+                        return text;
+                    }
+                }
+            },
+            prepend: {
+                label: 'Prepend',
+                fields: (op) => `<div class="op-row"><label>Text:</label><input type="text" data-field="text" value="${esc(op.text || '')}" placeholder="Text to prepend"></div>`,
+                defaults: { text: '' },
+                run: (text, op) => (op.text || '') + text
+            },
+            append: {
+                label: 'Append',
+                fields: (op) => `<div class="op-row"><label>Text:</label><input type="text" data-field="text" value="${esc(op.text || '')}" placeholder="Text to append"></div>`,
+                defaults: { text: '' },
+                run: (text, op) => text + (op.text || '')
+            },
+            insert: {
+                label: 'Insert at Position',
+                fields: (op) => `
+                    <div class="op-row"><label>Text:</label><input type="text" data-field="text" value="${esc(op.text || '')}" placeholder="Text to insert"></div>
+                    <div class="op-row"><label>Position:</label><input type="number" data-field="position" value="${op.position ?? 0}" min="0">
+                        <label class="checkbox-label"><input type="checkbox" data-field="fromEnd" ${op.fromEnd ? 'checked' : ''}> From end</label>
+                    </div>
+                `,
+                defaults: { text: '', position: 0, fromEnd: false },
+                run: (text, op) => {
+                    const pos = op.fromEnd ? Math.max(0, text.length - (op.position || 0)) : Math.min(text.length, op.position || 0);
+                    return text.slice(0, pos) + (op.text || '') + text.slice(pos);
+                }
+            },
+            wrap: {
+                label: 'Wrap',
+                fields: (op) => `
+                    <div class="op-row"><label>Prefix:</label><input type="text" data-field="prefix" value="${esc(op.prefix || '')}" placeholder="Before text"></div>
+                    <div class="op-row"><label>Suffix:</label><input type="text" data-field="suffix" value="${esc(op.suffix || '')}" placeholder="After text"></div>
+                `,
+                defaults: { prefix: '', suffix: '' },
+                run: (text, op) => (op.prefix || '') + text + (op.suffix || '')
+            },
+            case: {
+                label: 'Change Case',
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>To:</label>
+                        <select data-field="mode">
+                            <option value="upper" ${op.mode === 'upper' ? 'selected' : ''}>UPPER CASE</option>
+                            <option value="lower" ${op.mode === 'lower' ? 'selected' : ''}>lower case</option>
+                            <option value="title" ${op.mode === 'title' ? 'selected' : ''}>Title Case</option>
+                            <option value="sentence" ${op.mode === 'sentence' ? 'selected' : ''}>Sentence case</option>
+                            <option value="toggle" ${op.mode === 'toggle' ? 'selected' : ''}>tOGGLE cASE</option>
+                            <option value="camel" ${op.mode === 'camel' ? 'selected' : ''}>camelCase</option>
+                            <option value="pascal" ${op.mode === 'pascal' ? 'selected' : ''}>PascalCase</option>
+                            <option value="snake" ${op.mode === 'snake' ? 'selected' : ''}>snake_case</option>
+                            <option value="kebab" ${op.mode === 'kebab' ? 'selected' : ''}>kebab-case</option>
+                            <option value="constant" ${op.mode === 'constant' ? 'selected' : ''}>CONSTANT_CASE</option>
+                        </select>
+                    </div>
+                `,
+                defaults: { mode: 'upper' },
+                run: (text, op) => {
+                    switch (op.mode) {
+                        case 'upper': return text.toUpperCase();
+                        case 'lower': return text.toLowerCase();
+                        case 'title': return text.replace(/\b\w/g, c => c.toUpperCase());
+                        case 'sentence': return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+                        case 'toggle': return [...text].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join('');
+                        case 'camel': return toWords(text).map((w, i) => i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+                        case 'pascal': return toWords(text).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+                        case 'snake': return toWords(text).map(w => w.toLowerCase()).join('_');
+                        case 'kebab': return toWords(text).map(w => w.toLowerCase()).join('-');
+                        case 'constant': return toWords(text).map(w => w.toUpperCase()).join('_');
+                        default: return text;
+                    }
+                }
+            },
+            charFilter: {
+                label: 'Char/Substring Filter',
+                fields: (op) => `
+                    <div class="op-row"><label>List:</label><input type="text" data-field="list" value="${esc(op.list || '')}" placeholder="Comma-separated: a,e,i,o,u"></div>
+                    <div class="op-row">
+                        <label>Action:</label>
+                        <select data-field="action">
+                            <option value="delete" ${op.action === 'delete' ? 'selected' : ''}>Delete matching</option>
+                            <option value="keep" ${op.action === 'keep' ? 'selected' : ''}>Keep only matching</option>
+                        </select>
+                        <label>Treat as:</label>
+                        <select data-field="treatAs">
+                            <option value="chars" ${op.treatAs === 'chars' ? 'selected' : ''}>Individual characters</option>
+                            <option value="substrings" ${op.treatAs === 'substrings' ? 'selected' : ''}>Substrings</option>
+                        </select>
+                    </div>
+                `,
+                defaults: { list: '', action: 'delete', treatAs: 'chars' },
+                run: (text, op) => {
+                    if (!op.list) return text;
+                    const items = op.list.split(',').map(s => s.trim());
+                    if (op.treatAs === 'chars') {
+                        const charSet = new Set(items.join('').split(''));
+                        if (op.action === 'delete') return [...text].filter(c => !charSet.has(c)).join('');
+                        return [...text].filter(c => charSet.has(c)).join('');
+                    } else {
+                        if (op.action === 'delete') {
+                            let r = text;
+                            items.forEach(sub => { if (sub) r = r.split(sub).join(''); });
+                            return r;
+                        }
+                        // keep only: extract all occurrences in order
+                        let result = '';
+                        let remaining = text;
+                        while (remaining.length > 0) {
+                            let found = false;
+                            for (const sub of items) {
+                                if (sub && remaining.startsWith(sub)) {
+                                    result += sub;
+                                    remaining = remaining.slice(sub.length);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) remaining = remaining.slice(1);
+                        }
+                        return result;
+                    }
+                }
+            },
+            unique: {
+                label: 'Unique / Distinct',
+                isLineLevel: false, // always operates on the full set
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Mode:</label>
+                        <select data-field="mode">
+                            <option value="lines" ${op.mode === 'lines' ? 'selected' : ''}>Deduplicate lines</option>
+                            <option value="charsPerLine" ${op.mode === 'charsPerLine' ? 'selected' : ''}>Unique chars per line</option>
+                        </select>
+                        <label class="checkbox-label"><input type="checkbox" data-field="caseInsensitive" ${op.caseInsensitive ? 'checked' : ''}> Case insensitive</label>
+                    </div>
+                `,
+                defaults: { mode: 'lines', caseInsensitive: false },
+                runBulk: (lines, op) => {
+                    if (op.mode === 'lines') {
+                        const seen = new Set();
+                        return lines.filter(line => {
+                            const key = op.caseInsensitive ? line.toLowerCase() : line;
+                            if (seen.has(key)) return false;
+                            seen.add(key);
+                            return true;
+                        });
+                    }
+                    // chars per line
+                    return lines.map(line => {
+                        const seen = new Set();
+                        return [...line].filter(c => {
+                            const key = op.caseInsensitive ? c.toLowerCase() : c;
+                            if (seen.has(key)) return false;
+                            seen.add(key);
+                            return true;
+                        }).join('');
+                    });
+                }
+            },
+            blankLines: {
+                label: 'Blank Lines',
+                isLineLevel: false,
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Action:</label>
+                        <select data-field="action">
+                            <option value="removeEmpty" ${op.action === 'removeEmpty' ? 'selected' : ''}>Remove empty lines</option>
+                            <option value="removeWhitespace" ${op.action === 'removeWhitespace' ? 'selected' : ''}>Remove whitespace-only lines</option>
+                            <option value="collapse" ${op.action === 'collapse' ? 'selected' : ''}>Collapse consecutive blanks to one</option>
+                            <option value="addBetween" ${op.action === 'addBetween' ? 'selected' : ''}>Add blank line between every line</option>
+                        </select>
+                    </div>
+                `,
+                defaults: { action: 'removeEmpty' },
+                runBulk: (lines, op) => {
+                    switch (op.action) {
+                        case 'removeEmpty': return lines.filter(l => l !== '');
+                        case 'removeWhitespace': return lines.filter(l => l.trim() !== '');
+                        case 'collapse': {
+                            const result = [];
+                            let prevBlank = false;
+                            for (const l of lines) {
+                                const blank = l.trim() === '';
+                                if (blank && prevBlank) continue;
+                                result.push(l);
+                                prevBlank = blank;
+                            }
+                            return result;
+                        }
+                        case 'addBetween': {
+                            const result = [];
+                            lines.forEach((l, i) => {
+                                result.push(l);
+                                if (i < lines.length - 1) result.push('');
+                            });
+                            return result;
+                        }
+                        default: return lines;
+                    }
+                }
+            },
+            sort: {
+                label: 'Sort',
+                isLineLevel: false,
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>By:</label>
+                        <select data-field="mode">
+                            <option value="alpha" ${op.mode === 'alpha' ? 'selected' : ''}>Alphabetical</option>
+                            <option value="numeric" ${op.mode === 'numeric' ? 'selected' : ''}>Numeric</option>
+                            <option value="length" ${op.mode === 'length' ? 'selected' : ''}>By length</option>
+                            <option value="natural" ${op.mode === 'natural' ? 'selected' : ''}>Natural sort</option>
+                        </select>
+                        <label class="checkbox-label"><input type="checkbox" data-field="descending" ${op.descending ? 'checked' : ''}> Descending</label>
+                        <label class="checkbox-label"><input type="checkbox" data-field="caseInsensitive" ${op.caseInsensitive ? 'checked' : ''}> Case insensitive</label>
+                    </div>
+                `,
+                defaults: { mode: 'alpha', descending: false, caseInsensitive: false },
+                runBulk: (lines, op) => {
+                    const sorted = [...lines];
+                    const ci = op.caseInsensitive;
+                    sorted.sort((a, b) => {
+                        let va = ci ? a.toLowerCase() : a;
+                        let vb = ci ? b.toLowerCase() : b;
+                        let cmp = 0;
+                        switch (op.mode) {
+                            case 'alpha': cmp = va.localeCompare(vb); break;
+                            case 'numeric': cmp = (parseFloat(va) || 0) - (parseFloat(vb) || 0); break;
+                            case 'length': cmp = a.length - b.length; break;
+                            case 'natural': cmp = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' }); break;
+                        }
+                        return op.descending ? -cmp : cmp;
+                    });
+                    return sorted;
+                }
+            },
+            reverse: {
+                label: 'Reverse',
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Mode:</label>
+                        <select data-field="mode">
+                            <option value="lineOrder" ${op.mode === 'lineOrder' ? 'selected' : ''}>Reverse line order</option>
+                            <option value="charOrder" ${op.mode === 'charOrder' ? 'selected' : ''}>Reverse characters per line</option>
+                        </select>
+                    </div>
+                `,
+                defaults: { mode: 'lineOrder' },
+                isLineLevel: false,
+                runBulk: (lines, op) => {
+                    if (op.mode === 'lineOrder') return [...lines].reverse();
+                    return lines.map(l => [...l].reverse().join(''));
+                }
+            },
+            number: {
+                label: 'Numbering',
+                isLineLevel: false,
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Scheme:</label>
+                        <select data-field="scheme">
+                            <option value="numeric" ${op.scheme === 'numeric' ? 'selected' : ''}>1, 2, 3</option>
+                            <option value="zeroPad" ${op.scheme === 'zeroPad' ? 'selected' : ''}>01, 02, 10</option>
+                            <option value="letterUpper" ${op.scheme === 'letterUpper' ? 'selected' : ''}>A, B, ... Z, AA, AB (Excel)</option>
+                            <option value="letterLower" ${op.scheme === 'letterLower' ? 'selected' : ''}>a, b, ... z, aa, ab</option>
+                            <option value="romanUpper" ${op.scheme === 'romanUpper' ? 'selected' : ''}>I, II, III, IV</option>
+                            <option value="romanLower" ${op.scheme === 'romanLower' ? 'selected' : ''}>i, ii, iii, iv</option>
+                        </select>
+                    </div>
+                    <div class="op-row">
+                        <label>Separator:</label>
+                        <select data-field="separator">
+                            <option value="dotSpace" ${op.separator === 'dotSpace' ? 'selected' : ''}>. (period + space)</option>
+                            <option value="parenSpace" ${op.separator === 'parenSpace' ? 'selected' : ''}>) (paren + space)</option>
+                            <option value="tab" ${op.separator === 'tab' ? 'selected' : ''}>Tab</option>
+                            <option value="colonSpace" ${op.separator === 'colonSpace' ? 'selected' : ''}>: (colon + space)</option>
+                            <option value="dashSpace" ${op.separator === 'dashSpace' ? 'selected' : ''}>- (dash + space)</option>
+                            <option value="custom" ${op.separator === 'custom' ? 'selected' : ''}>Custom</option>
+                        </select>
+                        ${op.separator === 'custom' ? `<input type="text" data-field="customSep" value="${esc(op.customSep || '')}" placeholder="Custom separator" style="max-width:120px;">` : ''}
+                    </div>
+                    <div class="op-row">
+                        <label>Start at:</label>
+                        <input type="number" data-field="startAt" value="${op.startAt ?? 1}" min="0">
+                    </div>
+                `,
+                defaults: { scheme: 'numeric', separator: 'dotSpace', customSep: '', startAt: 1 },
+                runBulk: (lines, op) => {
+                    const sepMap = {
+                        dotSpace: '. ', parenSpace: ') ', tab: '\t',
+                        colonSpace: ': ', dashSpace: ' - ', custom: op.customSep || ''
+                    };
+                    const sep = sepMap[op.separator] || '. ';
+                    const start = op.startAt ?? 1;
+
+                    return lines.map((line, i) => {
+                        const n = start + i;
+                        let label = '';
+                        switch (op.scheme) {
+                            case 'numeric': label = String(n); break;
+                            case 'zeroPad': label = String(n).padStart(String(start + lines.length - 1).length, '0'); break;
+                            case 'letterUpper': label = toExcelCol(n); break;
+                            case 'letterLower': label = toExcelCol(n).toLowerCase(); break;
+                            case 'romanUpper': label = toRoman(n); break;
+                            case 'romanLower': label = toRoman(n).toLowerCase(); break;
+                        }
+                        return label + sep + line;
+                    });
+                }
+            },
+            pad: {
+                label: 'Pad / Align',
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Mode:</label>
+                        <select data-field="mode">
+                            <option value="left" ${op.mode === 'left' ? 'selected' : ''}>Left pad</option>
+                            <option value="right" ${op.mode === 'right' ? 'selected' : ''}>Right pad</option>
+                            <option value="center" ${op.mode === 'center' ? 'selected' : ''}>Center</option>
+                        </select>
+                        <label>Width:</label>
+                        <input type="number" data-field="width" value="${op.width ?? 40}" min="1">
+                        <label>Char:</label>
+                        <input type="text" data-field="padChar" value="${esc(op.padChar || ' ')}" style="max-width:50px;">
+                    </div>
+                `,
+                defaults: { mode: 'right', width: 40, padChar: ' ' },
+                run: (text, op) => {
+                    const w = op.width || 40;
+                    const c = (op.padChar || ' ').charAt(0);
+                    if (op.mode === 'left') return text.padStart(w, c);
+                    if (op.mode === 'right') return text.padEnd(w, c);
+                    // center
+                    const diff = w - text.length;
+                    if (diff <= 0) return text;
+                    const left = Math.floor(diff / 2);
+                    return c.repeat(left) + text + c.repeat(diff - left);
+                }
+            },
+            split: {
+                label: 'Split',
+                isLineLevel: false,
+                fields: (op) => `
+                    <div class="op-row"><label>Delimiter:</label><input type="text" data-field="delimiter" value="${esc(op.delimiter || '')}" placeholder="e.g. , or ; or \\t"></div>
+                `,
+                defaults: { delimiter: ',' },
+                runBulk: (lines, op) => {
+                    const delim = (op.delimiter || ',').replace(/\\t/g, '\t').replace(/\\n/g, '\n');
+                    const result = [];
+                    lines.forEach(l => result.push(...l.split(delim)));
+                    return result;
+                }
+            },
+            join: {
+                label: 'Join',
+                isLineLevel: false,
+                fields: (op) => `
+                    <div class="op-row"><label>Glue:</label><input type="text" data-field="glue" value="${esc(op.glue || '')}" placeholder="e.g. , or ; or \\n"></div>
+                `,
+                defaults: { glue: ', ' },
+                runBulk: (lines, op) => {
+                    const glue = (op.glue ?? ', ').replace(/\\t/g, '\t').replace(/\\n/g, '\n');
+                    return [lines.join(glue)];
+                }
+            },
+            encode: {
+                label: 'Encode / Decode',
+                fields: (op) => `
+                    <div class="op-row">
+                        <label>Type:</label>
+                        <select data-field="encType">
+                            <option value="urlEncode" ${op.encType === 'urlEncode' ? 'selected' : ''}>URL Encode</option>
+                            <option value="urlDecode" ${op.encType === 'urlDecode' ? 'selected' : ''}>URL Decode</option>
+                            <option value="htmlEncode" ${op.encType === 'htmlEncode' ? 'selected' : ''}>HTML Entity Encode</option>
+                            <option value="htmlDecode" ${op.encType === 'htmlDecode' ? 'selected' : ''}>HTML Entity Decode</option>
+                            <option value="base64Encode" ${op.encType === 'base64Encode' ? 'selected' : ''}>Base64 Encode</option>
+                            <option value="base64Decode" ${op.encType === 'base64Decode' ? 'selected' : ''}>Base64 Decode</option>
+                        </select>
+                    </div>
+                `,
+                defaults: { encType: 'urlEncode' },
+                run: (text, op) => {
+                    try {
+                        switch (op.encType) {
+                            case 'urlEncode': return encodeURIComponent(text);
+                            case 'urlDecode': return decodeURIComponent(text);
+                            case 'htmlEncode': return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+                            case 'htmlDecode': { const t = document.createElement('textarea'); t.innerHTML = text; return t.value; }
+                            case 'base64Encode': return btoa(unescape(encodeURIComponent(text)));
+                            case 'base64Decode': return decodeURIComponent(escape(atob(text)));
+                            default: return text;
+                        }
+                    } catch { return text; }
+                }
+            },
+            extract: {
+                label: 'Extract (Regex)',
+                fields: (op) => `
+                    <div class="op-row"><label>Pattern:</label><input type="text" data-field="pattern" value="${esc(op.pattern || '')}" placeholder="Regular expression"></div>
+                    <div class="op-row">
+                        <label class="checkbox-label"><input type="checkbox" data-field="caseInsensitive" ${op.caseInsensitive ? 'checked' : ''}> Case insensitive</label>
+                        <label class="checkbox-label"><input type="checkbox" data-field="joinMatches" ${op.joinMatches ? 'checked' : ''}> Join matches with space</label>
+                    </div>
+                `,
+                defaults: { pattern: '', caseInsensitive: false, joinMatches: false },
+                run: (text, op) => {
+                    if (!op.pattern) return text;
+                    try {
+                        const flags = 'g' + (op.caseInsensitive ? 'i' : '');
+                        const matches = text.match(new RegExp(op.pattern, flags));
+                        if (!matches) return '';
+                        return op.joinMatches ? matches.join(' ') : matches.join('\n');
+                    } catch { return text; }
+                }
+            },
+            deleteLine: {
+                label: 'Delete Line',
+                isFlowControl: true,
+                fields: (op) => matchFields(op),
+                defaults: { matchType: 'contains', matchValue: '', matchNumber: 0 },
+                // Handled specially in runPipeline
+            },
+            skip: {
+                label: 'Skip Remaining',
+                isFlowControl: true,
+                fields: (op) => matchFields(op) + `
+                    <div class="op-row" style="color:#666; font-size:11px; padding-left:50px;">
+                        Lines matching this condition will pass through all subsequent operations unchanged.
+                    </div>
+                `,
+                defaults: { matchType: 'contains', matchValue: '', matchNumber: 0 },
+                // Handled specially in runPipeline
+            }
+        };
+
+        // Match types for flow-control ops
+        const MATCH_TYPES = [
+            { value: 'contains', label: 'Contains', needsText: true },
+            { value: 'notContains', label: 'Does not contain', needsText: true },
+            { value: 'startsWith', label: 'Starts with', needsText: true },
+            { value: 'endsWith', label: 'Ends with', needsText: true },
+            { value: 'matchesRegex', label: 'Matches regex', needsText: true },
+            { value: 'notMatchesRegex', label: 'Does not match regex', needsText: true },
+            { value: 'lengthGt', label: 'Length >', needsNumber: true },
+            { value: 'lengthLt', label: 'Length <', needsNumber: true },
+            { value: 'lengthEq', label: 'Length =', needsNumber: true },
+            { value: 'lineEven', label: 'Line # is even' },
+            { value: 'lineOdd', label: 'Line # is odd' },
+            { value: 'isNumeric', label: 'Is numeric' },
+            { value: 'isBlank', label: 'Is blank' },
+            { value: 'isNotBlank', label: 'Is not blank' },
+        ];
+
+        function matchFields(op) {
+            const mt = MATCH_TYPES.find(m => m.value === op.matchType);
+            let extra = '';
+            if (mt && mt.needsText) extra = `<input type="text" data-field="matchValue" value="${esc(op.matchValue || '')}" placeholder="Value">`;
+            if (mt && mt.needsNumber) extra = `<input type="number" data-field="matchNumber" value="${op.matchNumber ?? 0}">`;
+            return `
+                <div class="op-row">
+                    <label>If:</label>
+                    <select data-field="matchType">
+                        ${MATCH_TYPES.map(m => `<option value="${m.value}" ${op.matchType === m.value ? 'selected' : ''}>${m.label}</option>`).join('')}
+                    </select>
+                    ${extra}
+                </div>
+            `;
+        }
+
+        function checkMatch(text, op, lineIndex) {
+            const val = op.matchValue || '';
+            const num = parseFloat(op.matchNumber) || 0;
+            try {
+                switch (op.matchType) {
+                    case 'contains': return text.includes(val);
+                    case 'notContains': return !text.includes(val);
+                    case 'startsWith': return text.startsWith(val);
+                    case 'endsWith': return text.endsWith(val);
+                    case 'matchesRegex': return new RegExp(val).test(text);
+                    case 'notMatchesRegex': return !new RegExp(val).test(text);
+                    case 'lengthGt': return text.length > num;
+                    case 'lengthLt': return text.length < num;
+                    case 'lengthEq': return text.length === num;
+                    case 'lineEven': return (lineIndex + 1) % 2 === 0;
+                    case 'lineOdd': return (lineIndex + 1) % 2 === 1;
+                    case 'isNumeric': return !isNaN(parseFloat(text)) && isFinite(text.trim());
+                    case 'isBlank': return text.trim() === '';
+                    case 'isNotBlank': return text.trim() !== '';
+                    default: return false;
+                }
+            } catch { return false; }
+        }
+
+        // Condition definitions
+        const CONDITIONS = [
+            { value: '', label: 'No condition' },
+            { value: 'contains', label: 'If contains', needsText: true },
+            { value: 'notContains', label: 'If does NOT contain', needsText: true },
+            { value: 'startsWith', label: 'If starts with', needsText: true },
+            { value: 'endsWith', label: 'If ends with', needsText: true },
+            { value: 'matchesRegex', label: 'If matches regex', needsText: true },
+            { value: 'notMatchesRegex', label: 'If does NOT match regex', needsText: true },
+            { value: 'lengthGt', label: 'If length >', needsNumber: true },
+            { value: 'lengthLt', label: 'If length <', needsNumber: true },
+            { value: 'lengthEq', label: 'If length =', needsNumber: true },
+            { value: 'lineEven', label: 'If line # is even' },
+            { value: 'lineOdd', label: 'If line # is odd' },
+            { value: 'isNumeric', label: 'If is numeric' },
+            { value: 'isBlank', label: 'If is blank' },
+            { value: 'isNotBlank', label: 'If is not blank' },
+        ];
+
+        // Helpers
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+        function toWords(s) {
+            return s.replace(/([a-z])([A-Z])/g, '$1 $2')
+                .replace(/[_\-]+/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length > 0);
+        }
+
+        function toExcelCol(n) {
+            let s = '';
+            while (n > 0) {
+                n--;
+                s = String.fromCharCode(65 + (n % 26)) + s;
+                n = Math.floor(n / 26);
+            }
+            return s;
+        }
+
+        function toRoman(num) {
+            if (num <= 0 || num > 3999) return String(num);
+            const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+            const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+            let result = '';
+            for (let i = 0; i < vals.length; i++) {
+                while (num >= vals[i]) { result += syms[i]; num -= vals[i]; }
+            }
+            return result;
+        }
+
+        function checkCondition(text, cond, lineIndex) {
+            if (!cond || !cond.type) return true;
+            const val = cond.value || '';
+            const num = parseFloat(cond.numValue) || 0;
+            try {
+                switch (cond.type) {
+                    case 'contains': return text.includes(val);
+                    case 'notContains': return !text.includes(val);
+                    case 'startsWith': return text.startsWith(val);
+                    case 'endsWith': return text.endsWith(val);
+                    case 'matchesRegex': return new RegExp(val).test(text);
+                    case 'notMatchesRegex': return !new RegExp(val).test(text);
+                    case 'lengthGt': return text.length > num;
+                    case 'lengthLt': return text.length < num;
+                    case 'lengthEq': return text.length === num;
+                    case 'lineEven': return (lineIndex + 1) % 2 === 0;
+                    case 'lineOdd': return (lineIndex + 1) % 2 === 1;
+                    case 'isNumeric': return !isNaN(parseFloat(text)) && isFinite(text.trim());
+                    case 'isBlank': return text.trim() === '';
+                    case 'isNotBlank': return text.trim() !== '';
+                    default: return true;
+                }
+            } catch { return true; }
+        }
+
+        // Pipeline Rendering
+        function renderPipeline() {
+            if (operations.length === 0) {
+                pipelineEl.innerHTML = '<div class="pipeline-empty">No operations added. Click <strong>+ Add Operation</strong> to start building your pipeline.</div>';
+                return;
+            }
+
+            pipelineEl.innerHTML = '';
+            operations.forEach((op, idx) => {
+                const def = OP_DEFS[op.type];
+                if (!def) return;
+
+                const card = document.createElement('div');
+                card.className = 'op-card' + (op.disabled ? ' disabled' : '') + (def.isFlowControl ? ' flow-control' : '');
+                card.dataset.idx = idx;
+                card.draggable = true;
+
+                // Condition HTML
+                const condDef = CONDITIONS.find(c => c.value === (op.condition?.type || ''));
+                const condOpen = !!op.condition?.type;
+                let condFieldsHtml = '';
+                if (condOpen && condDef) {
+                    if (condDef.needsText) {
+                        condFieldsHtml = `<input type="text" data-cond-field="value" value="${esc(op.condition.value || '')}" placeholder="Value">`;
+                    } else if (condDef.needsNumber) {
+                        condFieldsHtml = `<input type="number" data-cond-field="numValue" value="${op.condition.numValue ?? 0}">`;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="op-card-header">
+                        <span class="drag-handle" title="Drag to reorder">⠿</span>
+                        <span class="op-number">#${idx + 1}</span>
+                        <span class="op-type-select" style="color:#e0e0e0; font-size:13px; font-weight:bold;">${def.label}</span>
+                        <div class="op-actions">
+                            <button class="op-toggle" title="${op.disabled ? 'Enable' : 'Disable'}">${op.disabled ? '○' : '●'}</button>
+                            <button class="op-dup" title="Duplicate">⧉</button>
+                            <button class="op-remove" title="Remove">✕</button>
+                        </div>
+                    </div>
+                    <div class="op-body">
+                        ${def.fields(op)}
+                        ${def.isFlowControl ? '' : `<div class="condition-section">
+                            <div class="condition-row">
+                                <select data-cond-type style="font-size:12px;">
+                                    ${CONDITIONS.map(c => `<option value="${c.value}" ${(op.condition?.type || '') === c.value ? 'selected' : ''}>${c.label}</option>`).join('')}
+                                </select>
+                                ${condFieldsHtml}
+                            </div>
+                        </div>`}
+                    </div>
+                `;
+
+                // Event delegation for fields
+                card.addEventListener('change', (e) => handleFieldChange(e, idx));
+                card.addEventListener('input', (e) => handleFieldChange(e, idx));
+
+                // Action buttons
+                card.querySelector('.op-toggle').addEventListener('click', () => {
+                    operations[idx].disabled = !operations[idx].disabled;
+                    renderPipeline();
+                    maybeAutoRun();
+                });
+
+                card.querySelector('.op-dup').addEventListener('click', () => {
+                    operations.splice(idx + 1, 0, JSON.parse(JSON.stringify(op)));
+                    renderPipeline();
+                    maybeAutoRun();
+                });
+
+                card.querySelector('.op-remove').addEventListener('click', () => {
+                    operations.splice(idx, 1);
+                    renderPipeline();
+                    maybeAutoRun();
+                });
+
+                // Drag events
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', idx);
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+                card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('drag-over'); });
+                card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (fromIdx !== idx) {
+                        const [moved] = operations.splice(fromIdx, 1);
+                        operations.splice(idx, 0, moved);
+                        renderPipeline();
+                        maybeAutoRun();
+                    }
+                });
+
+                pipelineEl.appendChild(card);
+            });
+        }
+
+        function handleFieldChange(e, idx) {
+            const target = e.target;
+            const op = operations[idx];
+            if (!op) return;
+
+            if (target.dataset.field) {
+                const field = target.dataset.field;
+                if (target.type === 'checkbox') {
+                    op[field] = target.checked;
+                } else if (target.type === 'number') {
+                    op[field] = parseFloat(target.value) || 0;
+                } else {
+                    op[field] = target.value;
+                }
+                // Re-render if mode/separator changed (conditional fields may appear/disappear)
+                if (field === 'mode' || field === 'separator' || field === 'action' || field === 'matchType') {
+                    renderPipeline();
+                }
+                maybeAutoRun();
+            }
+
+            if (target.dataset.condType !== undefined) {
+                if (!op.condition) op.condition = {};
+                op.condition.type = target.value;
+                renderPipeline();
+                maybeAutoRun();
+            }
+
+            if (target.dataset.condField) {
+                if (!op.condition) op.condition = {};
+                op.condition[target.dataset.condField] = target.type === 'number' ? (parseFloat(target.value) || 0) : target.value;
+                maybeAutoRun();
+            }
+        }
+
+        // Add operation
+        addOpBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addOpMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!addOpMenu.contains(e.target) && e.target !== addOpBtn) {
+                addOpMenu.classList.remove('show');
+            }
+        });
+
+        addOpMenu.querySelectorAll('button[data-op]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.op;
+                const def = OP_DEFS[type];
+                if (!def) return;
+                operations.push({
+                    id: opIdCounter++,
+                    type,
+                    disabled: false,
+                    condition: {},
+                    ...JSON.parse(JSON.stringify(def.defaults))
+                });
+                addOpMenu.classList.remove('show');
+                renderPipeline();
+                maybeAutoRun();
+            });
+        });
+
+        // Clear pipeline
+        document.getElementById('clearPipeline').addEventListener('click', () => {
+            operations = [];
+            renderPipeline();
+            maybeAutoRun();
+        });
+
+        // Scope toggle
+        document.querySelectorAll('.scope-toggle button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.scope-toggle button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                scope = btn.dataset.scope;
+                scopeHint.textContent = scope === 'line'
+                    ? 'Each operation runs on each line individually'
+                    : 'Operations treat the entire input as one string';
+                maybeAutoRun();
+            });
+        });
+
+        // Run pipeline
+        document.getElementById('runPipeline').addEventListener('click', runPipeline);
+
+        function runPipeline() {
+            errorMsg.textContent = '';
+            infoMsg.textContent = '';
+
+            const input = textInput.value;
+            let lines = input.split('\n');
+
+            const activeOps = operations.filter(op => !op.disabled);
+
+            if (activeOps.length === 0) {
+                textOutput.value = input;
+                updateStats();
+                infoMsg.textContent = 'No active operations. Output matches input.';
+                return;
+            }
+
+            try {
+                let skippedLines = new Set(); // Tracks lines protected by Skip ops
+
+                for (const op of activeOps) {
+                    const def = OP_DEFS[op.type];
+                    if (!def) continue;
+
+                    // Skip: mark matching lines to bypass all subsequent operations
+                    if (op.type === 'skip') {
+                        lines.forEach((line, i) => {
+                            if (!skippedLines.has(i) && checkMatch(line, op, i)) {
+                                skippedLines.add(i);
+                            }
+                        });
+                        continue;
+                    }
+
+                    // Delete: remove matching lines (skipped lines are immune)
+                    if (op.type === 'deleteLine') {
+                        const newLines = [];
+                        const newSkipped = new Set();
+                        let ni = 0;
+                        lines.forEach((line, i) => {
+                            if (skippedLines.has(i)) {
+                                // Protected by skip — keep it
+                                newSkipped.add(ni);
+                                newLines.push(line);
+                                ni++;
+                            } else if (checkMatch(line, op, i)) {
+                                // Matched for deletion — drop it
+                            } else {
+                                newLines.push(line);
+                                ni++;
+                            }
+                        });
+                        lines = newLines;
+                        skippedLines = newSkipped;
+                        continue;
+                    }
+
+                    // Bulk operations (sort, unique, etc.)
+                    if (def.runBulk) {
+                        if (skippedLines.size > 0) {
+                            // Separate skipped and processable lines
+                            const processable = [];
+                            const processableOrigIdx = [];
+                            const skippedEntries = []; // { origIdx, line }
+                            lines.forEach((l, i) => {
+                                if (skippedLines.has(i)) {
+                                    skippedEntries.push({ origIdx: i, line: l });
+                                } else {
+                                    processable.push(l);
+                                    processableOrigIdx.push(i);
+                                }
+                            });
+
+                            let processed;
+                            if (op.condition?.type) {
+                                const conditioned = processable.filter((l, i) => checkCondition(l, op.condition, processableOrigIdx[i]));
+                                processed = def.runBulk(conditioned, op);
+                                // Simple: replace processable lines with bulk result
+                            } else {
+                                processed = def.runBulk(processable, op);
+                            }
+
+                            // Rebuild: skipped lines stay in their relative positions
+                            const newLines = [];
+                            const newSkipped = new Set();
+                            let pIdx = 0;
+                            let sIdx = 0;
+                            for (let i = 0; i < lines.length; i++) {
+                                if (skippedLines.has(i)) {
+                                    newSkipped.add(newLines.length);
+                                    newLines.push(skippedEntries[sIdx++].line);
+                                } else if (pIdx < processed.length) {
+                                    newLines.push(processed[pIdx++]);
+                                }
+                            }
+                            // Append any extra lines produced by bulk op
+                            while (pIdx < processed.length) newLines.push(processed[pIdx++]);
+                            lines = newLines;
+                            skippedLines = newSkipped;
+                        } else {
+                            // No skipped lines — original behavior
+                            if (op.condition?.type) {
+                                const processed = def.runBulk(
+                                    lines.filter((l, i) => checkCondition(l, op.condition, i)),
+                                    op
+                                );
+                                const conditionedIndices = [];
+                                lines.forEach((l, i) => {
+                                    if (checkCondition(l, op.condition, i)) conditionedIndices.push(i);
+                                });
+                                let pIdx = 0;
+                                const newLines = [];
+                                for (let i = 0; i < lines.length; i++) {
+                                    if (conditionedIndices.includes(i) && pIdx < processed.length) {
+                                        newLines.push(processed[pIdx++]);
+                                    } else if (!conditionedIndices.includes(i)) {
+                                        newLines.push(lines[i]);
+                                    }
+                                }
+                                while (pIdx < processed.length) newLines.push(processed[pIdx++]);
+                                lines = newLines;
+                            } else {
+                                lines = def.runBulk(lines, op);
+                            }
+                        }
+                    } else if (def.run) {
+                        if (scope === 'line') {
+                            lines = lines.map((line, i) => {
+                                if (skippedLines.has(i)) return line; // Protected
+                                if (!checkCondition(line, op.condition, i)) return line;
+                                return def.run(line, op);
+                            });
+                        } else {
+                            // Whole string mode
+                            let whole = lines.join('\n');
+                            if (checkCondition(whole, op.condition, 0)) {
+                                whole = def.run(whole, op);
+                            }
+                            lines = whole.split('\n');
+                        }
+                    }
+                }
+
+                textOutput.value = lines.join('\n');
+                updateStats();
+                infoMsg.textContent = `Pipeline ran ${activeOps.length} operation${activeOps.length !== 1 ? 's' : ''} successfully.`;
+            } catch (e) {
+                errorMsg.textContent = `Error: ${e.message}`;
+            }
+        }
+
+        // Copy, Clear
+        document.getElementById('copyOutput').addEventListener('click', async () => {
+            if (!textOutput.value) { infoMsg.textContent = 'Nothing to copy.'; return; }
+            try {
+                await navigator.clipboard.writeText(textOutput.value);
+                infoMsg.textContent = 'Copied to clipboard!';
+            } catch { errorMsg.textContent = 'Failed to copy.'; }
+        });
+
+        document.getElementById('clearAll').addEventListener('click', () => {
+            textInput.value = '';
+            textOutput.value = '';
+            infoMsg.textContent = '';
+            errorMsg.textContent = '';
+            updateStats();
+        });
+
+        // Auto-run
+        function maybeAutoRun() {
+            if (autoRunCb.checked) runPipeline();
+        }
+
+        textInput.addEventListener('input', () => {
+            updateStats();
+            maybeAutoRun();
+        });
+
+        // Stats
+        function updateStats() {
+            const iVal = textInput.value;
+            const oVal = textOutput.value;
+            const iLines = iVal === '' ? 0 : iVal.split('\n').length;
+            const oLines = oVal === '' ? 0 : oVal.split('\n').length;
+            const iWords = iVal.trim() === '' ? 0 : iVal.trim().split(/\s+/).length;
+            const oWords = oVal.trim() === '' ? 0 : oVal.trim().split(/\s+/).length;
+            inputStats.textContent = `${iLines} line${iLines !== 1 ? 's' : ''}, ${iWords} word${iWords !== 1 ? 's' : ''}, ${iVal.length} chars`;
+            outputStats.textContent = `${oLines} line${oLines !== 1 ? 's' : ''}, ${oWords} word${oWords !== 1 ? 's' : ''}, ${oVal.length} chars`;
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runPipeline();
+            }
+        });
+
+        // Swap Input ↔ Output
+        document.getElementById('swapIO').addEventListener('click', () => {
+            const tmp = textOutput.value;
+            if (!tmp) { infoMsg.textContent = 'Nothing in output to swap.'; return; }
+            textInput.value = tmp;
+            textOutput.value = '';
+            updateStats();
+            infoMsg.textContent = 'Swapped output → input.';
+            maybeAutoRun();
+        });
+
+        // Export Pipeline
+        document.getElementById('exportPipeline').addEventListener('click', () => {
+            if (operations.length === 0) { infoMsg.textContent = 'No operations to export.'; return; }
+            const data = JSON.stringify({ scope, operations }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pipeline.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            infoMsg.textContent = 'Pipeline exported.';
+        });
+
+        // Import Pipeline
+        const importFileEl = document.getElementById('importFile');
+        document.getElementById('importPipeline').addEventListener('click', () => importFileEl.click());
+        importFileEl.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.operations && Array.isArray(data.operations)) {
+                        operations = data.operations;
+                        opIdCounter = Math.max(opIdCounter, ...operations.map(o => (o.id || 0) + 1));
+                        if (data.scope === 'line' || data.scope === 'whole') {
+                            scope = data.scope;
+                            document.querySelectorAll('.scope-toggle button').forEach(b => {
+                                b.classList.toggle('active', b.dataset.scope === scope);
+                            });
+                            scopeHint.textContent = scope === 'line'
+                                ? 'Each operation runs on each line individually'
+                                : 'Operations treat the entire input as one string';
+                        }
+                        renderPipeline();
+                        maybeAutoRun();
+                        infoMsg.textContent = `Imported ${operations.length} operation(s).`;
+                    } else {
+                        errorMsg.textContent = 'Invalid pipeline file format.';
+                    }
+                } catch (err) {
+                    errorMsg.textContent = 'Failed to parse pipeline file: ' + err.message;
+                }
+            };
+            reader.readAsText(file);
+            importFileEl.value = '';
+        });
+
+        // Init
+        renderPipeline();
+        updateStats();
+    </script>
+</body>
+
+</html>
