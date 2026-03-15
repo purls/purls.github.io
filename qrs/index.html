@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QRS — Sequence & Bulk QR</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            border-bottom: 2px solid #3d3d3d;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: transparent;
+            color: #808080;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.95rem;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #b0b0b0;
+            background: transparent;
+        }
+
+        .tab-btn.active {
+            color: #80cccc;
+            border-bottom-color: #80cccc;
+            background: transparent;
+        }
+
+        .tab-panel {
+            display: none;
+            padding-top: 20px;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* shared form styles */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            padding: 7px 10px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.9rem;
+            border-radius: 3px;
+        }
+
+        input[type="number"] {
+            width: 100px;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .output-box {
+            background-color: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            padding: 12px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.85rem;
+            color: #c0c0c0;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            border-radius: 3px;
+        }
+
+        .info-msg {
+            color: #60c8c5;
+            font-size: 0.85rem;
+            min-height: 18px;
+            margin-top: 5px;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            font-size: 0.85rem;
+            min-height: 18px;
+            margin-top: 5px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        /* rules section */
+        .rules-container {
+            border: 1px solid #333;
+            border-radius: 3px;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #161616;
+        }
+
+        .rules-container h3 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #999;
+        }
+
+        .rule-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .rule-row select,
+        .rule-row input[type="text"],
+        .rule-row input[type="number"] {
+            font-size: 0.82rem;
+            padding: 5px 8px;
+        }
+
+        .rule-row input[type="number"] {
+            width: 80px;
+        }
+
+        .rule-row input[type="text"] {
+            width: 140px;
+        }
+
+        .remove-rule {
+            background: #442222;
+            color: #cc8888;
+            padding: 4px 10px;
+            font-size: 0.82rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .remove-rule:hover {
+            background: #553333;
+        }
+
+        .add-rule-btn {
+            background: #1a3333;
+            font-size: 0.82rem;
+            padding: 6px 12px;
+        }
+
+        .add-rule-btn:hover {
+            background: #224444;
+        }
+
+        /* QR panel */
+        .qr-settings {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+
+        .qr-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            background: #fff;
+            padding: 20px;
+            justify-content: flex-start;
+        }
+
+        .qr-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            page-break-inside: avoid;
+        }
+
+        .qr-cell canvas {
+            display: block;
+        }
+
+        .qr-label {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 10px;
+            color: #333;
+            margin-top: 2px;
+            text-align: center;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #qrPreview {
+            overflow: auto;
+            border: 1px solid #3d3d3d;
+            margin-bottom: 15px;
+            max-height: 600px;
+            border-radius: 3px;
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #555;
+        }
+
+        .source-toggle {
+            display: flex;
+            gap: 0;
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .source-toggle button {
+            border-radius: 0;
+            padding: 8px 14px;
+            background: #1a1a1a;
+            color: #888;
+            border: none;
+            font-size: 0.82rem;
+        }
+
+        .source-toggle button:hover {
+            background: #222;
+        }
+
+        .source-toggle button.active {
+            background: #244444;
+            color: #e0e0e0;
+        }
+
+        .qr-source-panel {
+            display: none;
+        }
+
+        .qr-source-panel.active {
+            display: block;
+        }
+
+        textarea {
+            border-radius: 3px;
+            padding: 10px;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                color: #000;
+            }
+
+            .tabs,
+            .controls,
+            .form-row,
+            .button-row,
+            .qr-settings,
+            .source-toggle,
+            .info-msg,
+            .error-msg,
+            .header-top,
+            p,
+            hr,
+            .rules-container,
+            h2,
+            .form-group,
+            textarea,
+            #seqOutput,
+            button,
+            #tab-seq {
+                display: none !important;
+            }
+
+            #qrPreview {
+                border: none;
+                max-height: none;
+                overflow: visible;
+            }
+
+            .qr-grid {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">QRS</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 15px 0;">Number sequence formatter & bulk QR code generator.</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-seq">Sequence</button>
+        <button class="tab-btn" data-tab="tab-qr">Bulk QR</button>
+    </div>
+
+    <!-- Sequence tab -->
+    <div id="tab-seq" class="tab-panel active">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="seqStart">Start</label>
+                <input type="number" id="seqStart" value="1" />
+            </div>
+            <div class="form-group">
+                <label for="seqEnd">End</label>
+                <input type="number" id="seqEnd" value="10" />
+            </div>
+            <div class="form-group">
+                <label for="seqStep">Step</label>
+                <input type="number" id="seqStep" value="1" min="1" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="seqPrepend">Prepend</label>
+                <input type="text" id="seqPrepend" placeholder="$" style="width: 160px;" />
+            </div>
+            <div class="form-group">
+                <label for="seqAppend">Append</label>
+                <input type="text" id="seqAppend" placeholder=".00" style="width: 160px;" />
+            </div>
+            <div class="form-group">
+                <label for="seqPadding">Zero-pad to</label>
+                <input type="number" id="seqPadding" value="0" min="0" max="20" style="width: 80px;" />
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="seqSep">Separator</label>
+                <select id="seqSep">
+                    <option value="\n">Newline</option>
+                    <option value=", ">Comma + space</option>
+                    <option value=" ">Space</option>
+                    <option value="\t">Tab</option>
+                    <option value="custom">Custom...</option>
+                </select>
+            </div>
+            <div class="form-group" id="customSepGroup" style="display: none;">
+                <label for="seqCustomSep">Custom</label>
+                <input type="text" id="seqCustomSep" placeholder="e.g. |" style="width: 80px;" />
+            </div>
+        </div>
+
+        <!-- Conditional formatting rules -->
+        <div class="rules-container">
+            <h3>Conditional Format Rules (optional)</h3>
+            <div id="rulesListSeq"></div>
+            <button class="add-rule-btn" id="addRuleBtn">+ Add Rule</button>
+            <div style="margin-top: 8px; font-size: 0.75rem; color: #666;">
+                Rules override the default format. Later rules take priority. Use <code>{n}</code> for the number.
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button id="generateSeq">Generate</button>
+            <button id="copySeq">Copy to Clipboard</button>
+            <button id="clearSeq">Clear</button>
+        </div>
+
+        <div id="seqOutput" class="output-box"><span style="color: #555;">Output will appear here...</span></div>
+        <div class="info-msg" id="seqInfo"></div>
+        <div class="error-msg" id="seqError"></div>
+
+        <hr>
+        <p>Generate formatted number sequences with optional conditional rules. Use <code>{n}</code> in rule formats to
+            place the number. Rules are evaluated top-to-bottom; the last matching rule wins.</p>
+    </div>
+
+    <!-- Bulk QR tab -->
+    <div id="tab-qr" class="tab-panel">
+
+        <div class="source-toggle">
+            <button class="active" data-source="from-seq">From Sequence</button>
+            <button data-source="from-list">From Text List</button>
+        </div>
+
+        <div id="src-from-seq" class="qr-source-panel active">
+            <p style="font-size: 0.85rem; color: #888; margin-bottom: 10px;">
+                Uses the current sequence output. Generate a sequence in the Sequence tab first, or configure one here.
+            </p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="qrSeqStart">Start</label>
+                    <input type="number" id="qrSeqStart" value="1" />
+                </div>
+                <div class="form-group">
+                    <label for="qrSeqEnd">End</label>
+                    <input type="number" id="qrSeqEnd" value="10" />
+                </div>
+                <div class="form-group">
+                    <label for="qrSeqStep">Step</label>
+                    <input type="number" id="qrSeqStep" value="1" min="1" />
+                </div>
+                <div class="form-group">
+                    <label for="qrSeqPrepend">Prepend</label>
+                    <input type="text" id="qrSeqPrepend" style="width: 180px;" />
+                </div>
+                <div class="form-group">
+                    <label for="qrSeqAppend">Append</label>
+                    <input type="text" id="qrSeqAppend" style="width: 120px;" />
+                </div>
+            </div>
+        </div>
+
+        <div id="src-from-list" class="qr-source-panel">
+            <p style="font-size: 0.85rem; color: #888; margin-bottom: 10px;">
+                One value per line. Each line becomes a QR code.
+            </p>
+            <textarea id="qrListInput" rows="6" placeholder="ID:1&#10;ID:2&#10;ID:3"></textarea>
+        </div>
+
+        <div class="qr-settings">
+            <div class="form-group">
+                <label for="qrScale">Module size (px)</label>
+                <input type="number" id="qrScale" value="4" min="1" max="25" style="width: 80px;" />
+            </div>
+            <div class="form-group">
+                <label for="qrEC">Error correction</label>
+                <select id="qrEC">
+                    <option value="L">L (Low)</option>
+                    <option value="M" selected>M (Medium)</option>
+                    <option value="Q">Q (Quartile)</option>
+                    <option value="H">H (High)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="qrSpacing">Spacing (px)</label>
+                <input type="number" id="qrSpacing" value="20" min="0" max="200" style="width: 80px;" />
+            </div>
+            <div class="form-group">
+                <label for="qrShowLabel">Labels</label>
+                <select id="qrShowLabel">
+                    <option value="below">Below</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="qrLabelSize">Label size (px)</label>
+                <input type="number" id="qrLabelSize" value="10" min="6" max="24" style="width: 80px;" />
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button id="generateQR">Generate QR Codes</button>
+            <button id="exportAllPNG">Export All as PNG</button>
+            <button id="printQR">Print</button>
+        </div>
+
+        <div id="qrPreview">
+            <div class="empty-state">Generate QR codes to preview them here.</div>
+        </div>
+        <div class="info-msg" id="qrInfo"></div>
+        <div class="error-msg" id="qrError"></div>
+
+        <hr>
+        <p>Generate bulk QR codes from a number sequence or text list. Adjust the module size and spacing, then export
+            as a single PNG image or print directly. The exported image has a white background suitable for printing and
+            cutting.</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Source toggle in QR tab
+        document.querySelectorAll('.source-toggle button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.source-toggle button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.qr-source-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('src-' + btn.dataset.source).classList.add('active');
+            });
+        });
+
+        // Separator
+        const seqSepSel = document.getElementById('seqSep');
+        const customSepGroup = document.getElementById('customSepGroup');
+        seqSepSel.addEventListener('change', () => {
+            customSepGroup.style.display = seqSepSel.value === 'custom' ? '' : 'none';
+        });
+
+        // Sequence formatting rules
+        let seqRules = [];
+        const rulesListEl = document.getElementById('rulesListSeq');
+
+        function renderRules() {
+            rulesListEl.innerHTML = '';
+            seqRules.forEach((rule, i) => {
+                const row = document.createElement('div');
+                row.className = 'rule-row';
+                row.innerHTML = `
+          <select data-i="${i}" data-field="condition">
+            <option value="odd" ${rule.condition === 'odd' ? 'selected' : ''}>Odd</option>
+            <option value="even" ${rule.condition === 'even' ? 'selected' : ''}>Even</option>
+            <option value="multiple" ${rule.condition === 'multiple' ? 'selected' : ''}>Multiple of</option>
+            <option value="gt" ${rule.condition === 'gt' ? 'selected' : ''}>&gt; value</option>
+            <option value="gte" ${rule.condition === 'gte' ? 'selected' : ''}>&ge; value</option>
+            <option value="lt" ${rule.condition === 'lt' ? 'selected' : ''}>&lt; value</option>
+            <option value="lte" ${rule.condition === 'lte' ? 'selected' : ''}>&le; value</option>
+            <option value="eq" ${rule.condition === 'eq' ? 'selected' : ''}>= value</option>
+            <option value="range" ${rule.condition === 'range' ? 'selected' : ''}>Range (a–b)</option>
+          </select>
+          <input type="number" data-i="${i}" data-field="value" value="${rule.value}" placeholder="value" style="width:80px;${['odd', 'even'].includes(rule.condition) ? 'display:none' : ''}" />
+          <input type="number" data-i="${i}" data-field="value2" value="${rule.value2 || ''}" placeholder="end" style="width:80px;${rule.condition !== 'range' ? 'display:none' : ''}" />
+          <span style="color:#666;font-size:0.8rem;">→</span>
+          <input type="text" data-i="${i}" data-field="format" value="${rule.format}" placeholder="{n} formatted" style="width:180px;" />
+          <button class="remove-rule" data-i="${i}">✕</button>
+        `;
+                rulesListEl.appendChild(row);
+            });
+
+            // wire up changes
+            rulesListEl.querySelectorAll('select[data-field="condition"]').forEach(sel => {
+                sel.addEventListener('change', e => {
+                    const idx = +e.target.dataset.i;
+                    seqRules[idx].condition = e.target.value;
+                    renderRules();
+                });
+            });
+            rulesListEl.querySelectorAll('input[data-field="value"]').forEach(inp => {
+                inp.addEventListener('input', e => { seqRules[+e.target.dataset.i].value = e.target.value; });
+            });
+            rulesListEl.querySelectorAll('input[data-field="value2"]').forEach(inp => {
+                inp.addEventListener('input', e => { seqRules[+e.target.dataset.i].value2 = e.target.value; });
+            });
+            rulesListEl.querySelectorAll('input[data-field="format"]').forEach(inp => {
+                inp.addEventListener('input', e => { seqRules[+e.target.dataset.i].format = e.target.value; });
+            });
+            rulesListEl.querySelectorAll('.remove-rule').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    seqRules.splice(+e.target.dataset.i, 1);
+                    renderRules();
+                });
+            });
+        }
+
+        document.getElementById('addRuleBtn').addEventListener('click', () => {
+            seqRules.push({ condition: 'even', value: '', value2: '', format: '{n}' });
+            renderRules();
+        });
+
+        // Sequence generation
+        function getSeparator() {
+            const v = seqSepSel.value;
+            if (v === '\\n') return '\n';
+            if (v === '\\t') return '\t';
+            if (v === 'custom') return document.getElementById('seqCustomSep').value || ' ';
+            return v;
+        }
+
+        function matchesRule(n, rule) {
+            const v = parseFloat(rule.value);
+            const v2 = parseFloat(rule.value2);
+            switch (rule.condition) {
+                case 'odd': return n % 2 !== 0;
+                case 'even': return n % 2 === 0;
+                case 'multiple': return !isNaN(v) && v !== 0 && n % v === 0;
+                case 'gt': return !isNaN(v) && n > v;
+                case 'gte': return !isNaN(v) && n >= v;
+                case 'lt': return !isNaN(v) && n < v;
+                case 'lte': return !isNaN(v) && n <= v;
+                case 'eq': return !isNaN(v) && n === v;
+                case 'range': return !isNaN(v) && !isNaN(v2) && n >= v && n <= v2;
+                default: return false;
+            }
+        }
+
+        function formatNumber(n, prepend, append, padding) {
+            let s = String(n);
+            if (padding > 0) {
+                const isNeg = n < 0;
+                const abs = String(Math.abs(n));
+                s = (isNeg ? '-' : '') + abs.padStart(padding, '0');
+            }
+
+            // Check rules (last match wins)
+            let customFormat = null;
+            for (const rule of seqRules) if (matchesRule(n, rule)) customFormat = rule.format;
+
+            if (customFormat !== null) return customFormat.replace(/\{n\}/g, s);
+
+            return prepend + s + append;
+        }
+
+        function generateSequence(start, end, step, prepend, append, padding) {
+            const items = [];
+            if (step <= 0) return items;
+            if (start <= end) for (let n = start; n <= end; n += step) items.push(formatNumber(n, prepend, append, padding));
+            else for (let n = start; n >= end; n -= step) items.push(formatNumber(n, prepend, append, padding));
+            return items;
+        }
+
+        document.getElementById('generateSeq').addEventListener('click', () => {
+            const start = parseFloat(document.getElementById('seqStart').value) || 0;
+            const end = parseFloat(document.getElementById('seqEnd').value) || 0;
+            const step = Math.max(parseFloat(document.getElementById('seqStep').value) || 1, 0.001);
+            const prepend = document.getElementById('seqPrepend').value;
+            const append = document.getElementById('seqAppend').value;
+            const padding = parseInt(document.getElementById('seqPadding').value) || 0;
+
+            const items = generateSequence(start, end, step, prepend, append, padding);
+            const sep = getSeparator();
+            const output = items.join(sep);
+
+            document.getElementById('seqOutput').textContent = output || '(empty)';
+            document.getElementById('seqInfo').textContent = `Generated ${items.length} items.`;
+            document.getElementById('seqError').textContent = '';
+        });
+
+        document.getElementById('copySeq').addEventListener('click', async () => {
+            const text = document.getElementById('seqOutput').textContent;
+            if (!text || text === 'Output will appear here...') {
+                document.getElementById('seqInfo').textContent = 'Nothing to copy.';
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                document.getElementById('seqInfo').textContent = 'Copied to clipboard!';
+            } catch {
+                document.getElementById('seqError').textContent = 'Failed to copy.';
+            }
+        });
+
+        document.getElementById('clearSeq').addEventListener('click', () => {
+            document.getElementById('seqOutput').innerHTML = '<span style="color: #555;">Output will appear here...</span>';
+            document.getElementById('seqInfo').textContent = '';
+            document.getElementById('seqError').textContent = '';
+        });
+
+        // Bulk QR code generation
+        const EC_MAP = { L: 1, M: 0, Q: 3, H: 2 }; // qrcode-generator EC mapping
+
+        function getQRValues() {
+            const activeSource = document.querySelector('.source-toggle button.active').dataset.source;
+            let values = [];
+
+            if (activeSource === 'from-seq') {
+                const start = parseFloat(document.getElementById('qrSeqStart').value) || 0;
+                const end = parseFloat(document.getElementById('qrSeqEnd').value) || 0;
+                const step = Math.max(parseFloat(document.getElementById('qrSeqStep').value) || 1, 0.001);
+                const prepend = document.getElementById('qrSeqPrepend').value;
+                const append = document.getElementById('qrSeqAppend').value;
+
+                if (start <= end) for (let n = start; n <= end; n += step) values.push(prepend + String(n) + append);
+                else for (let n = start; n >= end; n -= step) values.push(prepend + String(n) + append);
+            } else {
+                const raw = document.getElementById('qrListInput').value.trim();
+                if (raw) values = raw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            }
+
+            return values;
+        }
+
+        function makeQRCanvas(text, moduleSize, ecLevel) {
+            const qr = window.qrcode(0, ecLevel);
+            qr.addData(text);
+            qr.make();
+
+            const count = qr.getModuleCount();
+            const quiet = 4;
+            const size = (count + quiet * 2) * moduleSize;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect((c + quiet) * moduleSize, (r + quiet) * moduleSize, moduleSize, moduleSize);
+                    }
+                }
+            }
+            return canvas;
+        }
+
+        let lastQRData = []; // store for export
+
+        document.getElementById('generateQR').addEventListener('click', () => {
+            const values = getQRValues();
+            const qrError = document.getElementById('qrError');
+            const qrInfo = document.getElementById('qrInfo');
+            qrError.textContent = '';
+            qrInfo.textContent = '';
+
+            if (values.length === 0) {
+                qrError.textContent = 'No values to encode.';
+                return;
+            }
+            if (values.length > 500) {
+                qrError.textContent = 'Maximum 500 QR codes at once.';
+                return;
+            }
+
+            const moduleSize = parseInt(document.getElementById('qrScale').value) || 4;
+            const ec = document.getElementById('qrEC').value;
+            const spacing = parseInt(document.getElementById('qrSpacing').value) || 20;
+            const showLabel = document.getElementById('qrShowLabel').value;
+            const labelSize = parseInt(document.getElementById('qrLabelSize').value) || 10;
+
+            const preview = document.getElementById('qrPreview');
+            preview.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.className = 'qr-grid';
+            grid.style.gap = spacing + 'px';
+
+            lastQRData = [];
+            let errorCount = 0;
+
+            values.forEach((val, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'qr-cell';
+
+                try {
+                    const canvas = makeQRCanvas(val, moduleSize, ec);
+                    cell.appendChild(canvas);
+                    lastQRData.push({ canvas, label: val });
+                } catch (err) {
+                    const errDiv = document.createElement('div');
+                    errDiv.style.cssText = 'width:50px;height:50px;background:#ffdddd;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c00;';
+                    errDiv.textContent = 'ERR';
+                    cell.appendChild(errDiv);
+                    lastQRData.push(null);
+                    errorCount++;
+                }
+
+                if (showLabel === 'below') {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'qr-label';
+                    lbl.style.fontSize = labelSize + 'px';
+                    lbl.textContent = val;
+                    lbl.style.maxWidth = '200px';
+                    cell.appendChild(lbl);
+                }
+
+                grid.appendChild(cell);
+            });
+
+            preview.appendChild(grid);
+            qrInfo.textContent = `Generated ${values.length} QR code${values.length !== 1 ? 's' : ''}${errorCount ? ` (${errorCount} failed)` : ''}.`;
+        });
+
+        // Export all QR codes as a single PNG image
+        document.getElementById('exportAllPNG').addEventListener('click', () => {
+            if (lastQRData.length === 0) {
+                document.getElementById('qrError').textContent = 'Generate QR codes first.';
+                return;
+            }
+
+            const spacing = parseInt(document.getElementById('qrSpacing').value) || 20;
+            const showLabel = document.getElementById('qrShowLabel').value;
+            const labelSize = parseInt(document.getElementById('qrLabelSize').value) || 10;
+            const labelExtra = showLabel === 'below' ? labelSize + 6 : 0;
+
+            // Compute dimensions from canvas sizes
+            const validItems = lastQRData.filter(d => d !== null);
+            if (validItems.length === 0) return;
+
+            const maxW = Math.max(...validItems.map(d => d.canvas.width));
+            const maxH = Math.max(...validItems.map(d => d.canvas.height));
+
+            // Figure out columns to fit roughly a reasonable width
+            const targetWidth = Math.max(800, maxW + spacing * 2);
+            const cols = Math.max(1, Math.floor((targetWidth + spacing) / (maxW + spacing)));
+            const rows = Math.ceil(validItems.length / cols);
+
+            const canvasW = cols * (maxW + spacing) + spacing;
+            const canvasH = rows * (maxH + labelExtra + spacing) + spacing;
+
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = canvasW;
+            exportCanvas.height = canvasH;
+            const ctx = exportCanvas.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasW, canvasH);
+
+            let idx = 0;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (idx >= validItems.length) break;
+                    const item = validItems[idx];
+                    const x = spacing + c * (maxW + spacing) + Math.floor((maxW - item.canvas.width) / 2);
+                    const y = spacing + r * (maxH + labelExtra + spacing);
+                    ctx.drawImage(item.canvas, x, y);
+
+                    if (showLabel === 'below') {
+                        ctx.fillStyle = '#333333';
+                        ctx.font = `${labelSize}px "JetBrains Mono", monospace`;
+                        ctx.textAlign = 'center';
+                        const lx = spacing + c * (maxW + spacing) + maxW / 2;
+                        const ly = y + item.canvas.height + labelSize + 2;
+                        ctx.fillText(item.label, lx, ly, maxW);
+                    }
+                    idx++;
+                }
+            }
+
+            const dataURL = exportCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'qr-codes-bulk.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            document.getElementById('qrInfo').textContent = `Exported ${validItems.length} QR codes as PNG (${canvasW}×${canvasH}px).`;
+        });
+
+        // Printing
+        document.getElementById('printQR').addEventListener('click', () => {
+            if (lastQRData.length === 0) {
+                document.getElementById('qrError').textContent = 'Generate QR codes first.';
+                return;
+            }
+            // QR tab is active for print
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-tab="tab-qr"]').classList.add('active');
+            document.getElementById('tab-qr').classList.add('active');
+
+            window.print();
+        });
+    </script>
+</body>
+
+</html>
