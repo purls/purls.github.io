@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tuned RNG</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #80cccc;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 15px;
+        }
+
+        .mode-tab {
+            padding: 8px 18px;
+            background-color: #1e1e1e;
+            color: #888;
+            border: 1px solid #3d3d3d;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .mode-tab:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+
+        .mode-tab:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .mode-tab:not(:last-child) {
+            border-right: none;
+        }
+
+        .mode-tab.active {
+            background-color: #244444;
+            color: #e0e0e0;
+            border-color: #4cafac;
+        }
+
+        .mode-tab:hover:not(.active) {
+            background-color: #2a2a2a;
+            color: #b0b0b0;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .config-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .config-item label {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .config-item input[type="number"],
+        .config-item input[type="text"],
+        .config-item select {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 7px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .config-item input:focus,
+        .config-item select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+        }
+
+        .toggle-row label {
+            font-size: 13px;
+            color: #b0b0b0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        input[type="checkbox"] {
+            accent-color: #4cafac;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .charset-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .charset-chip {
+            padding: 4px 10px;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            color: #888;
+        }
+
+        .charset-chip.active {
+            background-color: #1a3a3a;
+            border-color: #4cafac;
+            color: #80cccc;
+        }
+
+        .charset-chip:hover {
+            border-color: #5d5d5d;
+        }
+
+        .output-box {
+            background-color: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 18px;
+            letter-spacing: 2px;
+            word-break: break-all;
+            min-height: 28px;
+            color: #80cccc;
+            position: relative;
+        }
+
+        .output-box.empty {
+            color: #555;
+            font-size: 13px;
+            letter-spacing: normal;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .btn-generate {
+            background-color: #244444;
+            padding: 10px 24px;
+            font-size: 14px;
+        }
+
+        .btn-generate:hover:not(:disabled) {
+            background-color: #255555;
+        }
+
+        .btn-secondary {
+            background-color: #2a2a2a;
+            border: 1px solid #3d3d3d;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #333;
+        }
+
+        .script-section {
+            margin-top: 10px;
+        }
+
+        .script-tabs {
+            display: flex;
+            gap: 0;
+        }
+
+        .script-tab {
+            padding: 6px 14px;
+            background-color: #1e1e1e;
+            color: #888;
+            border: 1px solid #3d3d3d;
+            border-bottom: none;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .script-tab:first-child {
+            border-radius: 4px 0 0 0;
+        }
+
+        .script-tab:last-child {
+            border-radius: 0 4px 0 0;
+        }
+
+        .script-tab:not(:last-child) {
+            border-right: none;
+        }
+
+        .script-tab.active {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            border-color: #3d3d3d;
+        }
+
+        .script-box {
+            background-color: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 0 4px 4px 4px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: #c0c0c0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 13px;
+            min-height: 18px;
+            margin-top: 8px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            min-height: 18px;
+            margin-top: 8px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .custom-chars-input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .multi-output {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .multi-output .output-line {
+            background-color: #161616;
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-size: 15px;
+            letter-spacing: 1.5px;
+            word-break: break-all;
+            color: #80cccc;
+        }
+
+        .multi-output .output-line:nth-child(even) {
+            background-color: #1a1a1a;
+        }
+
+        .copy-btn-inline {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 3px 8px;
+            font-size: 11px;
+            background-color: #2a2a2a;
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            color: #888;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.15s;
+        }
+
+        .copy-btn-inline:hover {
+            background-color: #333;
+            color: #ccc;
+        }
+
+        .palindrome-select {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Tuned RNG</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 15px 0;">Configurable random generator for numbers, hex, and character strings.</p>
+
+    <!-- Mode Selection -->
+    <div class="section">
+        <div class="mode-tabs">
+            <div class="mode-tab active" data-mode="number">Number</div>
+            <div class="mode-tab" data-mode="hex">Hex</div>
+            <div class="mode-tab" data-mode="chars">Characters</div>
+        </div>
+    </div>
+
+    <!-- Config -->
+    <div class="section">
+        <div class="section-title">Configuration</div>
+        <div class="config-grid">
+
+            <!-- Number mode: range -->
+            <div class="config-item" id="cfg-min">
+                <label for="rangeMin">Min Value</label>
+                <input type="number" id="rangeMin" value="0" />
+            </div>
+            <div class="config-item" id="cfg-max">
+                <label for="rangeMax">Max Value</label>
+                <input type="number" id="rangeMax" value="100" />
+            </div>
+
+            <!-- Shared: length (for hex/chars mode, or digit count for number mode) -->
+            <div class="config-item" id="cfg-length" style="display:none;">
+                <label for="outputLength">Length</label>
+                <input type="number" id="outputLength" value="16" min="1" max="10000" />
+            </div>
+
+            <!-- Count -->
+            <div class="config-item">
+                <label for="outputCount">Count (how many to generate)</label>
+                <input type="number" id="outputCount" value="1" min="1" max="500" />
+            </div>
+
+            <!-- Number mode toggles -->
+            <div class="config-item" id="cfg-leading-zeros" style="display:none;">
+                <div class="toggle-row">
+                    <input type="checkbox" id="leadingZeros" />
+                    <label for="leadingZeros">Allow leading zeros</label>
+                </div>
+            </div>
+
+            <!-- Shared toggles -->
+            <div class="config-item" id="cfg-no-repeats">
+                <div class="toggle-row">
+                    <input type="checkbox" id="noRepeats" />
+                    <label for="noRepeats">No repeating adjacent characters</label>
+                </div>
+            </div>
+
+            <div class="config-item" id="cfg-unique-chars" style="display:none;">
+                <div class="toggle-row">
+                    <input type="checkbox" id="uniqueChars" />
+                    <label for="uniqueChars">All characters unique (no duplicates)</label>
+                </div>
+            </div>
+
+            <div class="config-item" id="cfg-palindrome" style="display:none;">
+                <label for="palindromeMode">Palindrome</label>
+                <select id="palindromeMode" class="palindrome-select">
+                    <option value="allow">Allow (may or may not be)</option>
+                    <option value="force">Force palindrome</option>
+                    <option value="disallow">Disallow palindrome</option>
+                </select>
+            </div>
+
+            <!-- Hex mode: case -->
+            <div class="config-item" id="cfg-hex-case" style="display:none;">
+                <label for="hexCase">Hex Case</label>
+                <select id="hexCase">
+                    <option value="lower">Lowercase (a-f)</option>
+                    <option value="upper">Uppercase (A-F)</option>
+                    <option value="mixed">Mixed</option>
+                </select>
+            </div>
+
+            <div class="config-item" id="cfg-hex-prefix" style="display:none;">
+                <div class="toggle-row">
+                    <input type="checkbox" id="hexPrefix" />
+                    <label for="hexPrefix">Include 0x prefix</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character set (chars mode) -->
+    <div class="section" id="charset-section" style="display:none;">
+        <div class="section-title">Character Set</div>
+        <div class="charset-grid" id="charsetGrid">
+            <div class="charset-chip active" data-set="upper">A-Z</div>
+            <div class="charset-chip active" data-set="lower">a-z</div>
+            <div class="charset-chip active" data-set="digits">0-9</div>
+            <div class="charset-chip" data-set="symbols">!@#$%&*</div>
+            <div class="charset-chip" data-set="brackets">()[]{}<>
+            </div>
+            <div class="charset-chip" data-set="punctuation">.,;:!?</div>
+            <div class="charset-chip" data-set="math">+-=/%^~</div>
+            <div class="charset-chip" data-set="underscore">_ -</div>
+            <div class="charset-chip" data-set="space">Space</div>
+        </div>
+        <div class="config-item full-width" style="margin-top: 10px;">
+            <label for="customChars">Custom characters (add your own)</label>
+            <input type="text" id="customChars" class="custom-chars-input" placeholder="e.g. éàüñ¥£" />
+        </div>
+        <div class="config-item full-width" style="margin-top: 6px;">
+            <label for="excludeChars">Exclude characters</label>
+            <input type="text" id="excludeChars" class="custom-chars-input"
+                placeholder="e.g. 0O1lI (ambiguous chars)" />
+        </div>
+    </div>
+
+    <!-- Generate -->
+    <div class="section">
+        <div class="button-group">
+            <button class="btn-generate" id="btnGenerate">Generate</button>
+            <button class="btn-secondary" id="btnCopy">Copy Output</button>
+            <button class="btn-secondary" id="btnClear">Clear</button>
+        </div>
+        <div class="error-message" id="errorMsg"></div>
+        <div class="info-message" id="infoMsg"></div>
+    </div>
+
+    <!-- Output -->
+    <div class="section">
+        <div class="section-title">Output</div>
+        <div class="output-box empty" id="outputBox">Click Generate to create a random value.</div>
+    </div>
+
+    <hr />
+
+    <!-- Scripts -->
+    <div class="section">
+        <div class="section-title">Equivalent Shell Scripts</div>
+        <p style="font-size: 13px; color: #888; margin: 0 0 10px 0;">
+            Copy these scripts to reproduce the same generation on your machine.
+        </p>
+        <div class="script-section">
+            <div class="script-tabs">
+                <div class="script-tab active" data-script="bash">Bash</div>
+                <div class="script-tab" data-script="powershell">PowerShell</div>
+            </div>
+            <div style="position:relative;">
+                <div class="script-box" id="scriptBox">Configure and generate to see a script.</div>
+                <button class="copy-btn-inline" id="btnCopyScript">Copy</button>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <p>
+        A catch-all random generator with fine-grained control over character sets,
+        repeat rules, palindrome handling, and output format. The generated Bash and
+        PowerShell scripts let you run the same generation offline.
+    </p>
+
+    <script>
+        // State
+        let currentMode = 'number';
+        let currentScriptTab = 'bash';
+        let lastResults = [];
+        let lastBash = '';
+        let lastPowershell = '';
+
+        // DOM refs
+        const $ = id => document.getElementById(id);
+        const modeTabs = document.querySelectorAll('.mode-tab');
+        const scriptTabs = document.querySelectorAll('.script-tab');
+        const charsetChips = document.querySelectorAll('.charset-chip');
+
+        // Mode switching
+        modeTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                modeTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentMode = tab.dataset.mode;
+                updateUI();
+            });
+        });
+
+        function updateUI() {
+            const isNum = currentMode === 'number';
+            const isHex = currentMode === 'hex';
+            const isChars = currentMode === 'chars';
+
+            $('cfg-min').style.display = isNum ? '' : 'none';
+            $('cfg-max').style.display = isNum ? '' : 'none';
+            $('cfg-length').style.display = !isNum ? '' : 'none';
+            $('cfg-leading-zeros').style.display = isNum ? '' : 'none';
+            $('cfg-hex-case').style.display = isHex ? '' : 'none';
+            $('cfg-hex-prefix').style.display = isHex ? '' : 'none';
+            $('charset-section').style.display = isChars ? '' : 'none';
+            $('cfg-unique-chars').style.display = !isNum ? '' : 'none';
+            $('cfg-palindrome').style.display = !isNum ? '' : 'none';
+            $('cfg-no-repeats').style.display = !isNum ? '' : 'none';
+        }
+
+        // Charset chips
+        charsetChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+
+        // Script tabs
+        scriptTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                scriptTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentScriptTab = tab.dataset.script;
+                $('scriptBox').textContent = currentScriptTab === 'bash' ? lastBash : lastPowershell;
+            });
+        });
+
+        // Character set builder
+        const CHARSETS = {
+            upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lower: 'abcdefghijklmnopqrstuvwxyz',
+            digits: '0123456789',
+            symbols: '!@#$%&*',
+            brackets: '()[]{}<>',
+            punctuation: '.,;:!?',
+            math: '+-=/%^~',
+            underscore: '_-',
+            space: ' '
+        };
+
+        function buildCharset() {
+            let chars = '';
+            charsetChips.forEach(chip => {
+                if (chip.classList.contains('active')) {
+                    chars += CHARSETS[chip.dataset.set] || '';
+                }
+            });
+            chars += $('customChars').value;
+            const exclude = $('excludeChars').value;
+            if (exclude) {
+                const exSet = new Set(exclude.split(''));
+                chars = chars.split('').filter(c => !exSet.has(c)).join('');
+            }
+            // Deduplicate
+            return [...new Set(chars.split(''))].join('');
+        }
+
+        // Generation logic
+        function cryptoRandInt(max) {
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            return arr[0] % max;
+        }
+
+        function cryptoRandRange(min, max) {
+            // Inclusive range
+            return min + cryptoRandInt(max - min + 1);
+        }
+
+        function generateNumber() {
+            const min = parseInt($('rangeMin').value);
+            const max = parseInt($('rangeMax').value);
+            if (isNaN(min) || isNaN(max)) throw new Error('Min and Max must be valid numbers.');
+            if (min > max) throw new Error('Min must be ≤ Max.');
+            return cryptoRandRange(min, max).toString();
+        }
+
+        function generateHex() {
+            const len = parseInt($('outputLength').value);
+            if (isNaN(len) || len < 1) throw new Error('Length must be at least 1.');
+            const hexCase = $('hexCase').value;
+            const noRepeats = $('noRepeats').checked;
+            const uniqueAll = $('uniqueChars').checked;
+            const palindrome = $('palindromeMode').value;
+
+            let pool;
+            if (hexCase === 'lower') pool = '0123456789abcdef';
+            else if (hexCase === 'upper') pool = '0123456789ABCDEF';
+            else pool = '0123456789abcdefABCDEF';
+
+            let result = buildString(pool, len, noRepeats, uniqueAll, palindrome);
+            if ($('hexPrefix').checked) result = '0x' + result;
+            return result;
+        }
+
+        function generateChars() {
+            const len = parseInt($('outputLength').value);
+            if (isNaN(len) || len < 1) throw new Error('Length must be at least 1.');
+            const pool = buildCharset();
+            if (!pool) throw new Error('No characters selected. Enable at least one character set.');
+            const noRepeats = $('noRepeats').checked;
+            const uniqueAll = $('uniqueChars').checked;
+            const palindrome = $('palindromeMode').value;
+            return buildString(pool, len, noRepeats, uniqueAll, palindrome);
+        }
+
+        function buildString(pool, len, noAdjacentRepeats, allUnique, palindromeMode) {
+            if (allUnique && len > pool.length)
+                throw new Error(`Cannot produce ${len} unique characters from a pool of ${pool.length}. Increase pool or reduce length.`);
+
+            if (palindromeMode === 'force') return buildPalindrome(pool, len, noAdjacentRepeats, allUnique);
+
+            const maxAttempts = 2000;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                let result = '';
+                const used = new Set();
+                let ok = true;
+
+                for (let i = 0; i < len; i++) {
+                    let candidates = pool.split('');
+                    if (noAdjacentRepeats && result.length > 0) {
+                        const last = result[result.length - 1];
+                        candidates = candidates.filter(c => c !== last);
+                    }
+                    if (allUnique) candidates = candidates.filter(c => !used.has(c));
+                    if (candidates.length === 0) { ok = false; break; }
+                    const ch = candidates[cryptoRandInt(candidates.length)];
+                    result += ch;
+                    used.add(ch);
+                }
+
+                if (!ok) continue;
+
+                if (palindromeMode === 'disallow') if (isPalindrome(result)) continue;
+                return result;
+            }
+            throw new Error('Could not satisfy constraints after many attempts. Try relaxing the rules.');
+        }
+
+        function buildPalindrome(pool, len, noAdjacentRepeats, allUnique) {
+            const half = Math.ceil(len / 2);
+            const maxAttempts = 2000;
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                let firstHalf = '';
+                const used = new Set();
+                let ok = true;
+
+                for (let i = 0; i < half; i++) {
+                    let candidates = pool.split('');
+                    if (noAdjacentRepeats && firstHalf.length > 0) candidates = candidates.filter(c => c !== firstHalf[firstHalf.length - 1]);
+                    if (allUnique) candidates = candidates.filter(c => !used.has(c));
+                    if (candidates.length === 0) { ok = false; break; }
+                    const ch = candidates[cryptoRandInt(candidates.length)];
+                    firstHalf += ch;
+                    used.add(ch);
+                }
+
+                if (!ok) continue;
+
+                // Build palindrome
+                const mirror = firstHalf.split('').reverse().join('');
+                let result;
+                if (len % 2 === 0) {
+                    result = firstHalf + mirror;
+                } else {
+                    result = firstHalf + mirror.slice(1);
+                }
+
+                // Validate no-adjacent-repeats across the middle
+                if (noAdjacentRepeats) {
+                    let adjOk = true;
+                    for (let i = 1; i < result.length; i++) if (result[i] === result[i - 1]) { adjOk = false; break; }
+                    if (!adjOk) continue;
+                }
+
+                // Validate all-unique on the full string
+                if (allUnique) if (new Set(result.split('')).size !== result.length) continue;
+
+                return result;
+            }
+            throw new Error('Could not build a palindrome satisfying all constraints. Try relaxing the rules.');
+        }
+
+        function isPalindrome(s) {
+            if (s.length <= 1) return true;
+            const lower = s.toLowerCase();
+            for (let i = 0; i < Math.floor(lower.length / 2); i++) {
+                if (lower[i] !== lower[lower.length - 1 - i]) return false;
+            }
+            return true;
+        }
+
+        // Script generation
+        function escapeShellStr(s) {
+            return s.replace(/'/g, "'\\''");
+        }
+
+        function escapePSStr(s) {
+            return s.replace(/'/g, "''");
+        }
+
+        function generateBashScript() {
+            const count = parseInt($('outputCount').value) || 1;
+
+            if (currentMode === 'number') {
+                const min = parseInt($('rangeMin').value);
+                const max = parseInt($('rangeMax').value);
+                let lines = '#!/usr/bin/env bash\n';
+                lines += `# Tuned RNG: Number mode\n`;
+                lines += `MIN=${min}\nMAX=${max}\nCOUNT=${count}\n\n`;
+                lines += `for ((i=0; i<COUNT; i++)); do\n`;
+                lines += `  echo $(( RANDOM % (MAX - MIN + 1) + MIN ))\n`;
+                lines += `done\n`;
+                return lines;
+            }
+
+            if (currentMode === 'hex') {
+                const len = parseInt($('outputLength').value);
+                const hexCase = $('hexCase').value;
+                const prefix = $('hexPrefix').checked;
+                const noRepeats = $('noRepeats').checked;
+                const uniqueAll = $('uniqueChars').checked;
+                const palindrome = $('palindromeMode').value;
+
+                let pool;
+                if (hexCase === 'lower') pool = '0123456789abcdef';
+                else if (hexCase === 'upper') pool = '0123456789ABCDEF';
+                else pool = '0123456789abcdefABCDEF';
+
+                return buildBashCharScript(pool, len, count, prefix ? '0x' : '', noRepeats, uniqueAll, palindrome, 'Hex');
+            }
+
+            if (currentMode === 'chars') {
+                const len = parseInt($('outputLength').value);
+                const pool = buildCharset();
+                const noRepeats = $('noRepeats').checked;
+                const uniqueAll = $('uniqueChars').checked;
+                const palindrome = $('palindromeMode').value;
+
+                return buildBashCharScript(pool, len, count, '', noRepeats, uniqueAll, palindrome, 'Characters');
+            }
+
+            return '# No configuration set.';
+        }
+
+        function buildBashCharScript(pool, len, count, prefix, noRepeats, uniqueAll, palindrome, label) {
+            let s = '#!/usr/bin/env bash\n';
+            s += `# Tuned RNG: ${label} mode\n`;
+            s += `POOL='${escapeShellStr(pool)}'\n`;
+            s += `LEN=${len}\nCOUNT=${count}\n`;
+            s += `PREFIX='${prefix}'\n\n`;
+
+            s += `generate_one() {\n`;
+            s += `  local result="" used=""\n`;
+            s += `  for ((j=0; j<LEN; j++)); do\n`;
+            s += `    local attempts=0\n`;
+            s += `    while true; do\n`;
+            s += `      local idx=$(( RANDOM % \${#POOL} ))\n`;
+            s += `      local ch="\${POOL:\$idx:1}"\n`;
+
+            if (noRepeats) {
+                s += `      # No adjacent repeats\n`;
+                s += `      if [[ \${#result} -gt 0 && "\${result: -1}" == "$ch" ]]; then\n`;
+                s += `        ((attempts++)); [[ $attempts -ge 100 ]] && break\n`;
+                s += `        continue\n`;
+                s += `      fi\n`;
+            }
+
+            if (uniqueAll) {
+                s += `      # All unique\n`;
+                s += `      if [[ "$used" == *"$ch"* ]]; then\n`;
+                s += `        ((attempts++)); [[ $attempts -ge 100 ]] && break\n`;
+                s += `        continue\n`;
+                s += `      fi\n`;
+            }
+
+            s += `      result+="$ch"\n`;
+            if (uniqueAll) {
+                s += `      used+="$ch"\n`;
+            }
+            s += `      break\n`;
+            s += `    done\n`;
+            s += `  done\n`;
+
+            if (palindrome === 'force') {
+                s += `  # Force palindrome: mirror first half\n`;
+                s += `  local half=$(( (LEN + 1) / 2 ))\n`;
+                s += `  result="\${result:0:\$half}"\n`;
+                s += `  local rev=""\n`;
+                s += `  for ((k=\${#result}-1; k>=0; k--)); do rev+="\${result:\$k:1}"; done\n`;
+                s += `  if (( LEN % 2 == 0 )); then\n`;
+                s += `    result="\${result}\${rev}"\n`;
+                s += `  else\n`;
+                s += `    result="\${result}\${rev:1}"\n`;
+                s += `  fi\n`;
+            }
+
+            s += `  echo "\${PREFIX}\${result}"\n`;
+            s += `}\n\n`;
+
+            if (palindrome === 'disallow') {
+                s += `is_palindrome() {\n`;
+                s += `  local s="$1" rev=""\n`;
+                s += `  for ((k=\${#s}-1; k>=0; k--)); do rev+="\${s:\$k:1}"; done\n`;
+                s += `  [[ "$s" == "$rev" ]]\n`;
+                s += `}\n\n`;
+                s += `for ((i=0; i<COUNT; i++)); do\n`;
+                s += `  while true; do\n`;
+                s += `    val=$(generate_one)\n`;
+                s += `    val_body="\${val#$PREFIX}"\n`;
+                s += `    is_palindrome "$val_body" || { echo "$val"; break; }\n`;
+                s += `  done\n`;
+                s += `done\n`;
+            } else {
+                s += `for ((i=0; i<COUNT; i++)); do\n`;
+                s += `  generate_one\n`;
+                s += `done\n`;
+            }
+
+            return s;
+        }
+
+        function generatePowershellScript() {
+            const count = parseInt($('outputCount').value) || 1;
+
+            if (currentMode === 'number') {
+                const min = parseInt($('rangeMin').value);
+                const max = parseInt($('rangeMax').value);
+                let s = `# Tuned RNG: Number mode\n`;
+                s += `$Min = ${min}\n$Max = ${max}\n$Count = ${count}\n\n`;
+                s += `1..$Count | ForEach-Object {\n`;
+                s += `    Get-Random -Minimum $Min -Maximum ($Max + 1)\n`;
+                s += `}\n`;
+                return s;
+            }
+
+            if (currentMode === 'hex') {
+                const len = parseInt($('outputLength').value);
+                const hexCase = $('hexCase').value;
+                const prefix = $('hexPrefix').checked;
+                const noRepeats = $('noRepeats').checked;
+                const uniqueAll = $('uniqueChars').checked;
+                const palindrome = $('palindromeMode').value;
+
+                let pool;
+                if (hexCase === 'lower') pool = '0123456789abcdef';
+                else if (hexCase === 'upper') pool = '0123456789ABCDEF';
+                else pool = '0123456789abcdefABCDEF';
+
+                return buildPSCharScript(pool, len, count, prefix ? '0x' : '', noRepeats, uniqueAll, palindrome, 'Hex');
+            }
+
+            if (currentMode === 'chars') {
+                const len = parseInt($('outputLength').value);
+                const pool = buildCharset();
+                const noRepeats = $('noRepeats').checked;
+                const uniqueAll = $('uniqueChars').checked;
+                const palindrome = $('palindromeMode').value;
+
+                return buildPSCharScript(pool, len, count, '', noRepeats, uniqueAll, palindrome, 'Characters');
+            }
+
+            return '# No configuration set.';
+        }
+
+        function buildPSCharScript(pool, len, count, prefix, noRepeats, uniqueAll, palindrome, label) {
+            let s = `# Tuned RNG: ${label} mode\n`;
+            s += `$Pool = '${escapePSStr(pool)}'\n`;
+            s += `$Len = ${len}\n$Count = ${count}\n`;
+            s += `$Prefix = '${prefix}'\n\n`;
+
+            s += `function Generate-One {\n`;
+            s += `    $result = ''\n`;
+            s += `    $used = @{}\n`;
+            s += `    for ($j = 0; $j -lt $Len; $j++) {\n`;
+            s += `        $attempts = 0\n`;
+            s += `        while ($true) {\n`;
+            s += `            $ch = $Pool[(Get-Random -Maximum $Pool.Length)]\n`;
+
+            if (noRepeats) {
+                s += `            # No adjacent repeats\n`;
+                s += `            if ($result.Length -gt 0 -and $result[-1] -eq $ch) {\n`;
+                s += `                $attempts++; if ($attempts -ge 100) { break }\n`;
+                s += `                continue\n`;
+                s += `            }\n`;
+            }
+
+            if (uniqueAll) {
+                s += `            # All unique\n`;
+                s += `            if ($used.ContainsKey([string]$ch)) {\n`;
+                s += `                $attempts++; if ($attempts -ge 100) { break }\n`;
+                s += `                continue\n`;
+                s += `            }\n`;
+            }
+
+            s += `            $result += $ch\n`;
+            if (uniqueAll) {
+                s += `            $used[[string]$ch] = $true\n`;
+            }
+            s += `            break\n`;
+            s += `        }\n`;
+            s += `    }\n`;
+
+            if (palindrome === 'force') {
+                s += `    # Force palindrome\n`;
+                s += `    $half = [math]::Ceiling($Len / 2)\n`;
+                s += `    $result = $result.Substring(0, $half)\n`;
+                s += `    $rev = -join ($result.ToCharArray() | Sort-Object { -not $_ } )\n`;
+                s += `    $revChars = $result.ToCharArray()\n`;
+                s += `    [array]::Reverse($revChars)\n`;
+                s += `    $rev = -join $revChars\n`;
+                s += `    if ($Len % 2 -eq 0) { $result = $result + $rev }\n`;
+                s += `    else { $result = $result + $rev.Substring(1) }\n`;
+            }
+
+            s += `    return "$Prefix$result"\n`;
+            s += `}\n\n`;
+
+            if (palindrome === 'disallow') {
+                s += `function Test-Palindrome([string]$s) {\n`;
+                s += `    $chars = $s.ToCharArray()\n`;
+                s += `    $rev = $chars.Clone()\n`;
+                s += `    [array]::Reverse($rev)\n`;
+                s += `    return ($s -eq (-join $rev))\n`;
+                s += `}\n\n`;
+                s += `1..$Count | ForEach-Object {\n`;
+                s += `    do {\n`;
+                s += `        $val = Generate-One\n`;
+                s += `        $body = $val\n`;
+                s += `        if ($Prefix) { $body = $val.Substring($Prefix.Length) }\n`;
+                s += `    } while (Test-Palindrome $body)\n`;
+                s += `    $val\n`;
+                s += `}\n`;
+            } else {
+                s += `1..$Count | ForEach-Object {\n`;
+                s += `    Generate-One\n`;
+                s += `}\n`;
+            }
+
+            return s;
+        }
+
+        // Main generate handler
+        $('btnGenerate').addEventListener('click', () => {
+            $('errorMsg').textContent = '';
+            $('infoMsg').textContent = '';
+
+            try {
+                const count = parseInt($('outputCount').value) || 1;
+                if (count < 1 || count > 500) throw new Error('Count must be 1–500.');
+
+                lastResults = [];
+                for (let i = 0; i < count; i++) {
+                    let val;
+                    if (currentMode === 'number') val = generateNumber();
+                    else if (currentMode === 'hex') val = generateHex();
+                    else val = generateChars();
+                    lastResults.push(val);
+                }
+
+                // Render output
+                const box = $('outputBox');
+                box.classList.remove('empty');
+                if (count === 1) {
+                    box.innerHTML = `<span>${escapeHtml(lastResults[0])}</span>`;
+                } else {
+                    box.innerHTML = '<div class="multi-output">' +
+                        lastResults.map(r => `<div class="output-line">${escapeHtml(r)}</div>`).join('') +
+                        '</div>';
+                }
+
+                // Generate scripts
+                lastBash = generateBashScript();
+                lastPowershell = generatePowershellScript();
+                $('scriptBox').textContent = currentScriptTab === 'bash' ? lastBash : lastPowershell;
+
+                $('infoMsg').textContent = `Generated ${count} value${count > 1 ? 's' : ''}.`;
+            } catch (e) {
+                $('errorMsg').textContent = e.message;
+            }
+        });
+
+        // Copy
+        $('btnCopy').addEventListener('click', async () => {
+            if (!lastResults.length) {
+                $('infoMsg').textContent = 'Nothing to copy.';
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(lastResults.join('\n'));
+                $('infoMsg').textContent = 'Copied to clipboard!';
+            } catch {
+                $('errorMsg').textContent = 'Failed to copy.';
+            }
+        });
+
+        $('btnCopyScript').addEventListener('click', async () => {
+            const text = $('scriptBox').textContent;
+            if (!text || text.startsWith('Configure')) {
+                $('infoMsg').textContent = 'No script to copy yet.';
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                $('infoMsg').textContent = 'Script copied!';
+            } catch {
+                $('errorMsg').textContent = 'Failed to copy script.';
+            }
+        });
+
+        // Clear
+        $('btnClear').addEventListener('click', () => {
+            lastResults = [];
+            lastBash = '';
+            lastPowershell = '';
+            $('outputBox').innerHTML = 'Click Generate to create a random value.';
+            $('outputBox').classList.add('empty');
+            $('scriptBox').textContent = 'Configure and generate to see a script.';
+            $('errorMsg').textContent = '';
+            $('infoMsg').textContent = '';
+        });
+
+        // Utilities
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                $('btnGenerate').click();
+            }
+        });
+
+        // Init
+        updateUI();
+    </script>
+</body>
+
+</html>
