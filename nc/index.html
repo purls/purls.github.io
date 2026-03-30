@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Namecheap Market Parser</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <link rel="stylesheet" href="parser.css" />
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Namecheap Market Parser<span id="tableType"></span></h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 10px 0;">Upload a Namecheap Market CSV (Auction or Buy-Now), then filter and sort.</p>
+
+    <!-- Upload -->
+    <div class="upload-area" id="uploadArea">
+        <p>Drop a CSV file here or click to upload</p>
+        <p class="filename" id="fileName"></p>
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt" />
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-grid" id="filtersSection" style="display:none;">
+
+        <!-- Length -->
+        <div class="filter-group">
+            <h3>Length (chars before first dot)</h3>
+            <div class="filter-row">
+                <label>Min:</label>
+                <input type="number" id="minLength" min="1" placeholder="—" />
+                <label>Max:</label>
+                <input type="number" id="maxLength" min="1" placeholder="—" />
+            </div>
+        </div>
+
+        <!-- TLD -->
+        <div class="filter-group">
+            <h3>TLD Filter</h3>
+            <div class="filter-row">
+                <label>Include:</label>
+                <div class="tag-input-wrap" id="tldIncludeWrap">
+                    <input type="text" class="tag-text-input" id="tldIncludeInput" placeholder="e.g. com ↵" />
+                </div>
+            </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>Exclude:</label>
+                <div class="tag-input-wrap" id="tldExcludeWrap">
+                    <input type="text" class="tag-text-input" id="tldExcludeInput" placeholder="e.g. xyz ↵" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Character toggles -->
+        <div class="filter-group">
+            <h3>Character Filters</h3>
+            <div class="filter-row">
+                <label>Letters:</label>
+                <div class="tri-toggle" data-filter="letters">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Vowels:</label>
+                <div class="tri-toggle" data-filter="vowels">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Numbers:</label>
+                <div class="tri-toggle" data-filter="numbers">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Hyphens:</label>
+                <div class="tri-toggle" data-filter="hyphens">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern filters -->
+        <div class="filter-group">
+            <h3>Pattern Filters</h3>
+            <div class="filter-row">
+                <label>Palindrome:</label>
+                <div class="tri-toggle" data-filter="palindrome">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="repeat-grid" style="margin-top:8px;">
+                <div class="filter-row">
+                    <label>Dubs:</label>
+                    <div class="tri-toggle" data-filter="dubs">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Trips:</label>
+                    <div class="tri-toggle" data-filter="trips">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Quads:</label>
+                    <div class="tri-toggle" data-filter="quads">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Quints:</label>
+                    <div class="tri-toggle" data-filter="quints">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Sexts:</label>
+                    <div class="tri-toggle" data-filter="sexts">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Septs:</label>
+                    <div class="tri-toggle" data-filter="septs">
+                        <button data-val="yes">Y</button>
+                        <button data-val="no">N</button>
+                        <button data-val="any" class="active-any">—</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Substrings -->
+        <div class="filter-group">
+            <h3>Substrings (domain must contain one)</h3>
+            <div class="filter-row">
+                <div class="tag-input-wrap" id="substringWrap">
+                    <input type="text" class="tag-text-input" id="substringInput" placeholder="e.g. crypto ↵" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Auction-only: Max Renew -->
+        <div class="filter-group" id="auctionFilters" style="display:none;">
+            <h3>Auction Filters</h3>
+            <div class="filter-row">
+                <label>Max Renew $:</label>
+                <input type="number" id="maxRenew" min="0" step="0.01" placeholder="—" />
+            </div>
+        </div>
+
+        <!-- Keyboard patterns -->
+        <div class="filter-group">
+            <h3>Keyboard Patterns (QWERTY)</h3>
+            <div class="filter-row">
+                <label>Same Row:</label>
+                <div class="tri-toggle" data-filter="sameRow">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Min Adj %:</label>
+                <input type="number" id="minAdjacentPct" min="0" max="100" placeholder="—" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Sort & Actions -->
+    <div class="controls" id="actionsSection" style="display:none;">
+        <div class="sort-controls">
+            <label for="sortBy">Sort:</label>
+            <select id="sortBy">
+                <option value="none">Original Order</option>
+                <option value="alpha">Alphabetical</option>
+                <option value="alpha-desc">Alphabetical (Z-A)</option>
+                <option value="length">Length (short→long)</option>
+                <option value="length-desc">Length (long→short)</option>
+                <option value="price">Price (low→high)</option>
+                <option value="price-desc">Price (high→low)</option>
+                <option value="bid" id="bidSortOpt" style="display:none;">Bids (high→low)</option>
+                <option value="keyboard">Keyboard Adj % (high→low)</option>
+            </select>
+        </div>
+        <button id="applyBtn">Apply Filters</button>
+        <button id="exportBtn" disabled>Export CSV</button>
+        <button id="resetBtn">Reset Filters</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar" style="display:none;">
+        <div>Showing <span id="resultCount">0</span> of <span id="totalCount">0</span> domains</div>
+        <div id="priceStat"></div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-table-wrap" id="tableWrap" style="display:none;">
+        <table id="resultsTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevPage">← Prev</button>
+        <span id="pageInfo">Page 1</span>
+        <button id="nextPage">Next →</button>
+        <label style="margin-left:10px;">Per page:</label>
+        <select id="perPage">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="0">All</option>
+        </select>
+    </div>
+
+    <hr>
+    <p>
+        Upload a Namecheap Market CSV export (Auction or Buy-Now). The parser auto-detects the table type
+        from the column headers. Use the filters above to narrow results, then export the filtered set.
+    </p>
+    <p>
+        <strong>Tri-toggles:</strong> <em>Yes</em> = must have, <em>No</em> = must not have, <em>Any</em> = don't care.
+        For TLDs and substrings, press Enter to add tags.
+    </p>
+    <p>
+        <strong>Keyboard Patterns:</strong> Analyzes domain names against a US QWERTY layout.
+        "Same Row" means every character sits on one keyboard row. "Adjacent %" measures how many
+        consecutive key-pairs are physically next to each other.
+    </p>
+
+    <script src="parser.js"></script>
+</body>
+
+</html>
