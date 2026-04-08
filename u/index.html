@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>String Converter</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+        }
+
+        select,
+        input[type="checkbox"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-tab {
+            padding: 10px 18px;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-bottom: none;
+            cursor: pointer;
+            color: #888;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .mode-tab:first-child {
+            border-radius: 4px 0 0 0;
+        }
+
+        .mode-tab:last-child {
+            border-radius: 0 4px 0 0;
+        }
+
+        .mode-tab:hover {
+            background-color: #252525;
+            color: #ccc;
+        }
+
+        .mode-tab.active {
+            background-color: #244444;
+            color: #e0e0e0;
+            border-color: #4cafac;
+        }
+
+        .option-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .option-row label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .arrow {
+            font-size: 20px;
+            color: #4cafac;
+            user-select: none;
+        }
+
+        .swap-btn {
+            background-color: #1a3a3a;
+            font-size: 16px;
+            padding: 6px 12px;
+        }
+
+        .swap-btn:hover {
+            background-color: #225252;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">String Converter</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0;">Encode, decode, escape, and convert strings between formats.</p>
+    <br />
+
+    <div class="mode-tabs">
+        <div class="mode-tab active" data-mode="url">URL Encode</div>
+        <div class="mode-tab" data-mode="unicode">Unicode Escape</div>
+        <div class="mode-tab" data-mode="base64">Base64</div>
+        <div class="mode-tab" data-mode="html">HTML Entities</div>
+        <div class="mode-tab" data-mode="hex">Hex</div>
+        <div class="mode-tab" data-mode="rot13">ROT13</div>
+    </div>
+
+    <!-- URL options -->
+    <div class="option-row" id="urlOptions">
+        <label><input type="checkbox" id="urlEncodeSlashes"> Encode slashes</label>
+        <label><input type="checkbox" id="urlEncodePlus"> Use + for spaces (form encoding)</label>
+    </div>
+
+    <!-- Unicode options -->
+    <div class="option-row" id="unicodeOptions" style="display:none;">
+        <label><input type="checkbox" id="unicodeUppercase" checked> Uppercase hex (\u00FF vs \u00ff)</label>
+        <label><input type="checkbox" id="unicodeAsciiOnly"> Only escape non-ASCII</label>
+    </div>
+
+    <!-- Base64 options -->
+    <div class="option-row" id="base64Options" style="display:none;">
+        <label><input type="checkbox" id="base64Url"> URL-safe Base64 (- _ instead of + /)</label>
+    </div>
+
+    <!-- HTML options -->
+    <div class="option-row" id="htmlOptions" style="display:none;">
+        <label><input type="checkbox" id="htmlNumeric"> Use numeric entities (&#60; vs &amp;lt;)</label>
+    </div>
+
+    <!-- Hex options -->
+    <div class="option-row" id="hexOptions" style="display:none;">
+        <label for="hexSeparator">Separator:</label>
+        <select id="hexSeparator">
+            <option value=" ">Space</option>
+            <option value="">None</option>
+            <option value=":">Colon</option>
+            <option value="-">Dash</option>
+            <option value="\\x">\\x prefix</option>
+            <option value="0x">0x prefix</option>
+        </select>
+        <label><input type="checkbox" id="hexUppercase" checked> Uppercase</label>
+    </div>
+
+    <textarea id="inputText" rows="6" placeholder="Enter your string here..."></textarea>
+
+    <div class="button-group">
+        <button id="encodeBtn">Encode ↓</button>
+        <button id="decodeBtn">Decode ↑</button>
+        <button class="swap-btn" id="swapBtn" title="Swap input and output">⇅</button>
+        <button id="copyBtn">Copy Output</button>
+        <button id="clearBtn">Clear All</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <h2>Output:</h2>
+    <textarea id="outputText" rows="6" readonly></textarea>
+
+    <hr>
+    <p>
+        <strong>URL Encode:</strong> Percent-encodes special characters for use in URLs. Optionally encode slashes or
+        use + for spaces.<br>
+        <strong>Unicode Escape:</strong> Converts characters to \uXXXX sequences and back.<br>
+        <strong>Base64:</strong> Standard or URL-safe Base64 encoding/decoding.<br>
+        <strong>HTML Entities:</strong> Encodes &amp; &lt; &gt; &quot; and optionally all non-ASCII as named or numeric
+        entities.<br>
+        <strong>Hex:</strong> Converts each byte to its hexadecimal representation with configurable separators.<br>
+        <strong>ROT13:</strong> Classic letter rotation cipher (encode and decode are the same operation).
+    </p>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const encodeBtn = document.getElementById('encodeBtn');
+        const decodeBtn = document.getElementById('decodeBtn');
+        const swapBtn = document.getElementById('swapBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
+
+        let currentMode = 'url';
+
+        // Tab switching
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentMode = tab.dataset.mode;
+
+                document.querySelectorAll('.option-row').forEach(r => r.style.display = 'none');
+                const opts = document.getElementById(currentMode + 'Options');
+                if (opts) opts.style.display = 'flex';
+
+                clearMessages();
+            });
+        });
+
+        function showError(msg) { errorMessage.textContent = msg; infoMessage.textContent = ''; }
+        function showInfo(msg) { infoMessage.textContent = msg; errorMessage.textContent = ''; }
+        function clearMessages() { errorMessage.textContent = ''; infoMessage.textContent = ''; }
+
+        function adjustHeight(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+        inputText.addEventListener('input', () => adjustHeight(inputText));
+
+        // --- Encoders ---
+        const encoders = {
+            url(str) {
+                const encSlash = document.getElementById('urlEncodeSlashes').checked;
+                const usePlus = document.getElementById('urlEncodePlus').checked;
+                if (usePlus) {
+                    let out = encodeURIComponent(str);
+                    out = out.replace(/%20/g, '+');
+                    if (!encSlash) out = out.replace(/%2F/g, '/');
+                    return out;
+                }
+                let out = encSlash ? encodeURIComponent(str) : encodeURI(str);
+                return out;
+            },
+            unicode(str) {
+                const upper = document.getElementById('unicodeUppercase').checked;
+                const asciiOnly = document.getElementById('unicodeAsciiOnly').checked;
+                return [...str].map(ch => {
+                    const code = ch.codePointAt(0);
+                    if (asciiOnly && code < 128) return ch;
+                    if (code > 0xFFFF) {
+                        const hex = code.toString(16);
+                        return '\\u{' + (upper ? hex.toUpperCase() : hex) + '}';
+                    }
+                    const hex = code.toString(16).padStart(4, '0');
+                    return '\\u' + (upper ? hex.toUpperCase() : hex);
+                }).join('');
+            },
+            base64(str) {
+                const urlSafe = document.getElementById('base64Url').checked;
+                let b = btoa(unescape(encodeURIComponent(str)));
+                if (urlSafe) b = b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                return b;
+            },
+            html(str) {
+                const numeric = document.getElementById('htmlNumeric').checked;
+                const named = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return [...str].map(ch => {
+                    if (named[ch]) return numeric ? '&#' + ch.charCodeAt(0) + ';' : named[ch];
+                    if (ch.charCodeAt(0) > 127) return '&#' + ch.codePointAt(0) + ';';
+                    return ch;
+                }).join('');
+            },
+            hex(str) {
+                const sep = document.getElementById('hexSeparator').value;
+                const upper = document.getElementById('hexUppercase').checked;
+                const bytes = new TextEncoder().encode(str);
+                const hexArr = [...bytes].map(b => {
+                    let h = b.toString(16).padStart(2, '0');
+                    return upper ? h.toUpperCase() : h;
+                });
+                if (sep === '\\x') return hexArr.map(h => '\\x' + h).join('');
+                if (sep === '0x') return hexArr.map(h => '0x' + h).join(' ');
+                return hexArr.join(sep);
+            },
+            rot13(str) {
+                return str.replace(/[a-zA-Z]/g, c => {
+                    const base = c <= 'Z' ? 65 : 97;
+                    return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+                });
+            }
+        };
+
+        // --- Decoders ---
+        const decoders = {
+            url(str) {
+                const usePlus = document.getElementById('urlEncodePlus').checked;
+                if (usePlus) str = str.replace(/\+/g, ' ');
+                return decodeURIComponent(str);
+            },
+            unicode(str) {
+                return str
+                    .replace(/\\u\{([0-9a-fA-F]+)\}/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+                    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+            },
+            base64(str) {
+                const urlSafe = document.getElementById('base64Url').checked;
+                if (urlSafe) {
+                    str = str.replace(/-/g, '+').replace(/_/g, '/');
+                    while (str.length % 4) str += '=';
+                }
+                return decodeURIComponent(escape(atob(str)));
+            },
+            html(str) {
+                const el = document.createElement('textarea');
+                el.innerHTML = str;
+                return el.value;
+            },
+            hex(str) {
+                let cleaned = str.replace(/\\x/g, ' ').replace(/0x/g, ' ');
+                cleaned = cleaned.replace(/[^0-9a-fA-F]/g, ' ').trim();
+                const parts = cleaned.split(/\s+/).filter(Boolean);
+                // If no separators were found, split into pairs
+                if (parts.length === 1 && parts[0].length > 2) {
+                    const raw = parts[0];
+                    const bytes = [];
+                    for (let i = 0; i < raw.length; i += 2) bytes.push(raw.slice(i, i + 2));
+                    return new TextDecoder().decode(new Uint8Array(bytes.map(b => parseInt(b, 16))));
+                }
+                return new TextDecoder().decode(new Uint8Array(parts.map(b => parseInt(b, 16))));
+            },
+            rot13(str) { return encoders.rot13(str); }
+        };
+
+        encodeBtn.addEventListener('click', () => {
+            const input = inputText.value;
+            if (!input) { showError('Please enter a string to encode.'); return; }
+            try {
+                outputText.value = encoders[currentMode](input);
+                adjustHeight(outputText);
+                showInfo('Encoded successfully.');
+            } catch (e) { showError('Encode error: ' + e.message); }
+        });
+
+        decodeBtn.addEventListener('click', () => {
+            const input = inputText.value;
+            if (!input) { showError('Please enter a string to decode.'); return; }
+            try {
+                outputText.value = decoders[currentMode](input);
+                adjustHeight(outputText);
+                showInfo('Decoded successfully.');
+            } catch (e) { showError('Decode error: ' + e.message); }
+        });
+
+        swapBtn.addEventListener('click', () => {
+            const tmp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = tmp;
+            adjustHeight(inputText);
+            adjustHeight(outputText);
+            clearMessages();
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            if (!outputText.value) { showInfo('Nothing to copy.'); return; }
+            try {
+                await navigator.clipboard.writeText(outputText.value);
+                showInfo('Copied to clipboard!');
+            } catch { showError('Failed to copy.'); }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            clearMessages();
+        });
+    </script>
+</body>
+
+</html>
