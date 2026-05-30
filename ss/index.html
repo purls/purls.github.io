@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screensaver</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 700px;
+        }
+
+        .section-title {
+            color: #555;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 22px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .field-row label {
+            min-width: 88px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        input[type="text"],
+        select {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .color-swatches {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            box-sizing: border-box;
+            transition: transform 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+
+        .swatch:hover {
+            transform: scale(1.2);
+        }
+
+        .swatch.selected {
+            border-color: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        input[type="color"] {
+            width: 38px;
+            height: 28px;
+            padding: 1px 2px;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            background: #2d2d2d;
+            cursor: pointer;
+        }
+
+        .preview-box {
+            background: #050505;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .launch-btn {
+            padding: 11px 28px;
+            background-color: #1a4444;
+            font-size: 14px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .launch-btn:hover {
+            background-color: #226666;
+        }
+
+        /* Screensaver overlay */
+        #screensaver {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #screensaver.active {
+            display: block;
+        }
+
+        #ss-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        #ss-content {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        #exit-hint {
+            position: absolute;
+            bottom: 14px;
+            right: 16px;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px;
+            pointer-events: none;
+            z-index: 2;
+            transition: opacity 1.5s;
+        }
+
+        #exit-hint.faded {
+            opacity: 0;
+        }
+
+        #click-dots {
+            position: absolute;
+            bottom: 14px;
+            left: 16px;
+            display: flex;
+            gap: 6px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .click-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transition: background 0.15s;
+        }
+
+        .click-dot.lit {
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Typewriter cursor */
+        @keyframes blink {
+
+            0%,
+            49% {
+                opacity: 1;
+            }
+
+            50%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .tw-cursor {
+            animation: blink 0.9s step-end infinite;
+        }
+
+        /* Neon pulse */
+        @keyframes neonPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.72;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Screensaver</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 2px;">Configure your screensaver-style text display, then go fullscreen.</p>
+    <p style="font-size: 12px; color: #555; margin: 0;">Triple-click anywhere (or press Escape) to exit.</p>
+
+    <!-- Text -->
+    <div class="section-title">Text</div>
+    <div class="field-row">
+        <label>Display text</label>
+        <input type="text" id="textInput" placeholder="localhost.beer" value="localhost.beer" maxlength="80" />
+    </div>
+    <div class="field-row">
+        <label>Font size</label>
+        <select id="fontSize">
+            <option value="28">Small</option>
+            <option value="52" selected>Medium</option>
+            <option value="80">Large</option>
+            <option value="120">Huge</option>
+        </select>
+    </div>
+
+    <!-- Animation -->
+    <div class="section-title">Animation</div>
+    <div class="field-row">
+        <label>Mode</label>
+        <select id="animMode">
+            <option value="static">Static: Text centered</option>
+            <option value="dvd">DVD: Bouncing text</option>
+            <option value="matrix">Matrix: Code rain</option>
+            <option value="typewriter">Typewriter: Terminal typing</option>
+            <option value="glitch">Glitch: Scramble bursts</option>
+            <option value="neon">Neon: Pulsing glow</option>
+            <option value="float">Float: Drifting words</option>
+        </select>
+    </div>
+    <div class="field-row">
+        <label>Speed</label>
+        <select id="speed">
+            <option value="0.5">Slow</option>
+            <option value="1" selected>Normal</option>
+            <option value="2">Fast</option>
+        </select>
+    </div>
+
+    <!-- Color -->
+    <div class="section-title">Color</div>
+    <div class="field-row" style="align-items: center;">
+        <label>Theme</label>
+        <div class="color-swatches" id="colorSwatches">
+            <span class="swatch selected" data-color="rainbow" title="Rainbow"
+                style="background: conic-gradient(red, orange, yellow, green, cyan, blue, violet, red);"></span>
+            <span class="swatch" data-color="#00ff41" title="Matrix Green" style="background: #00ff41;"></span>
+            <span class="swatch" data-color="#4cafac" title="Teal" style="background: #4cafac;"></span>
+            <span class="swatch" data-color="#ff6b6b" title="Red" style="background: #ff6b6b;"></span>
+            <span class="swatch" data-color="#bd93f9" title="Purple" style="background: #bd93f9;"></span>
+            <span class="swatch" data-color="#ffb86c" title="Orange" style="background: #ffb86c;"></span>
+            <span class="swatch" data-color="#f1fa8c" title="Yellow" style="background: #f1fa8c;"></span>
+            <span class="swatch" data-color="#ffffff" title="White" style="background: #fff;"></span>
+            <input type="color" id="customColor" title="Custom color" value="#4cafac" />
+        </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="section-title">Preview</div>
+    <div class="preview-box">
+        <span id="previewText" style="font-size: 28px; font-weight: bold; color: #4cafac;">localhost.beer</span>
+    </div>
+
+    <button class="launch-btn" id="launchBtn">▶ Launch Screensaver</button>
+
+    <!-- Screensaver overlay -->
+    <div id="screensaver">
+        <canvas id="ss-canvas"></canvas>
+        <div id="ss-content"></div>
+        <div id="exit-hint">click × 3 to exit</div>
+        <div id="click-dots">
+            <div class="click-dot" id="dot1"></div>
+            <div class="click-dot" id="dot2"></div>
+            <div class="click-dot" id="dot3"></div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            // State
+            let selectedColor = 'rainbow';
+            let cleanupFns = [];
+            let clickCount = 0, clickTimer = null, hintTimer = null;
+
+            const RAINBOW = ['#ff6b6b', '#ffb86c', '#f1fa8c', '#50fa7b', '#4cafac', '#bd93f9', '#ff79c6', '#8be9fd'];
+
+            // Config elements
+            const textInput = document.getElementById('textInput');
+            const fontSizeEl = document.getElementById('fontSize');
+            const animModeEl = document.getElementById('animMode');
+            const speedEl = document.getElementById('speed');
+            const launchBtn = document.getElementById('launchBtn');
+            const prevText = document.getElementById('previewText');
+
+            // Screensaver elements
+            const screensaver = document.getElementById('screensaver');
+            const ssCanvas = document.getElementById('ss-canvas');
+            const ssContent = document.getElementById('ss-content');
+            const exitHint = document.getElementById('exit-hint');
+            const dots = [document.getElementById('dot1'), document.getElementById('dot2'), document.getElementById('dot3')];
+
+            // Color swatches
+            document.querySelectorAll('.swatch').forEach(s => {
+                s.addEventListener('click', () => {
+                    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('selected'));
+                    s.classList.add('selected');
+                    selectedColor = s.dataset.color;
+                    updatePreview();
+                });
+            });
+
+            document.getElementById('customColor').addEventListener('input', e => {
+                document.querySelectorAll('.swatch').forEach(x => x.classList.remove('selected'));
+                selectedColor = e.target.value;
+                updatePreview();
+            });
+
+            function updatePreview() {
+                const text = textInput.value || 'screensaver';
+                prevText.textContent = text;
+                prevText.style.removeProperty('background');
+                prevText.style.removeProperty('-webkit-background-clip');
+                prevText.style.removeProperty('-webkit-text-fill-color');
+                if (selectedColor === 'rainbow') {
+                    prevText.style.background = 'linear-gradient(90deg,#ff6b6b,#ffb86c,#f1fa8c,#50fa7b,#4cafac,#bd93f9)';
+                    prevText.style.webkitBackgroundClip = 'text';
+                    prevText.style.webkitTextFillColor = 'transparent';
+                } else {
+                    prevText.style.color = selectedColor;
+                }
+            }
+
+            textInput.addEventListener('input', updatePreview);
+
+            // Launch
+            launchBtn.addEventListener('click', () => {
+                const text = textInput.value.trim() || 'localhost.beer';
+                const fontSize = parseInt(fontSizeEl.value);
+                const mode = animModeEl.value;
+                const speed = parseFloat(speedEl.value);
+                startScreensaver(text, fontSize, mode, selectedColor, speed);
+            });
+
+            // Exit triggers
+            screensaver.addEventListener('click', handleClick);
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && screensaver.classList.contains('active')) exitScreensaver();
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && screensaver.classList.contains('active')) exitScreensaver();
+            });
+
+            function handleClick() {
+                clickCount++;
+                dots.slice(0, clickCount).forEach(d => d.classList.add('lit'));
+                if (clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => {
+                    clickCount = 0;
+                    dots.forEach(d => d.classList.remove('lit'));
+                }, 2000);
+                if (clickCount >= 3) exitScreensaver();
+            }
+
+            // Core: start / exit
+            function startScreensaver(text, fontSize, mode, color, speed) {
+                clickCount = 0;
+                dots.forEach(d => d.classList.remove('lit'));
+
+                exitHint.classList.remove('faded');
+                if (hintTimer) clearTimeout(hintTimer);
+                hintTimer = setTimeout(() => exitHint.classList.add('faded'), 4500);
+
+                screensaver.style.background = (mode === 'neon') ? '#020008' : '#000';
+                screensaver.classList.add('active');
+                screensaver.requestFullscreen?.().catch(() => { });
+
+                ssContent.innerHTML = '';
+                ssCanvas.style.display = 'none';
+                ssCanvas.getContext('2d').clearRect(0, 0, ssCanvas.width, ssCanvas.height);
+
+                if (mode === 'static') startStatic(text, fontSize, color, speed);
+                else if (mode === 'dvd') startDVD(text, fontSize, color, speed);
+                else if (mode === 'matrix') startMatrix(text, fontSize, color, speed);
+                else if (mode === 'typewriter') startTypewriter(text, fontSize, color, speed);
+                else if (mode === 'glitch') startGlitch(text, fontSize, color, speed);
+                else if (mode === 'neon') startNeon(text, fontSize, color, speed);
+                else if (mode === 'float') startFloat(text, fontSize, color, speed);
+            }
+
+            function exitScreensaver() {
+                clickCount = 0;
+                if (clickTimer) clearTimeout(clickTimer);
+                dots.forEach(d => d.classList.remove('lit'));
+                screensaver.classList.remove('active');
+                screensaver.style.background = '#000';
+                cleanupFns.forEach(fn => { try { fn(); } catch (_) { } });
+                cleanupFns = [];
+                ssContent.innerHTML = '';
+                ssCanvas.style.display = 'none';
+                document.exitFullscreen?.().catch(() => { });
+            }
+
+            function reg(fn) { cleanupFns.push(fn); }
+
+            // Helpers
+            function pickColor(color, idx) {
+                return color === 'rainbow' ? RAINBOW[((idx % RAINBOW.length) + RAINBOW.length) % RAINBOW.length] : color;
+            }
+
+            function makeEl(tag, css, text) {
+                const el = document.createElement(tag);
+                Object.assign(el.style, css);
+                if (text != null) el.textContent = text;
+                ssContent.appendChild(el);
+                return el;
+            }
+
+            // Static (text centered, no animation)
+            function startStatic(text, fontSize, color) {
+                const el = makeEl('div', {
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: fontSize + 'px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                    textAlign: 'center',
+                }, text);
+
+                if (color === 'rainbow') {
+                    el.style.background = 'linear-gradient(90deg,#ff6b6b,#ffb86c,#f1fa8c,#50fa7b,#4cafac,#bd93f9)';
+                    el.style.webkitBackgroundClip = 'text';
+                    el.style.webkitTextFillColor = 'transparent';
+                } else {
+                    el.style.color = color;
+                }
+            }
+
+            // DVD (bouncing text, changes color on wall hit)
+            function startDVD(text, fontSize, color, speed) {
+                const el = makeEl('div', {
+                    position: 'absolute',
+                    fontSize: fontSize + 'px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                    textShadow: '0 0 18px currentColor',
+                }, text);
+
+                const base = speed * 2.2;
+                let x = 120, y = 120;
+                let dx = base * (Math.random() > 0.5 ? 1 : -1);
+                let dy = base * 0.72 * (Math.random() > 0.5 ? 1 : -1);
+                let colorIdx = 0;
+
+                function applyColor() { el.style.color = pickColor(color, colorIdx++); }
+                applyColor();
+
+                let rafId;
+                function frame() {
+                    const W = window.innerWidth, H = window.innerHeight;
+                    const w = el.offsetWidth, h = el.offsetHeight;
+                    x += dx; y += dy;
+                    let hit = false;
+                    if (x <= 0) { x = 0; dx = Math.abs(dx); hit = true; }
+                    if (x + w >= W) { x = W - w; dx = -Math.abs(dx); hit = true; }
+                    if (y <= 0) { y = 0; dy = Math.abs(dy); hit = true; }
+                    if (y + h >= H) { y = H - h; dy = -Math.abs(dy); hit = true; }
+                    if (hit) applyColor();
+                    el.style.left = x + 'px';
+                    el.style.top = y + 'px';
+                    rafId = requestAnimationFrame(frame);
+                }
+                rafId = requestAnimationFrame(frame);
+                reg(() => cancelAnimationFrame(rafId));
+            }
+
+            // Matrix (katakana rain + glowing center text)
+            function startMatrix(text, fontSize, color, speed) {
+                const rainColor = (color === 'rainbow' || color === '#ffffff') ? '#00ff41' : color;
+
+                ssCanvas.style.display = 'block';
+                ssCanvas.width = window.innerWidth;
+                ssCanvas.height = window.innerHeight;
+                const ctx = ssCanvas.getContext('2d');
+
+                const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF#+-=/<>';
+                const COL_W = 18;
+                const cols = Math.ceil(ssCanvas.width / COL_W);
+                const drops = Array.from({ length: cols }, () => (Math.random() * -50) | 0);
+                const skipInterval = Math.max(1, Math.round(3 / speed));
+                let frame = 0;
+
+                // glowing center overlay
+                makeEl('div', {
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: fontSize + 'px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 'bold',
+                    color: rainColor,
+                    textShadow: `0 0 20px ${rainColor}, 0 0 40px ${rainColor}80`,
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                    zIndex: '2',
+                }, text);
+
+                let rafId;
+                function draw() {
+                    frame++;
+                    if (frame % skipInterval === 0) {
+                        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                        ctx.fillRect(0, 0, ssCanvas.width, ssCanvas.height);
+                        ctx.fillStyle = rainColor;
+                        ctx.font = '15px monospace';
+                        for (let i = 0; i < drops.length; i++) {
+                            const ch = CHARS[Math.random() * CHARS.length | 0];
+                            ctx.fillText(ch, i * COL_W, drops[i] * 16);
+                            if (drops[i] * 16 > ssCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                            drops[i]++;
+                        }
+                    }
+                    rafId = requestAnimationFrame(draw);
+                }
+                rafId = requestAnimationFrame(draw);
+                reg(() => {
+                    cancelAnimationFrame(rafId);
+                    ssCanvas.style.display = 'none';
+                });
+            }
+
+            // Typewriter (text types & deletes in a loop)
+            function startTypewriter(text, fontSize, color, speed) {
+                const container = makeEl('div', {
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: fontSize + 'px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 'bold',
+                    whiteSpace: 'pre',
+                    userSelect: 'none',
+                });
+
+                const textSpan = document.createElement('span');
+                const cursorSpan = document.createElement('span');
+                cursorSpan.className = 'tw-cursor';
+                cursorSpan.textContent = '█';
+                container.append(textSpan, cursorSpan);
+
+                let colorIdx = 0;
+                function applyColor() {
+                    const c = pickColor(color, colorIdx++);
+                    container.style.color = c;
+                    container.style.textShadow = `0 0 10px ${c}80`;
+                }
+                applyColor();
+
+                const typeMs = 100 / speed;
+                const deleteMs = 45 / speed;
+                const pauseMs = 1400 / speed;
+
+                let charIdx = 0, phase = 'typing', stopped = false, timer;
+
+                function tick() {
+                    if (stopped) return;
+                    if (phase === 'typing') {
+                        charIdx++;
+                        textSpan.textContent = text.substring(0, charIdx);
+                        if (charIdx >= text.length) {
+                            phase = 'pausing';
+                            timer = setTimeout(tick, pauseMs);
+                        } else {
+                            timer = setTimeout(tick, typeMs * (0.6 + Math.random() * 0.8));
+                        }
+                    } else if (phase === 'pausing') {
+                        phase = 'deleting';
+                        timer = setTimeout(tick, deleteMs);
+                    } else {
+                        charIdx--;
+                        textSpan.textContent = text.substring(0, charIdx);
+                        if (charIdx <= 0) {
+                            phase = 'typing';
+                            applyColor();
+                            timer = setTimeout(tick, pauseMs * 0.3);
+                        } else {
+                            timer = setTimeout(tick, deleteMs * (0.6 + Math.random() * 0.8));
+                        }
+                    }
+                }
+                tick();
+                reg(() => { stopped = true; clearTimeout(timer); });
+            }
+
+            // Glitch (centered text with RGB-split scramble bursts)
+            function startGlitch(text, fontSize, color, speed) {
+                const outer = makeEl('div', {
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    userSelect: 'none',
+                    textAlign: 'center',
+                });
+
+                const textCss = `
+                font-size: ${fontSize}px;
+                font-family: 'JetBrains Mono', monospace;
+                font-weight: bold;
+                white-space: nowrap;
+                display: inline-block;
+            `;
+
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position: relative; display: inline-block;';
+                const main = document.createElement('div');
+                main.style.cssText = textCss + 'position: relative;';
+                main.textContent = text;
+                const redGhost = document.createElement('div');
+                redGhost.style.cssText = textCss + 'position: absolute; top: 0; left: 0; color: #ff0040; opacity: 0; pointer-events: none;';
+                redGhost.textContent = text;
+                const blueGhost = document.createElement('div');
+                blueGhost.style.cssText = textCss + 'position: absolute; top: 0; left: 0; color: #00ffff; opacity: 0; pointer-events: none;';
+                blueGhost.textContent = text;
+                wrap.append(main, redGhost, blueGhost);
+                outer.appendChild(wrap);
+
+                let colorIdx = 0;
+                function applyColor() {
+                    const c = pickColor(color, colorIdx++);
+                    main.style.color = c;
+                    main.style.textShadow = `0 0 15px ${c}60`;
+                }
+                applyColor();
+
+                const GCHARS = '!@#$%^&*<>?/|[]{}~`0123456789ABCDEFabcdef';
+                let stopped = false, timer;
+
+                function scheduleGlitch() {
+                    if (stopped) return;
+                    timer = setTimeout(doGlitch, (900 + Math.random() * 2200) / speed);
+                }
+
+                function doGlitch() {
+                    if (stopped) return;
+                    const offsetX = 4 + Math.random() * 9;
+                    const pct1 = Math.random() * 55, pct2 = pct1 + 10 + Math.random() * 28;
+                    redGhost.style.transform = `translate(${-offsetX}px, ${Math.random() * 4 - 2}px)`;
+                    blueGhost.style.transform = `translate(${offsetX}px, ${Math.random() * 4 - 2}px)`;
+                    redGhost.style.clipPath = `polygon(0 ${pct1}%, 100% ${pct1}%, 100% ${pct2}%, 0 ${pct2}%)`;
+                    blueGhost.style.clipPath = `polygon(0 ${100 - pct2}%, 100% ${100 - pct2}%, 100% ${100 - pct1}%, 0 ${100 - pct1}%)`;
+                    redGhost.style.opacity = '0.65';
+                    blueGhost.style.opacity = '0.65';
+
+                    let n = 0;
+                    const maxFrames = 5 + Math.floor(Math.random() * 6);
+
+                    function scramble() {
+                        if (stopped) return;
+                        let s = '';
+                        for (let i = 0; i < text.length; i++) {
+                            s += Math.random() < 0.35 ? GCHARS[Math.random() * GCHARS.length | 0] : text[i];
+                        }
+                        main.textContent = s;
+                        n++;
+                        if (n < maxFrames) {
+                            timer = setTimeout(scramble, 55 / speed);
+                        } else {
+                            main.textContent = text;
+                            redGhost.textContent = blueGhost.textContent = text;
+                            redGhost.style.opacity = blueGhost.style.opacity = '0';
+                            if (color === 'rainbow') applyColor();
+                            scheduleGlitch();
+                        }
+                    }
+                    scramble();
+                }
+
+                scheduleGlitch();
+                reg(() => { stopped = true; clearTimeout(timer); });
+            }
+
+            // Neon (centered text with layered neon glow, cycles color)
+            function startNeon(text, fontSize, color, speed) {
+                const el = makeEl('div', {
+                    position: 'absolute',
+                    top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: fontSize + 'px',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    textAlign: 'center',
+                    userSelect: 'none',
+                    animation: `neonPulse ${2 / speed}s ease-in-out infinite`,
+                }, text);
+
+                let colorIdx = 0;
+                function applyNeon() {
+                    const c = pickColor(color, colorIdx++);
+                    el.style.color = c;
+                    el.style.textShadow = [
+                        '0 0 7px #fff',
+                        '0 0 10px #fff',
+                        '0 0 21px #fff',
+                        `0 0 42px ${c}`,
+                        `0 0 82px ${c}`,
+                        `0 0 92px ${c}`,
+                        `0 0 102px ${c}`,
+                    ].join(', ');
+                }
+                applyNeon();
+
+                let stopped = false, timer;
+                function cycle() {
+                    if (stopped) return;
+                    if (color === 'rainbow') applyNeon();
+                    timer = setTimeout(cycle, 2000 / speed);
+                }
+                timer = setTimeout(cycle, 2000 / speed);
+
+                reg(() => {
+                    stopped = true;
+                    clearTimeout(timer);
+                    screensaver.style.background = '#000';
+                });
+            }
+
+            // Float (words drift around the screen)
+            function startFloat(text, fontSize, color, speed) {
+                const words = text.trim().split(/\s+/).filter(Boolean);
+                const pool = words.length > 1 ? words : [text];
+                const count = Math.max(7, Math.min(18, pool.length * 4));
+                const items = [];
+
+                for (let i = 0; i < count; i++) {
+                    const word = pool[i % pool.length];
+                    const scale = 0.3 + Math.random() * 0.95;
+                    const fs = Math.round(fontSize * scale);
+                    const c = pickColor(color, i);
+                    const op = (0.2 + Math.random() * 0.7).toFixed(2);
+                    const el = makeEl('div', {
+                        position: 'absolute',
+                        fontSize: fs + 'px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontWeight: 'bold',
+                        color: c,
+                        opacity: op,
+                        userSelect: 'none',
+                        pointerEvents: 'none',
+                        whiteSpace: 'nowrap',
+                    }, word);
+
+                    const x = Math.random() * Math.max(0, window.innerWidth - 200);
+                    const y = Math.random() * Math.max(0, window.innerHeight - 60);
+                    el.style.left = x + 'px';
+                    el.style.top = y + 'px';
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const spd = (0.25 + Math.random() * 0.85) * speed;
+                    items.push({ el, x, y, dx: Math.cos(angle) * spd, dy: Math.sin(angle) * spd });
+                }
+
+                let rafId;
+                function frame() {
+                    const W = window.innerWidth, H = window.innerHeight;
+                    items.forEach(it => {
+                        it.x += it.dx; it.y += it.dy;
+                        const w = it.el.offsetWidth || 80, h = it.el.offsetHeight || 40;
+                        if (it.x < 0) { it.x = 0; it.dx = Math.abs(it.dx); }
+                        if (it.x + w > W) { it.x = W - w; it.dx = -Math.abs(it.dx); }
+                        if (it.y < 0) { it.y = 0; it.dy = Math.abs(it.dy); }
+                        if (it.y + h > H) { it.y = H - h; it.dy = -Math.abs(it.dy); }
+                        it.el.style.left = it.x + 'px';
+                        it.el.style.top = it.y + 'px';
+                    });
+                    rafId = requestAnimationFrame(frame);
+                }
+                rafId = requestAnimationFrame(frame);
+                reg(() => cancelAnimationFrame(rafId));
+            }
+
+            // init
+            updatePreview();
+        })();
+    </script>
+</body>
+
+</html>
