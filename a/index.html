@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anchor Playground</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 900px;
+        }
+
+        .builder {
+            background-color: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .field-row label {
+            min-width: 90px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        select {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .toggle-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .toggle-item input[type="checkbox"] {
+            accent-color: #4cafac;
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .toggle-item input[type="text"] {
+            width: 140px;
+            flex: none;
+        }
+
+        .add-btn {
+            padding: 8px 20px;
+            background-color: #1a4444;
+            font-size: 13px;
+        }
+
+        .add-btn:hover {
+            background-color: #226666;
+        }
+
+        .preview-label {
+            color: #555;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .code-preview {
+            background-color: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #80cccc;
+            word-break: break-all;
+            min-height: 22px;
+            margin-bottom: 14px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 16px 0;
+        }
+
+        .anchors-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 16px;
+            background-color: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            min-height: 60px;
+        }
+
+        .anchor-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .anchor-btn {
+            display: inline-block;
+            padding: 8px 14px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border-radius: 4px 0 0 4px;
+            text-decoration: none;
+            font-size: 13px;
+            transition: background-color 0.2s;
+            border: 1px solid #2d5555;
+            border-right: none;
+            white-space: nowrap;
+        }
+
+        .anchor-btn:hover {
+            background-color: #2d5555;
+            color: #e0e0e0;
+            text-decoration: none;
+        }
+
+        .anchor-delete {
+            background: none;
+            border: 1px solid #2d5555;
+            border-left: 1px solid #1a4444;
+            color: #555;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 8px 7px;
+            border-radius: 0 4px 4px 0;
+            transition: color 0.2s, background-color 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .anchor-delete:hover {
+            color: #ff6b6b;
+            background-color: #2a1a1a;
+        }
+
+        .empty-msg {
+            color: #444;
+            font-size: 13px;
+            align-self: center;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        #clearAll {
+            background-color: #3a1a1a;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+        #clearAll:hover {
+            background-color: #551a1a;
+        }
+
+        .hint {
+            color: #444;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 7px 10px;
+            border: 1px solid #2a2a2a;
+        }
+
+        th {
+            background-color: #1a1a1a;
+            color: #888;
+            font-weight: normal;
+        }
+
+        td {
+            color: #b0b0b0;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #161616;
+        }
+
+        td code,
+        p code,
+        li code {
+            background-color: #1e1e1e;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #80cccc;
+        }
+
+        h3 {
+            font-size: 14px;
+            color: #888;
+            margin: 18px 0 8px;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin: 0 0 16px;
+        }
+
+        li {
+            color: #b0b0b0;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Anchor Playground</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0;">Build and test <code>&lt;a&gt;</code> anchor links with any attributes. Useful for testing
+        protocol handlers, custom schemes, and download links.</p>
+    <br />
+
+    <div class="builder">
+        <div class="field-row">
+            <label for="anchorName">Label</label>
+            <input type="text" id="anchorName" placeholder="Button label" />
+        </div>
+        <div class="field-row">
+            <label for="anchorHref">href</label>
+            <input type="text" id="anchorHref" placeholder="https://example.com  or  myapp://open  or  mailto:..." />
+        </div>
+
+        <hr />
+
+        <div class="toggle-row">
+            <div class="toggle-item">
+                <input type="checkbox" id="useTarget" />
+                <label for="useTarget">target</label>
+                <select id="targetValue">
+                    <option value="_blank">_blank</option>
+                    <option value="_self">_self</option>
+                    <option value="_parent">_parent</option>
+                    <option value="_top">_top</option>
+                </select>
+            </div>
+
+            <div class="toggle-item">
+                <input type="checkbox" id="useRel" />
+                <label for="useRel">rel</label>
+                <select id="relValue">
+                    <option value="noopener noreferrer">noopener noreferrer</option>
+                    <option value="noopener">noopener</option>
+                    <option value="noreferrer">noreferrer</option>
+                    <option value="nofollow">nofollow</option>
+                    <option value="opener">opener</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-item">
+                <input type="checkbox" id="useDownload" />
+                <label for="useDownload">download</label>
+                <input type="text" id="downloadValue" placeholder="filename (optional)" />
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-item">
+                <input type="checkbox" id="useType" />
+                <label for="useType">type</label>
+                <input type="text" id="typeValue" placeholder="e.g. application/pdf" />
+            </div>
+
+            <div class="toggle-item">
+                <input type="checkbox" id="useHreflang" />
+                <label for="useHreflang">hreflang</label>
+                <input type="text" id="hreflangValue" placeholder="e.g. en" />
+            </div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-item">
+                <input type="checkbox" id="usePing" />
+                <label for="usePing">ping</label>
+                <input type="text" id="pingValue" placeholder="URL(s) space-separated" />
+            </div>
+
+            <div class="toggle-item">
+                <input type="checkbox" id="useReferrer" />
+                <label for="useReferrer">referrerpolicy</label>
+                <select id="referrerValue">
+                    <option value="no-referrer">no-referrer</option>
+                    <option value="no-referrer-when-downgrade">no-referrer-when-downgrade</option>
+                    <option value="origin">origin</option>
+                    <option value="origin-when-cross-origin">origin-when-cross-origin</option>
+                    <option value="same-origin">same-origin</option>
+                    <option value="strict-origin">strict-origin</option>
+                    <option value="strict-origin-when-cross-origin">strict-origin-when-cross-origin</option>
+                    <option value="unsafe-url">unsafe-url</option>
+                </select>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="preview-label">Generated HTML:</div>
+        <div class="code-preview" id="codePreview"></div>
+
+        <button class="add-btn" id="addAnchor">Add Anchor</button>
+        <p class="hint">Anchors are saved to localStorage and persist on refresh.</p>
+    </div>
+
+    <div class="section-header">
+        <h2>Your Anchors</h2>
+        <button id="clearAll">Clear All</button>
+    </div>
+    <div class="anchors-section" id="anchorsSection">
+        <span class="empty-msg" id="emptyMsg">No anchors yet.</span>
+    </div>
+
+    <hr />
+    <p>Build and test <code>&lt;a&gt;</code> anchor links with any combination of attributes. Originally built to
+        brute-force finding how to open applications via custom protocol handlers (e.g. <code>myapp://</code>).</p>
+
+    <h3>Attributes</h3>
+    <ul>
+        <li><code>target</code>: where to open the linked URL.</li>
+        <li><code>rel</code>: relationship between the current page and the linked resource; also controls referrer
+            behavior for new tabs.</li>
+        <li><code>download</code>: hints to the browser to download the resource instead of navigating. The optional
+            value sets the suggested filename.</li>
+        <li><code>type</code>: MIME type of the linked resource (advisory only; e.g. <code>application/pdf</code>).
+        </li>
+        <li><code>hreflang</code>: language of the linked resource (e.g. <code>en</code>, <code>fr</code>).</li>
+        <li><code>ping</code>: space-separated list of URLs that receive a POST request when the link is clicked. Used
+            for analytics/tracking.</li>
+        <li><code>referrerpolicy</code>: controls how much referrer information is sent with the request.</li>
+    </ul>
+
+    <h3><code>target</code> values</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>Behavior</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>_blank</code></td>
+                <td>Open in a new tab or window.</td>
+            </tr>
+            <tr>
+                <td><code>_self</code></td>
+                <td>Open in the same browsing context (default).</td>
+            </tr>
+            <tr>
+                <td><code>_parent</code></td>
+                <td>Open in the parent frame; falls back to <code>_self</code> if none.</td>
+            </tr>
+            <tr>
+                <td><code>_top</code></td>
+                <td>Open in the top-level browsing context; breaks out of all frames.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3><code>rel</code> values</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>Behavior</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>noopener</code></td>
+                <td>Prevents the new page from accessing <code>window.opener</code>. Recommended with
+                    <code>_blank</code>.
+                </td>
+            </tr>
+            <tr>
+                <td><code>noreferrer</code></td>
+                <td>Omits the <code>Referer</code> header and implies <code>noopener</code>.</td>
+            </tr>
+            <tr>
+                <td><code>noopener noreferrer</code></td>
+                <td>Both of the above. The standard safe combination for <code>target="_blank"</code>.</td>
+            </tr>
+            <tr>
+                <td><code>nofollow</code></td>
+                <td>Tells search engines not to follow or pass ranking credit to this link.</td>
+            </tr>
+            <tr>
+                <td><code>opener</code></td>
+                <td>Explicitly grants the new page access to <code>window.opener</code> (overrides the default lockdown
+                    in some browsers).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3><code>referrerpolicy</code> values</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Value</th>
+                <th>What is sent</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>no-referrer</code></td>
+                <td>No <code>Referer</code> header is sent.</td>
+            </tr>
+            <tr>
+                <td><code>no-referrer-when-downgrade</code></td>
+                <td>Full URL sent for same-protocol requests; nothing sent on HTTPS→HTTP.</td>
+            </tr>
+            <tr>
+                <td><code>origin</code></td>
+                <td>Only the origin (scheme + host + port) is sent.</td>
+            </tr>
+            <tr>
+                <td><code>origin-when-cross-origin</code></td>
+                <td>Full URL for same-origin; only origin for cross-origin.</td>
+            </tr>
+            <tr>
+                <td><code>same-origin</code></td>
+                <td>Full URL for same-origin requests; nothing for cross-origin.</td>
+            </tr>
+            <tr>
+                <td><code>strict-origin</code></td>
+                <td>Origin sent for same-protocol; nothing on HTTPS→HTTP downgrade.</td>
+            </tr>
+            <tr>
+                <td><code>strict-origin-when-cross-origin</code></td>
+                <td>Full URL same-origin; origin cross-origin; nothing on downgrade. Browser default.</td>
+            </tr>
+            <tr>
+                <td><code>unsafe-url</code></td>
+                <td>Always sends the full URL, including paths and query strings. Never use on sensitive pages.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        const nameEl = document.getElementById('anchorName');
+        const hrefEl = document.getElementById('anchorHref');
+        const codePreview = document.getElementById('codePreview');
+        const anchorsSection = document.getElementById('anchorsSection');
+        const emptyMsg = document.getElementById('emptyMsg');
+
+        const fields = [
+            { check: 'useTarget', val: 'targetValue', attr: 'target' },
+            { check: 'useRel', val: 'relValue', attr: 'rel' },
+            { check: 'useDownload', val: 'downloadValue', attr: 'download' },
+            { check: 'useType', val: 'typeValue', attr: 'type' },
+            { check: 'useHreflang', val: 'hreflangValue', attr: 'hreflang' },
+            { check: 'usePing', val: 'pingValue', attr: 'ping' },
+            { check: 'useReferrer', val: 'referrerValue', attr: 'referrerpolicy' },
+        ];
+
+        let anchors = JSON.parse(localStorage.getItem('anchorPlayground') || '[]');
+
+        function buildAttrs(anchor) {
+            return anchor.attrs.map(a => {
+                if (a.attr === 'download' && a.value === '') return 'download';
+                return `${a.attr}="${escapeAttr(a.value)}"`;
+            }).join(' ');
+        }
+
+        function escapeAttr(s) {
+            return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        }
+
+        function buildHtml(anchor) {
+            const attrStr = buildAttrs(anchor);
+            const parts = [`href="${escapeAttr(anchor.href)}"`];
+            if (attrStr) parts.push(attrStr);
+            return `<a ${parts.join(' ')}>${escapeHtml(anchor.name)}</a>`;
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function getCurrentAttrs() {
+            return fields
+                .filter(f => document.getElementById(f.check).checked)
+                .map(f => ({ attr: f.attr, value: document.getElementById(f.val).value }));
+        }
+
+        function updatePreview() {
+            const href = hrefEl.value.trim();
+            const name = nameEl.value.trim() || 'Link';
+            if (!href) { codePreview.textContent = ''; return; }
+            const mock = { href, name, attrs: getCurrentAttrs() };
+            codePreview.textContent = buildHtml(mock);
+        }
+
+        [nameEl, hrefEl, ...fields.flatMap(f => [
+            document.getElementById(f.check),
+            document.getElementById(f.val)
+        ])].forEach(el => el && el.addEventListener('input', updatePreview));
+        fields.forEach(f => document.getElementById(f.check).addEventListener('change', updatePreview));
+
+        function renderAnchors() {
+            while (anchorsSection.firstChild) anchorsSection.removeChild(anchorsSection.firstChild);
+            if (anchors.length === 0) {
+                anchorsSection.appendChild(emptyMsg);
+                return;
+            }
+            anchors.forEach((anchor, i) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'anchor-wrapper';
+
+                const a = document.createElement('a');
+                a.className = 'anchor-btn';
+                a.href = anchor.href;
+                a.textContent = anchor.name;
+                anchor.attrs.forEach(({ attr, value }) => {
+                    if (attr === 'download' && value === '') a.setAttribute('download', '');
+                    else a.setAttribute(attr, value);
+                });
+                a.title = buildHtml(anchor);
+
+                const del = document.createElement('button');
+                del.className = 'anchor-delete';
+                del.textContent = '×';
+                del.title = 'Remove';
+                del.addEventListener('click', () => {
+                    anchors.splice(i, 1);
+                    save();
+                    renderAnchors();
+                });
+
+                wrapper.appendChild(a);
+                wrapper.appendChild(del);
+                anchorsSection.appendChild(wrapper);
+            });
+        }
+
+        function save() {
+            localStorage.setItem('anchorPlayground', JSON.stringify(anchors));
+        }
+
+        document.getElementById('addAnchor').addEventListener('click', () => {
+            const href = hrefEl.value.trim();
+            if (!href) { hrefEl.focus(); return; }
+            const name = nameEl.value.trim() || href;
+            anchors.push({ href, name, attrs: getCurrentAttrs() });
+            save();
+            renderAnchors();
+            nameEl.value = '';
+            hrefEl.value = '';
+            fields.forEach(f => {
+                document.getElementById(f.check).checked = false;
+            });
+            updatePreview();
+        });
+
+        document.getElementById('clearAll').addEventListener('click', () => {
+            if (anchors.length === 0) return;
+            if (confirm('Remove all anchors?')) {
+                anchors = [];
+                save();
+                renderAnchors();
+            }
+        });
+
+        hrefEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('addAnchor').click();
+        });
+
+        renderAnchors();
+        updatePreview();
+    </script>
+</body>
+
+</html>
