@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Encrypt/Decrypt</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .mode-toggle {
+            background-color: #4cafac;
+            color: #121212;
+            font-weight: bold;
+        }
+
+        .mode-toggle:hover {
+            background-color: #5cbfbb;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            margin-top: 5px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        label {
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        select,
+        input[type="text"],
+        input[type="password"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .key-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .key-row input {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .mode-and-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            min-height: 24px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mode-indicator {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4cafac;
+        }
+
+        .character-info {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .mode-highlight {
+            text-decoration: underline;
+            color: #4cafac;
+        }
+
+        .security-note {
+            color: #888;
+            font-size: 13px;
+            border-left: 3px solid #244444;
+            padding-left: 10px;
+            margin: 15px 0;
+        }
+
+        .key-strength {
+            font-size: 12px;
+            min-height: 16px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .strength-weak {
+            color: #ff6b6b;
+        }
+
+        .strength-ok {
+            color: #d8b04a;
+        }
+
+        .strength-strong {
+            color: #60c8c5;
+        }
+
+        .glossary {
+            margin: 25px 0;
+        }
+
+        .glossary h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .glossary p.glossary-intro {
+            color: #888;
+            font-size: 13px;
+            margin-top: 0;
+        }
+
+        .glossary dl {
+            margin: 0;
+        }
+
+        .glossary dt {
+            color: #4cafac;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 14px;
+        }
+
+        .glossary dd {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #c8c8c8;
+        }
+
+        .glossary dd code {
+            background-color: #2d2d2d;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;"><span id="encryptText">Encrypt</span>/<span id="decryptText">Decrypt</span></h1>
+        <a href="https://localhost.beer" class="home-link">
+            &larr; home
+        </a>
+    </div>
+    <p style="margin: 0;">
+        Encrypt or decrypt text with a secret key, entirely in your browser. Nothing ever leaves this page. No
+        network requests are made by the tool itself, and all cryptography runs locally via the built-in Web Crypto API.
+    </p>
+    <br />
+
+    <div class="controls">
+        <button id="modeToggle" class="mode-toggle">Switch to Decrypt</button>
+
+        <div class="control-group">
+            <label for="algorithm">Algorithm:</label>
+            <select id="algorithm">
+                <option value="1">AES-256-GCM (recommended)</option>
+                <option value="2">AES-128-GCM</option>
+                <option value="3">AES-256-CBC</option>
+                <option value="4">AES-256-CTR</option>
+            </select>
+        </div>
+
+        <div class="control-group" id="iterationsControl">
+            <label for="iterations">Key Stretching:</label>
+            <select id="iterations">
+                <option value="100000">PBKDF2 100k</option>
+                <option value="300000">PBKDF2 300k</option>
+                <option value="600000" selected>PBKDF2 600k</option>
+                <option value="1000000">PBKDF2 1M</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mode-and-options">
+        <div class="mode-indicator" id="modeIndicator">Mode: Encrypt</div>
+        <div class="control-group">
+            <label for="outputWrap">Output Line Breaks:</label>
+            <select id="outputWrap">
+                <option value="none">None</option>
+                <option value="64">Every 64 chars</option>
+                <option value="76">Every 76 chars</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="key-row">
+        <label for="secretKey" style="margin: 0;">Secret Key:</label>
+        <input type="password" id="secretKey" placeholder="Enter your secret key / passphrase..." autocomplete="off"
+            spellcheck="false" />
+        <button id="toggleKeyVisibility" aria-label="Show or hide secret key">Show</button>
+        <button id="generateKey" aria-label="Generate random key">Generate</button>
+        <button id="copyKey" aria-label="Copy secret key">Copy Key</button>
+    </div>
+    <div class="key-strength" id="keyStrength"></div>
+
+    <textarea id="inputText" rows="12" placeholder="Enter text to encrypt (plain text, JSON, etc.)..."
+        spellcheck="false"></textarea>
+    <div class="character-info" id="inputInfo"></div>
+
+    <div class="button-group" style="margin-top: 10px;">
+        <button id="processBtn">Encrypt</button>
+        <button id="copyOutput">Copy to Clipboard</button>
+        <button id="clearAll">Clear All</button>
+        <button id="swapInputOutput">Swap Input/Output</button>
+        <button id="downloadResult">Download Result</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <h2 id="outputLabel">Encrypted Output:</h2>
+    <textarea id="outputText" rows="12" readonly spellcheck="false"></textarea>
+    <div class="character-info" id="outputInfo"></div>
+
+    <hr>
+    <p id="description">
+        Use this tool to encrypt text with a secret key. The output is a self-contained Base64 string that
+        embeds the algorithm, key-stretching parameters, a random salt, and a random IV, so decryption only
+        requires the secret key. Switch to decrypt mode to recover the original text.
+    </p>
+    <div class="security-note">
+        Security notes: keys are derived from your passphrase with PBKDF2-SHA256 and a random 16-byte salt.
+        AES-GCM is authenticated, so tampering or a wrong key is detected on decrypt. CBC and CTR modes are
+        provided for compatibility but do not authenticate the ciphertext. The secret key is never stored,
+        and a fresh salt and IV are generated for every encryption, so encrypting the same text twice yields
+        different output. Works offline once the page is loaded.
+    </div>
+
+    <div class="glossary">
+        <h2>Glossary</h2>
+        <p class="glossary-intro">Plain-language meanings of the more technical terms used above.</p>
+        <dl>
+            <dt>Key stretching</dt>
+            <dd>
+                Deliberately slowing down the conversion of your passphrase into an encryption key by repeating
+                a calculation many times. A human-friendly passphrase has little randomness, so stretching makes
+                each guess expensive for an attacker: at 600,000 iterations, testing a password list takes
+                hundreds of thousands of times longer than checking the passphrase once.
+            </dd>
+
+            <dt>PBKDF2</dt>
+            <dd>
+                Password-Based Key Derivation Function 2: The specific, widely standardized key-stretching
+                algorithm this tool uses. It hashes your passphrase together with the salt repeatedly (here using
+                SHA-256 as the underlying hash) to produce the raw bytes of the AES key. The
+                <code>100k</code>&ndash;<code>1M</code>
+                options are how many times that loop runs.
+            </dd>
+
+            <dt>Salt</dt>
+            <dd>
+                A random value (16 bytes here) mixed into key stretching before hashing your passphrase. It is not
+                secret and is stored alongside the ciphertext. Its job is to make every encryption unique even when
+                the same passphrase is reused, which defeats precomputed lookup tables (&ldquo;rainbow tables&rdquo;)
+                and stops identical passphrases from producing identical keys.
+            </dd>
+
+            <dt>IV / nonce</dt>
+            <dd>
+                Initialization vector: A random starting value (12 or 16 bytes) fed into the cipher so that
+                encrypting the same text twice yields completely different output. Like the salt it is not secret and
+                travels with the ciphertext. For GCM it must never be reused with the same key, which is why a fresh
+                random one is generated every time.
+            </dd>
+
+            <dt>AES (and AES-128 vs AES-256)</dt>
+            <dd>
+                The Advanced Encryption Standard: The symmetric cipher doing the actual encryption.
+                &ldquo;Symmetric&rdquo;
+                means the same key both encrypts and decrypts. The number is the key length in bits: AES-256 uses a
+                256-bit key, AES-128 a 128-bit key. Both are considered secure, but 256-bit offers a larger safety
+                margin
+                at a small speed cost.
+            </dd>
+
+            <dt>Mode of operation (GCM / CBC / CTR)</dt>
+            <dd>
+                AES only scrambles one fixed-size block at a time. The &ldquo;mode&rdquo; defines how those blocks are
+                chained together to encrypt a whole message. The trailing letters in AES-256-GCM name that mode.
+                <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+                    <li><strong>GCM</strong> (Galois/Counter Mode) turns AES into a stream cipher and adds an
+                        authentication tag. Recommended here because it is fast and authenticated.</li>
+                    <li><strong>CTR</strong> (Counter Mode) turns AES into a stream cipher by encrypting a
+                        counter. This is the same engine GCM is built on, but with no authentication.</li>
+                    <li><strong>CBC</strong> (Cipher Block Chaining) is an older mode where each block is mixed
+                        into the next. Offered for compatibility, but also unauthenticated.</li>
+                </ul>
+            </dd>
+
+            <dt>Authenticated encryption</dt>
+            <dd>
+                Encryption that also proves the ciphertext was not altered and that the right key was used. GCM does
+                this by attaching an authentication tag. If even one byte is changed or the key is wrong, decryption
+                fails loudly instead of returning garbage. CBC and CTR provide confidentiality, but they only hide
+                the contents and cannot detect tampering, so they are best paired with a separate integrity check.
+            </dd>
+
+            <dt>Base64</dt>
+            <dd>
+                A text encoding that represents arbitrary binary data using 64 printable characters, being
+                all ASCII letters and digits, the plus sign, and the forward slash
+                (<code>A&ndash;Z a&ndash;z 0&ndash;9 + /</code>). The encrypted output is binary, so it is
+                Base64-encoded to make it safe to copy, paste, and store as plain text.
+                It is an encoding, not encryption, and adds no security.
+            </dd>
+        </dl>
+    </div>
+
+    <script>
+        // State
+        let isEncryptMode = true;
+
+        // Container format, all bytes Base64-encoded together:
+        // magic "LBE1" (4) | algorithm id (1) | reserved (1) | iterations uint32 BE (4) | salt (16) | IV (12 or 16) | ciphertext
+        const MAGIC = [0x4C, 0x42, 0x45, 0x31];
+        const SALT_LENGTH = 16;
+
+        const ALGORITHMS = {
+            1: { label: 'AES-256-GCM', name: 'AES-GCM', keyBits: 256, ivLength: 12 },
+            2: { label: 'AES-128-GCM', name: 'AES-GCM', keyBits: 128, ivLength: 12 },
+            3: { label: 'AES-256-CBC', name: 'AES-CBC', keyBits: 256, ivLength: 16 },
+            4: { label: 'AES-256-CTR', name: 'AES-CTR', keyBits: 256, ivLength: 16 }
+        };
+
+        // DOM elements
+        const modeToggle = document.getElementById('modeToggle');
+        const modeIndicator = document.getElementById('modeIndicator');
+        const encryptText = document.getElementById('encryptText');
+        const decryptText = document.getElementById('decryptText');
+        const algorithmSelect = document.getElementById('algorithm');
+        const iterationsSelect = document.getElementById('iterations');
+        const iterationsControl = document.getElementById('iterationsControl');
+        const outputWrap = document.getElementById('outputWrap');
+        const secretKey = document.getElementById('secretKey');
+        const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
+        const generateKeyBtn = document.getElementById('generateKey');
+        const copyKeyBtn = document.getElementById('copyKey');
+        const keyStrength = document.getElementById('keyStrength');
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const processBtn = document.getElementById('processBtn');
+        const copyBtn = document.getElementById('copyOutput');
+        const clearBtn = document.getElementById('clearAll');
+        const swapBtn = document.getElementById('swapInputOutput');
+        const downloadBtn = document.getElementById('downloadResult');
+        const errorMessage = document.getElementById('errorMessage');
+        const infoMessage = document.getElementById('infoMessage');
+        const outputLabel = document.getElementById('outputLabel');
+        const description = document.getElementById('description');
+        const inputInfo = document.getElementById('inputInfo');
+        const outputInfo = document.getElementById('outputInfo');
+
+        // ---------- Byte helpers (chunked to handle very long inputs) ----------
+
+        function bytesToBase64(bytes) {
+            let binary = '';
+            const CHUNK = 0x8000;
+            for (let i = 0; i < bytes.length; i += CHUNK) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+            }
+            return btoa(binary);
+        }
+
+        function base64ToBytes(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function concatBytes(...arrays) {
+            const total = arrays.reduce((sum, a) => sum + a.length, 0);
+            const out = new Uint8Array(total);
+            let offset = 0;
+            for (const a of arrays) {
+                out.set(a, offset);
+                offset += a.length;
+            }
+            return out;
+        }
+
+        // ---------- Key derivation ----------
+
+        async function deriveKey(passphrase, salt, iterations, algorithm) {
+            const baseKey = await crypto.subtle.importKey(
+                'raw',
+                new TextEncoder().encode(passphrase),
+                'PBKDF2',
+                false,
+                ['deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
+                baseKey,
+                { name: algorithm.name, length: algorithm.keyBits },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        function cipherParams(algorithm, iv) {
+            if (algorithm.name === 'AES-GCM') return { name: 'AES-GCM', iv: iv };
+            if (algorithm.name === 'AES-CBC') return { name: 'AES-CBC', iv: iv };
+            // AES-CTR uses the IV bytes as the initial counter block
+            return { name: 'AES-CTR', counter: iv, length: 64 };
+        }
+
+        // ---------- Encrypt / Decrypt ----------
+
+        async function encryptInput(plainText, passphrase) {
+            const algId = parseInt(algorithmSelect.value);
+            const algorithm = ALGORITHMS[algId];
+            const iterations = parseInt(iterationsSelect.value);
+
+            const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+            const iv = crypto.getRandomValues(new Uint8Array(algorithm.ivLength));
+            const key = await deriveKey(passphrase, salt, iterations, algorithm);
+
+            const plainBytes = new TextEncoder().encode(plainText);
+            const cipherBuffer = await crypto.subtle.encrypt(cipherParams(algorithm, iv), key, plainBytes);
+
+            const header = new Uint8Array(10);
+            header.set(MAGIC, 0);
+            header[4] = algId;
+            header[5] = 0; // reserved for future use
+            new DataView(header.buffer).setUint32(6, iterations, false);
+
+            const packed = concatBytes(header, salt, iv, new Uint8Array(cipherBuffer));
+            let base64 = bytesToBase64(packed);
+
+            const wrap = outputWrap.value;
+            if (wrap !== 'none') {
+                const charsPerLine = parseInt(wrap);
+                base64 = base64.replace(new RegExp(`(.{${charsPerLine}})`, 'g'), '$1\n').trim();
+            }
+
+            outputText.value = base64;
+            adjustTextareaHeight(outputText);
+            updateCounts();
+            showInfo(`Encrypted with ${algorithm.label}, PBKDF2-SHA256 (${iterations.toLocaleString()} iterations).`);
+        }
+
+        async function decryptInput(encoded, passphrase) {
+            const cleaned = encoded.replace(/\s/g, '');
+            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) throw new Error('Input is not valid Base64.');
+
+            let packed;
+            try {
+                packed = base64ToBytes(cleaned);
+            } catch (err) {
+                throw new Error('Input is not valid Base64.');
+            }
+
+            if (packed.length < 10 || packed[0] !== MAGIC[0] || packed[1] !== MAGIC[1] ||
+                packed[2] !== MAGIC[2] || packed[3] !== MAGIC[3]) {
+                throw new Error('Unrecognized format. This input was not produced by this tool.');
+            }
+
+            const algId = packed[4];
+            const algorithm = ALGORITHMS[algId];
+            if (!algorithm) throw new Error(`Unknown algorithm id (${algId}). The data may be corrupted.`);
+
+            const iterations = new DataView(packed.buffer, packed.byteOffset).getUint32(6, false);
+            if (iterations < 1 || iterations > 10000000)
+                throw new Error('Invalid iteration count in header. The data may be corrupted.');
+
+            const saltStart = 10;
+            const ivStart = saltStart + SALT_LENGTH;
+            const cipherStart = ivStart + algorithm.ivLength;
+            if (packed.length <= cipherStart) throw new Error('Input is too short to contain a ciphertext.');
+
+            const salt = packed.subarray(saltStart, ivStart);
+            const iv = packed.subarray(ivStart, cipherStart);
+            const cipherBytes = packed.subarray(cipherStart);
+
+            const key = await deriveKey(passphrase, salt, iterations, algorithm);
+
+            let plainBuffer;
+            try {
+                plainBuffer = await crypto.subtle.decrypt(cipherParams(algorithm, iv), key, cipherBytes);
+            } catch (err) {
+                if (algorithm.name === 'AES-GCM') throw new Error('Decryption failed: wrong secret key or tampered data.');
+                throw new Error('Decryption failed. Check the secret key and input.');
+            }
+
+            const text = new TextDecoder('utf-8', { fatal: false }).decode(plainBuffer);
+            outputText.value = text;
+            adjustTextareaHeight(outputText);
+            updateCounts();
+            showInfo(`Decrypted successfully (${algorithm.label}, ${iterations.toLocaleString()} iterations).`);
+        }
+
+        // ---------- UI ----------
+
+        modeToggle.addEventListener('click', () => {
+            isEncryptMode = !isEncryptMode;
+            updateUI();
+        });
+
+        function updateUI() {
+            if (isEncryptMode) {
+                modeToggle.textContent = 'Switch to Decrypt';
+                modeIndicator.textContent = 'Mode: Encrypt';
+                encryptText.className = 'mode-highlight';
+                decryptText.className = '';
+                inputText.placeholder = 'Enter text to encrypt (plain text, JSON, etc.)...';
+                processBtn.textContent = 'Encrypt';
+                outputLabel.textContent = 'Encrypted Output:';
+                description.textContent = 'Use this tool to encrypt text with a secret key. The output is a self-contained Base64 string that embeds the algorithm, key-stretching parameters, a random salt, and a random IV, so decryption only requires the secret key. Switch to decrypt mode to recover the original text.';
+                algorithmSelect.disabled = false;
+                iterationsControl.style.display = 'flex';
+                outputWrap.parentElement.style.display = 'flex';
+            } else {
+                modeToggle.textContent = 'Switch to Encrypt';
+                modeIndicator.textContent = 'Mode: Decrypt';
+                encryptText.className = '';
+                decryptText.className = 'mode-highlight';
+                inputText.placeholder = 'Paste encrypted Base64 to decrypt...';
+                processBtn.textContent = 'Decrypt';
+                outputLabel.textContent = 'Decrypted Output:';
+                description.textContent = 'Use this tool to decrypt data produced by this page. The algorithm, salt, IV, and key-stretching parameters are read from the encrypted blob automatically, so you only need to provide the same secret key that was used to encrypt. Switch to encrypt mode to protect new text.';
+                // Algorithm and iterations are read from the encrypted header during decryption
+                algorithmSelect.disabled = true;
+                iterationsControl.style.display = 'none';
+                outputWrap.parentElement.style.display = 'none';
+            }
+            clearMessages();
+        }
+
+        processBtn.addEventListener('click', async () => {
+            const input = inputText.value;
+            const passphrase = secretKey.value;
+
+            if (!passphrase) {
+                showError('Please enter a secret key.');
+                secretKey.focus();
+                return;
+            }
+            if (!input.trim()) {
+                showError(`Please enter some ${isEncryptMode ? 'text to encrypt' : 'Base64 to decrypt'}.`);
+                return;
+            }
+
+            processBtn.disabled = true;
+            processBtn.textContent = 'Working...';
+            try {
+                if (isEncryptMode) await encryptInput(input, passphrase);
+                else await decryptInput(input, passphrase);
+            } catch (err) {
+                outputText.value = '';
+                showError(err.message);
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = isEncryptMode ? 'Encrypt' : 'Decrypt';
+            }
+        });
+
+        // Show or hide the secret key
+        toggleKeyVisibility.addEventListener('click', () => {
+            const hidden = secretKey.type === 'password';
+            secretKey.type = hidden ? 'text' : 'password';
+            toggleKeyVisibility.textContent = hidden ? 'Hide' : 'Show';
+        });
+
+        // Generate a random 256-bit key, Base64-encoded
+        generateKeyBtn.addEventListener('click', () => {
+            const bytes = crypto.getRandomValues(new Uint8Array(32));
+            secretKey.value = bytesToBase64(bytes);
+            secretKey.type = 'text';
+            toggleKeyVisibility.textContent = 'Hide';
+            updateKeyStrength();
+            showInfo('Random 256-bit key generated. Store it somewhere safe; it cannot be recovered.');
+        });
+
+        copyKeyBtn.addEventListener('click', async () => {
+            if (!secretKey.value) {
+                showInfo('No key to copy.');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(secretKey.value);
+                showInfo('Secret key copied to clipboard.');
+            } catch (err) {
+                showError('Failed to copy key to clipboard.');
+            }
+        });
+
+        // Rough strength estimate based on length and character variety
+        function updateKeyStrength() {
+            const key = secretKey.value;
+            if (!key) {
+                keyStrength.textContent = '';
+                keyStrength.className = 'key-strength';
+                return;
+            }
+            let variety = 0;
+            if (/[a-z]/.test(key)) variety++;
+            if (/[A-Z]/.test(key)) variety++;
+            if (/[0-9]/.test(key)) variety++;
+            if (/[^a-zA-Z0-9]/.test(key)) variety++;
+
+            if (key.length < 8) {
+                keyStrength.textContent = 'Weak key: under 8 characters';
+                keyStrength.className = 'key-strength strength-weak';
+            } else if (key.length < 16 || variety < 3) {
+                keyStrength.textContent = 'Moderate key: longer or more varied is better';
+                keyStrength.className = 'key-strength strength-ok';
+            } else {
+                keyStrength.textContent = 'Strong key';
+                keyStrength.className = 'key-strength strength-strong';
+            }
+        }
+
+        secretKey.addEventListener('input', updateKeyStrength);
+
+        copyBtn.addEventListener('click', async () => {
+            const output = outputText.value;
+            if (!output) {
+                showInfo('Nothing to copy.');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(output);
+                showInfo('Copied to clipboard!');
+            } catch (err) {
+                showError('Failed to copy to clipboard.');
+            }
+        });
+
+        swapBtn.addEventListener('click', () => {
+            const temp = inputText.value;
+            inputText.value = outputText.value;
+            outputText.value = temp;
+            adjustTextareaHeight(inputText);
+            adjustTextareaHeight(outputText);
+            updateCounts();
+            showInfo('Input and output swapped.');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            secretKey.value = '';
+            updateKeyStrength();
+            updateCounts();
+            clearMessages();
+            adjustTextareaHeight(inputText);
+            adjustTextareaHeight(outputText);
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const output = outputText.value;
+            if (!output) {
+                showError('Nothing to download.');
+                return;
+            }
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = isEncryptMode ? 'encrypted.txt' : 'decrypted.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showInfo(`File downloaded as "${a.download}".`);
+        });
+
+        function updateCounts() {
+            inputInfo.textContent = inputText.value ? `${inputText.value.length.toLocaleString()} characters` : '';
+            outputInfo.textContent = outputText.value ? `${outputText.value.length.toLocaleString()} characters` : '';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            infoMessage.textContent = '';
+        }
+
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            errorMessage.textContent = '';
+        }
+
+        function clearMessages() {
+            errorMessage.textContent = '';
+            infoMessage.textContent = '';
+        }
+
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        inputText.addEventListener('input', () => {
+            adjustTextareaHeight(inputText);
+            updateCounts();
+        });
+
+        // Web Crypto requires a secure context (HTTPS or localhost)
+        if (!window.isSecureContext || !crypto.subtle) {
+            showError('Web Crypto is unavailable. Serve this page over HTTPS (or localhost) to use it.');
+            processBtn.disabled = true;
+        }
+
+        updateUI();
+    </script>
+</body>
+
+</html>
