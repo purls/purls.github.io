@@ -92,7 +92,7 @@
 
         .reset-button {
             display: block;
-            margin: 20px auto;
+            margin: 0;
             padding: 10px 30px;
             background-color: #244444;
             color: #e0e0e0;
@@ -132,17 +132,89 @@
             color: #60c8c5;
         }
 
-        .counter {
+        .box-footer {
             position: absolute;
             bottom: 10px;
-            right: 10px;
-            font-size: 14px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 13px;
             color: #70a070;
-            opacity: 0.8;
+            opacity: 0.85;
         }
 
-        .scroll-box.failed .counter {
+        .box-footer .rate-line {
+            font-weight: bold;
+        }
+
+        .scroll-box.failed .box-footer {
             color: #d0a0a0;
+        }
+
+        /* brief red flash for a faulty scroll in continuous mode */
+        .flash-fail {
+            animation: flashFail 0.25s ease-out;
+        }
+
+        @keyframes flashFail {
+            0% {
+                background-color: #5a2d2d;
+            }
+
+            100% {
+                background-color: #2d5a2d;
+            }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1 1 50%;
+            font-size: 14px;
+            color: #b0c0b0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle .toggle-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+
+        .toggle .toggle-sub {
+            color: #809580;
+            opacity: 0.85;
+        }
+
+        .reset-area {
+            flex: 1 1 50%;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .controls .reset-button {
+            flex: 0 1 auto;
+            padding: 10px 16px;
+        }
+
+        .toggle input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #2d5a2d;
         }
     </style>
 </head>
@@ -161,105 +233,173 @@
         <div class="scroll-box" id="upBox" data-direction="up">
             <div class="arrow">↑</div>
             <div class="error-x">✕</div>
-            <div class="counter" id="upCounter">0</div>
+            <div class="box-footer">
+                <span class="count-line"><span id="upGood">0</span> ok / <span id="upBad">0</span> bad</span>
+                <span class="rate-line" id="upRate">—</span>
+            </div>
         </div>
 
         <div class="scroll-box" id="downBox" data-direction="down">
             <div class="arrow">↓</div>
             <div class="error-x">✕</div>
-            <div class="counter" id="downCounter">0</div>
+            <div class="box-footer">
+                <span class="count-line"><span id="downGood">0</span> ok / <span id="downBad">0</span> bad</span>
+                <span class="rate-line" id="downRate">—</span>
+            </div>
         </div>
     </div>
 
-    <div class="status" id="status">Ready to test - hover over a box and scroll in the indicated direction</div>
+    <div class="status" id="status">Ready to test: Hover over a box and scroll in the indicated direction</div>
 
-    <button class="reset-button" id="resetButton">Reset Test</button>
+    <div class="controls">
+        <label class="toggle">
+            <input type="checkbox" id="continuousToggle" />
+            <span class="toggle-text">
+                Keep counting after faulty scrolls
+                <span class="toggle-sub">(measure general failure rate)</span>
+            </span>
+        </label>
+        <div class="reset-area">
+            <button class="reset-button" id="resetUpButton">Reset Upward</button>
+            <button class="reset-button" id="resetDownButton">Reset Downward</button>
+        </div>
+    </div>
 
     <div class="disclaimer">
-        <h3>How This Test Works</h3>
-        <p>Hover over a box and scroll in the arrow's direction. The box pulses green for correct scrolls. If your
-            scroll wheel registers the opposite direction, the box turns red with an X, indicating a faulty scroll wheel
-            that needs cleaning or replacement.</p>
+        <h3 style="font-size: 0.9rem;">How This Test Works</h3>
+        <p style="font-size: 0.8rem;">Hover over a box and scroll in the arrow's direction. The box pulses green for
+            correct scrolls. If your
+            scroll wheel registers the opposite direction, it is likely faulty. The box will turn red to indicate a
+            detected fault and divide the number of faulty scrolls by the total scrolls to calculate the failure rate.
+        </p>
+        <p style="font-size: 0.8rem;"><strong>Failure rate</strong> is the share of scrolls that came out backwards: 99
+            good scrolls and 1 bad one
+            is a 1% failure rate. A healthy wheel sits at 0%. Any sustained reading above 0% suggests the encoder needs
+            cleaning or replacement. The failure rate is only an estimation and isn't truly diagnostic, but there to
+            indicate the prevalence of faulty scrolls.</p>
+        <p style="font-size: 0.8rem;"><strong>Keep counting after a faulty scroll:</strong> by default the box locks red
+            on the first fault. Enable
+            this toggle to keep the box live so you can rack up hundreds of scrolls on a flaky wheel and converge on a
+            precise failure rate.</p>
     </div>
 
     <script>
-        const upBox = document.getElementById('upBox');
-        const downBox = document.getElementById('downBox');
-        const upCounter = document.getElementById('upCounter');
-        const downCounter = document.getElementById('downCounter');
         const status = document.getElementById('status');
-        const resetButton = document.getElementById('resetButton');
+        const resetUpButton = document.getElementById('resetUpButton');
+        const resetDownButton = document.getElementById('resetDownButton');
+        const continuousToggle = document.getElementById('continuousToggle');
 
-        let upCount = 0;
-        let downCount = 0;
-        let upFailed = false;
-        let downFailed = false;
+        // Per-box state, keyed by expected direction.
+        const boxes = {
+            up: {
+                el: document.getElementById('upBox'),
+                good: document.getElementById('upGood'),
+                bad: document.getElementById('upBad'),
+                rate: document.getElementById('upRate'),
+                label: 'Upward',
+                goodCount: 0,
+                badCount: 0,
+                locked: false
+            },
+            down: {
+                el: document.getElementById('downBox'),
+                good: document.getElementById('downGood'),
+                bad: document.getElementById('downBad'),
+                rate: document.getElementById('downRate'),
+                label: 'Downward',
+                goodCount: 0,
+                badCount: 0,
+                locked: false
+            }
+        };
 
-        function handleWheel(event, box, expectedDirection) {
+        function formatRate(b) {
+            const total = b.goodCount + b.badCount;
+            if (total === 0) return '—';
+            const pct = (b.badCount / total) * 100;
+            // More precision once there's a meaningful sample size.
+            const decimals = total >= 100 ? 2 : 1;
+            return pct.toFixed(decimals) + '% fail';
+        }
+
+        function render(b) {
+            b.good.textContent = b.goodCount;
+            b.bad.textContent = b.badCount;
+            b.rate.textContent = formatRate(b);
+        }
+
+        function handleWheel(event, expectedDirection) {
             event.preventDefault();
 
-            if ((box === upBox && upFailed) || (box === downBox && downFailed)) {
-                return;
-            }
+            const b = boxes[expectedDirection];
+            if (b.locked) return;
 
             const actualDirection = event.deltaY < 0 ? 'up' : 'down';
+            const total = b.goodCount + b.badCount + 1;
 
             if (actualDirection === expectedDirection) {
                 // Correct direction
-                box.classList.add('pulse');
-                box.classList.add('active');
+                b.goodCount++;
+                b.el.classList.add('pulse', 'active');
+                setTimeout(() => b.el.classList.remove('pulse', 'active'), 150);
 
-                setTimeout(() => {
-                    box.classList.remove('pulse');
-                    box.classList.remove('active');
-                }, 150);
-
-                if (box === upBox) {
-                    upCount++;
-                    upCounter.textContent = upCount;
-                } else {
-                    downCount++;
-                    downCounter.textContent = downCount;
-                }
-
-                status.textContent = `Good! ${expectedDirection === 'up' ? 'Upward' : 'Downward'} scroll detected (${expectedDirection === 'up' ? upCount : downCount} successful)`;
+                status.textContent = `Good! ${b.label} scroll detected (${b.goodCount} ok of ${total}, ${formatRate(b)})`;
                 status.style.color = '#60c8c5';
             } else {
-                // Wrong direction - fail the test
-                box.classList.add('failed');
+                // Wrong direction: faulty scroll
+                b.badCount++;
 
-                if (box === upBox) {
-                    upFailed = true;
+                if (continuousToggle.checked) {
+                    // Keep the box live, flash red briefly and keep tallying.
+                    b.el.classList.remove('flash-fail');
+                    // force reflow so the animation can replay
+                    void b.el.offsetWidth;
+                    b.el.classList.add('flash-fail');
+                    status.textContent = `Faulty scroll on ${b.label} box. ${b.badCount} bad of ${total} (${formatRate(b)})`;
                 } else {
-                    downFailed = true;
+                    // Default: lock the box on the first fault.
+                    b.locked = true;
+                    b.el.classList.add('failed');
+                    status.textContent = `Failed! ${b.label} box detected ${actualDirection === 'up' ? 'upward' : 'downward'} scroll (${formatRate(b)})`;
                 }
-
-                status.textContent = `Failed! ${expectedDirection === 'up' ? 'Upward' : 'Downward'} box detected ${actualDirection === 'up' ? 'upward' : 'downward'} scroll`;
                 status.style.color = '#ff6b6b';
             }
+
+            render(b);
         }
 
-        upBox.addEventListener('wheel', (e) => handleWheel(e, upBox, 'up'));
-        downBox.addEventListener('wheel', (e) => handleWheel(e, downBox, 'down'));
+        boxes.up.el.addEventListener('wheel', (e) => handleWheel(e, 'up'));
+        boxes.down.el.addEventListener('wheel', (e) => handleWheel(e, 'down'));
 
-        resetButton.addEventListener('click', () => {
-            upBox.classList.remove('failed', 'active');
-            downBox.classList.remove('failed', 'active');
-            upCount = 0;
-            downCount = 0;
-            upFailed = false;
-            downFailed = false;
-            upCounter.textContent = '0';
-            downCounter.textContent = '0';
-            status.textContent = 'Ready to test - hover over a box and scroll in the indicated direction';
-            status.style.color = '#60c8c5';
+        // Turning on continuous mode unlocks any box that already hard-failed,
+        // so a single early fault doesn't end the run.
+        continuousToggle.addEventListener('change', () => {
+            if (!continuousToggle.checked) return;
+            Object.values(boxes).forEach((b) => {
+                b.locked = false;
+                b.el.classList.remove('failed');
+            });
         });
 
-        // Prevent page scrolling
+        // Reset a single box so the other direction's tally stays intact
+        // (handy for screenshotting one box's result before clearing it).
+        function resetBox(direction) {
+            const b = boxes[direction];
+            b.el.classList.remove('failed', 'active', 'flash-fail');
+            b.goodCount = 0;
+            b.badCount = 0;
+            b.locked = false;
+            render(b);
+            status.textContent = `${b.label} box reset. Hover over it and scroll in the indicated direction.`;
+            status.style.color = '#60c8c5';
+        }
+
+        resetUpButton.addEventListener('click', () => resetBox('up'));
+        resetDownButton.addEventListener('click', () => resetBox('down'));
+
+        // Prevent page scrolling while hovering a test box
         document.body.addEventListener('wheel', (e) => {
-            if (e.target === upBox || e.target === downBox || upBox.contains(e.target) || downBox.contains(e.target)) {
-                e.preventDefault();
-            }
+            if (boxes.up.el.contains(e.target) || boxes.down.el.contains(e.target)) e.preventDefault();
         }, { passive: false });
     </script>
 </body>
