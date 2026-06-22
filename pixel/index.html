@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Strip Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        /* Self contained base so the tool previews without tools.css, full width */
+        /* because the editor is the focus. */
+        body {
+            max-width: 1200px;
+            font-family: "JetBrains Mono", monospace;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        .home-link {
+            color: #666;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .home-link:hover {
+            color: #999;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        p.lede {
+            color: #b0b0b0;
+            margin: 0 0 16px;
+        }
+
+        button {
+            padding: 7px 13px;
+            background-color: #244444;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: "JetBrains Mono", monospace;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #255555;
+        }
+
+        button:disabled {
+            background-color: #2a2a2a;
+            color: #5a5a5a;
+            cursor: not-allowed;
+        }
+
+        input[type="number"],
+        select,
+        textarea {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        input[type="number"] {
+            width: 64px;
+        }
+
+        label {
+            color: #b0b0b0;
+            font-size: 13px;
+        }
+
+        input[type="range"] {
+            accent-color: #4cafac;
+            vertical-align: middle;
+        }
+
+        .panel {
+            border: 1px solid #2e2e2e;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            background-color: #171717;
+        }
+
+        .panel h2 {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #80cccc;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            align-items: center;
+        }
+
+        .field.inline {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .seg {
+            display: inline-flex;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .seg button {
+            border-radius: 0;
+            background-color: #1e1e1e;
+            padding: 6px 12px;
+        }
+
+        .seg button.active {
+            background-color: #1a6660;
+            color: #d8fffb;
+        }
+
+        #dropzone {
+            border: 2px dashed #3d3d3d;
+            border-radius: 8px;
+            padding: 48px 20px;
+            text-align: center;
+            color: #888;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        #dropzone.hover {
+            border-color: #4cafac;
+            color: #cfeeec;
+        }
+
+        #dropzone strong {
+            color: #80cccc;
+        }
+
+        #editorWrap {
+            position: relative;
+            border: 1px solid #2e2e2e;
+            border-radius: 6px;
+            overflow: hidden;
+            background: repeating-conic-gradient(#1a1a1a 0% 25%, #161616 0% 50%) 0 / 16px 16px;
+        }
+
+        #view {
+            display: block;
+            touch-action: none;
+        }
+
+        #view.cut {
+            cursor: crosshair;
+        }
+
+        #view.pan {
+            cursor: grab;
+        }
+
+        #view.panning {
+            cursor: grabbing;
+        }
+
+        .stat {
+            font-size: 13px;
+            color: #9a9a9a;
+            margin: 8px 2px;
+            min-height: 18px;
+        }
+
+        .ok {
+            color: #84c573;
+        }
+
+        .warn {
+            color: #f6aa09;
+        }
+
+        #previewCanvas {
+            image-rendering: pixelated;
+            display: block;
+            max-width: 100%;
+            border: 1px solid #2e2e2e;
+            background: repeating-conic-gradient(#1a1a1a 0% 25%, #161616 0% 50%) 0 / 12px 12px;
+        }
+
+        .out-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        @media (max-width: 760px) {
+            .out-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        textarea#palette {
+            width: 100%;
+            height: 120px;
+            resize: vertical;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .help {
+            color: #909090;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .help strong {
+            color: #c8c8c8;
+        }
+
+        .help code {
+            color: #80cccc;
+            background-color: #1e1e1e;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        .kbd {
+            color: #80cccc;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2e2e2e;
+            margin: 20px 0;
+        }
+
+        details summary {
+            cursor: pointer;
+            color: #80cccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1>Pixel Strip Editor</h1>
+        <a href="https://localhost.beer" class="home-link">&larr; home</a>
+    </div>
+    <p class="lede">
+        Clean up an upscaled pixel-art screenshot by hand. Zoom in, cut the extra
+        rows and columns until every block lines up with the bold grid, then reduce
+        by that step to one pixel per block. Everything runs in your browser.
+    </p>
+
+    <div id="dropzone">
+        <p><strong>Drop an image here</strong>, click to browse, or paste from the clipboard.</p>
+        <p style="font-size:13px;margin-top:8px;">PNG screenshots work best. Nothing is uploaded.</p>
+        <input type="file" id="fileInput" accept="image/*" hidden />
+    </div>
+
+    <div id="tool" hidden>
+        <div class="panel">
+            <h2>tools</h2>
+            <div class="row">
+                <div class="field inline">
+                    <label>mode</label>
+                    <div class="seg" id="modeSeg">
+                        <button data-mode="cutV" class="active">cut column</button>
+                        <button data-mode="addV">add column</button>
+                        <button data-mode="cutH">cut row</button>
+                        <button data-mode="addH">add row</button>
+                        <button data-mode="pan">pan</button>
+                    </div>
+                </div>
+                <div class="field inline">
+                    <label for="zoom">zoom</label>
+                    <input type="range" id="zoom" min="1" max="48" step="1" value="8" style="width:160px;" />
+                    <span class="val" id="zoomVal" style="color:#80cccc;">8x</span>
+                    <button id="fitBtn">Fit</button>
+                </div>
+                <button id="undoBtn" disabled>Undo</button>
+                <button id="resetBtn">Reset image</button>
+                <button id="newImageBtn">Load different</button>
+            </div>
+            <p class="help" style="margin:10px 0 0;">
+                <strong>Cut</strong> removes the highlighted strip and joins the two
+                sides; <strong>add</strong> duplicates it and shifts everything else
+                over one. To pan, use the pan tool, drag with the middle or right mouse
+                button, or hold <span class="kbd">H</span> and drag. Scroll to zoom.
+                <span class="kbd">Ctrl/Cmd+Z</span> undoes.
+            </p>
+        </div>
+
+        <div class="panel">
+            <h2>reference grid</h2>
+            <div class="row">
+                <div class="field inline">
+                    <input type="checkbox" id="showGrid" checked />
+                    <label for="showGrid">show grid</label>
+                </div>
+                <div class="field inline">
+                    <label for="stepN">bold every</label>
+                    <input type="number" id="stepN" min="2" max="64" step="1" value="4" />
+                    <label>px</label>
+                </div>
+                <div class="field inline">
+                    <label for="offX">x offset</label>
+                    <input type="number" id="offX" min="0" step="1" value="0" />
+                </div>
+                <div class="field inline">
+                    <label for="offY">y offset</label>
+                    <input type="number" id="offY" min="0" step="1" value="0" />
+                </div>
+                <span class="stat" id="alignStat"></span>
+            </div>
+        </div>
+
+        <div id="editorWrap">
+            <canvas id="view"></canvas>
+        </div>
+        <p class="stat" id="imgStat"></p>
+
+        <div class="panel" style="margin-top:14px;">
+            <h2>reduce and export</h2>
+            <div class="out-grid">
+                <div>
+                    <div class="row" style="margin-bottom:10px;">
+                        <button id="reduceBtn">Reduce by step</button>
+                        <div class="field inline">
+                            <input type="checkbox" id="snapOut" />
+                            <label for="snapOut">snap output to palette</label>
+                        </div>
+                    </div>
+                    <canvas id="previewCanvas" width="10" height="10"></canvas>
+                    <p class="stat" id="outStat"></p>
+                    <div class="row" style="gap:10px;">
+                        <div class="field inline">
+                            <label for="scale">export scale</label>
+                            <select id="scale">
+                                <option value="1">1x</option>
+                                <option value="4">4x</option>
+                                <option value="8">8x</option>
+                                <option value="16">16x</option>
+                            </select>
+                        </div>
+                        <button id="downloadPng" disabled>PNG</button>
+                        <button id="downloadSvg" disabled>SVG</button>
+                        <button id="copyBtn" disabled>Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <details>
+                        <summary>palette (used for snapping and source cleanup)</summary>
+                        <p class="help" style="margin:8px 0;">
+                            One hex color per line. <button id="cleanBtn" style="padding:5px 10px;">Clean source to
+                                palette</button>
+                            snaps every pixel in the image to its nearest listed color, which sharpens
+                            the blurry block edges from compression. This is undoable.
+                        </p>
+                        <textarea id="palette" spellcheck="false"></textarea>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <p class="help">
+        <strong>Workflow.</strong> Set the bold step to the original upscale factor
+        (4 in the wplace example). Line the bold grid up with a block edge using the
+        offsets, then cut any block that runs a pixel wide or tall until every block
+        fills exactly one bold cell. The alignment readout turns green when the
+        width and height are clean multiples of the step. Then reduce.
+    </p>
+
+    <script>
+        "use strict";
+
+        const els = {};
+        [
+            "dropzone", "fileInput", "tool", "modeSeg", "zoom", "zoomVal", "fitBtn", "undoBtn",
+            "resetBtn", "newImageBtn", "showGrid", "stepN", "offX", "offY", "alignStat",
+            "editorWrap", "view", "imgStat", "reduceBtn", "snapOut", "previewCanvas", "outStat",
+            "scale", "downloadPng", "downloadSvg", "copyBtn", "cleanBtn", "palette"
+        ].forEach(id => els[id] = document.getElementById(id));
+
+        // ---- Working bitmap ----------------------------------------------------
+        // work holds the current editable image as raw RGBA. original keeps a copy
+        // for the reset button. workCanvas is what we draw from.
+        let work = null;          // { w, h, data: Uint8ClampedArray }
+        let original = null;
+        let workCanvas = document.createElement("canvas");
+        let workCtx = workCanvas.getContext("2d");
+
+        // ---- View state --------------------------------------------------------
+        let zoom = 8;             // CSS px per source pixel
+        let ox = 0, oy = 0;       // top-left source coordinate shown
+        let mode = "cutV";
+        let dpr = window.devicePixelRatio || 1;
+        let cssW = 0, cssH = 0;
+        let mouse = { x: 0, y: 0, inside: false };
+        let panning = false, panKey = false, lastPan = null;
+
+        const undoStack = [];
+        const UNDO_MAX = 500;
+
+        // ---- Default palette (wplace) -----------------------------------------
+        const DEFAULT_PALETTE = [
+            "#000000", "#3c3c3c", "#787878", "#aaaaaa", "#d2d2d2", "#ffffff", "#600018", "#a50e1e",
+            "#ed1c24", "#fa8072", "#e45c1a", "#ff7f27", "#f6aa09", "#f9dd3b", "#fffabc", "#9c8431",
+            "#c5ad31", "#e8d45f", "#4a6b3a", "#5a944a", "#84c573", "#0eb968", "#13e67b", "#87ff5e",
+            "#0c816e", "#10aea6", "#13e1be", "#0f799f", "#60f7f2", "#bbfaf2", "#28509e", "#4093e4",
+            "#7dc7ff", "#4d31b8", "#6b50f6", "#99b1fb", "#4a4284", "#7a71c4", "#b5aef1", "#780c99",
+            "#aa38b9", "#e09ff9", "#cb007a", "#ec1f80", "#f38da9", "#9b5249", "#d18078", "#fab6a4",
+            "#684634", "#95682a", "#dba463", "#7b6352", "#9c846b", "#d6b594", "#d18051", "#f8b277",
+            "#ffc5a5", "#6d643f", "#948c6b", "#cdc59e", "#333941", "#6d758d", "#b3b9d1"
+        ];
+        els.palette.value = DEFAULT_PALETTE.join("\n");
+
+        function parsePalette() {
+            const out = [];
+            for (const line of els.palette.value.split(/\s+/)) {
+                const m = /^#?([0-9a-fA-F]{6})$/.exec(line.trim());
+                if (m) {
+                    const n = parseInt(m[1], 16);
+                    out.push([(n >> 16) & 255, (n >> 8) & 255, n & 255]);
+                }
+            }
+            return out;
+        }
+
+        function nearestPalette(r, g, b, pal) {
+            let best = 0, bestD = Infinity;
+            for (let i = 0; i < pal.length; i++) {
+                const p = pal[i];
+                const dr = r - p[0], dg = g - p[1], db = b - p[2];
+                const d = dr * dr + dg * dg + db * db;
+                if (d < bestD) { bestD = d; best = i; }
+            }
+            return pal[best];
+        }
+
+        // ---- Loading -----------------------------------------------------------
+        function loadFile(file) {
+            if (!file || !file.type.startsWith("image/")) return;
+            const img = new Image();
+            img.onload = () => { setupImage(img); URL.revokeObjectURL(img.src); };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function setupImage(img) {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            const c = document.createElement("canvas");
+            c.width = w; c.height = h;
+            const ctx = c.getContext("2d", { willReadFrequently: true });
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, w, h).data;
+            work = { w, h, data: new Uint8ClampedArray(data) };
+            original = { w, h, data: new Uint8ClampedArray(data) };
+            undoStack.length = 0; updateUndo();
+            syncWorkCanvas();
+            els.dropzone.hidden = true;
+            els.tool.hidden = false;
+            resizeView();
+            fitView();
+            updateInfo();
+        }
+
+        function syncWorkCanvas() {
+            workCanvas.width = work.w; workCanvas.height = work.h;
+            const id = new ImageData(work.data, work.w, work.h);
+            workCtx.putImageData(id, 0, 0);
+        }
+
+        els.dropzone.addEventListener("click", () => els.fileInput.click());
+        els.fileInput.addEventListener("change", e => loadFile(e.target.files[0]));
+        els.newImageBtn.addEventListener("click", () => els.fileInput.click());
+        ["dragenter", "dragover"].forEach(ev => els.dropzone.addEventListener(ev, e => { e.preventDefault(); els.dropzone.classList.add("hover"); }));
+        ["dragleave", "drop"].forEach(ev => els.dropzone.addEventListener(ev, e => { e.preventDefault(); els.dropzone.classList.remove("hover"); }));
+        els.dropzone.addEventListener("drop", e => { if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]); });
+        document.addEventListener("paste", e => {
+            const items = e.clipboardData && e.clipboardData.items; if (!items) return;
+            for (const it of items) if (it.type.startsWith("image/")) { loadFile(it.getAsFile()); break; }
+        });
+
+        // ---- Strip operations --------------------------------------------------
+        function removeCol(x) {
+            const { w, h, data } = work; const nw = w - 1;
+            const nd = new Uint8ClampedArray(nw * h * 4);
+            const strip = new Uint8ClampedArray(h * 4);
+            for (let y = 0; y < h; y++) {
+                const si = (y * w + x) * 4;
+                strip.set(data.subarray(si, si + 4), y * 4);
+                const dst = y * nw * 4;
+                const leftLen = x * 4;
+                nd.set(data.subarray(y * w * 4, y * w * 4 + leftLen), dst);
+                nd.set(data.subarray((y * w + x + 1) * 4, (y * w + w) * 4), dst + leftLen);
+            }
+            work = { w: nw, h, data: nd };
+            return strip;
+        }
+        function insertCol(x, strip) {
+            const { w, h, data } = work; const nw = w + 1;
+            const nd = new Uint8ClampedArray(nw * h * 4);
+            for (let y = 0; y < h; y++) {
+                const dst = y * nw * 4; const leftLen = x * 4;
+                nd.set(data.subarray(y * w * 4, y * w * 4 + leftLen), dst);
+                nd.set(strip.subarray(y * 4, y * 4 + 4), dst + leftLen);
+                nd.set(data.subarray((y * w + x) * 4, (y * w + w) * 4), dst + leftLen + 4);
+            }
+            work = { w: nw, h, data: nd };
+        }
+        function removeRow(y) {
+            const { w, h, data } = work; const rb = w * 4;
+            const strip = data.slice(y * rb, (y + 1) * rb);
+            const nd = new Uint8ClampedArray((h - 1) * rb);
+            nd.set(data.subarray(0, y * rb), 0);
+            nd.set(data.subarray((y + 1) * rb), y * rb);
+            work = { w, h: h - 1, data: nd };
+            return strip;
+        }
+        function insertRow(y, strip) {
+            const { w, h, data } = work; const rb = w * 4;
+            const nd = new Uint8ClampedArray((h + 1) * rb);
+            nd.set(data.subarray(0, y * rb), 0);
+            nd.set(strip, y * rb);
+            nd.set(data.subarray(y * rb), (y + 1) * rb);
+            work = { w, h: h + 1, data: nd };
+        }
+
+        function doCut(axis, index, duplicate) {
+            if (axis === "v") {
+                if (index < 0 || index >= work.w || work.w <= 1) return;
+                if (duplicate) { const s = colStrip(index); insertCol(index, s); pushUndo({ t: "insV", index }); }
+                else { const s = removeCol(index); pushUndo({ t: "remV", index, strip: s }); }
+            } else {
+                if (index < 0 || index >= work.h || work.h <= 1) return;
+                if (duplicate) { const s = rowStrip(index); insertRow(index, s); pushUndo({ t: "insH", index }); }
+                else { const s = removeRow(index); pushUndo({ t: "remH", index, strip: s }); }
+            }
+            syncWorkCanvas(); clampView(); render(); updateInfo();
+        }
+        function colStrip(x) {
+            const { w, h, data } = work; const s = new Uint8ClampedArray(h * 4);
+            for (let y = 0; y < h; y++) { const si = (y * w + x) * 4; s.set(data.subarray(si, si + 4), y * 4); }
+            return s;
+        }
+        function rowStrip(y) { const rb = work.w * 4; return work.data.slice(y * rb, (y + 1) * rb); }
+
+        // ---- Undo --------------------------------------------------------------
+        function pushUndo(entry) { undoStack.push(entry); if (undoStack.length > UNDO_MAX) undoStack.shift(); updateUndo(); }
+        function updateUndo() { els.undoBtn.disabled = undoStack.length === 0; }
+        function undo() {
+            const e = undoStack.pop(); if (!e) return;
+            if (e.t === "remV") insertCol(e.index, e.strip);
+            else if (e.t === "insV") removeCol(e.index);
+            else if (e.t === "remH") insertRow(e.index, e.strip);
+            else if (e.t === "insH") removeRow(e.index);
+            else if (e.t === "full") work = { w: e.w, h: e.h, data: e.data };
+            updateUndo(); syncWorkCanvas(); clampView(); render(); updateInfo();
+        }
+        els.undoBtn.addEventListener("click", undo);
+        els.resetBtn.addEventListener("click", () => {
+            if (!original) return;
+            work = { w: original.w, h: original.h, data: new Uint8ClampedArray(original.data) };
+            undoStack.length = 0; updateUndo(); syncWorkCanvas(); fitView(); updateInfo();
+        });
+
+        // ---- Source palette cleanup -------------------------------------------
+        els.cleanBtn.addEventListener("click", () => {
+            const pal = parsePalette(); if (!pal.length) return;
+            pushUndo({ t: "full", w: work.w, h: work.h, data: new Uint8ClampedArray(work.data) });
+            const d = work.data;
+            for (let i = 0; i < d.length; i += 4) {
+                const c = nearestPalette(d[i], d[i + 1], d[i + 2], pal);
+                d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+            }
+            syncWorkCanvas(); render();
+        });
+
+        // ---- View sizing -------------------------------------------------------
+        function resizeView() {
+            dpr = window.devicePixelRatio || 1;
+            cssW = els.editorWrap.clientWidth;
+            cssH = Math.max(360, Math.min(720, Math.round(window.innerHeight * 0.6)));
+            els.view.style.width = cssW + "px";
+            els.view.style.height = cssH + "px";
+            els.view.width = Math.round(cssW * dpr);
+            els.view.height = Math.round(cssH * dpr);
+            if (work) { clampView(); render(); }
+        }
+        window.addEventListener("resize", resizeView);
+
+        function fitView() {
+            if (!work) return;
+            const z = Math.max(1, Math.floor(Math.min(cssW / work.w, cssH / work.h)));
+            zoom = Math.min(48, z || 1);
+            els.zoom.value = Math.min(48, Math.max(1, Math.round(zoom)));
+            els.zoomVal.textContent = zoom + "x";
+            ox = (work.w - cssW / zoom) / 2;
+            oy = (work.h - cssH / zoom) / 2;
+            clampView(); render();
+        }
+        els.fitBtn.addEventListener("click", fitView);
+
+        function clampView() {
+            if (!work) return;
+            const viewW = cssW / zoom, viewH = cssH / zoom;
+            const minVisible = 4;
+            ox = Math.max(-viewW + minVisible, Math.min(work.w - minVisible, ox));
+            oy = Math.max(-viewH + minVisible, Math.min(work.h - minVisible, oy));
+        }
+
+        // ---- Rendering ---------------------------------------------------------
+        function render() {
+            const ctx = els.view.getContext("2d");
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cssW, cssH);
+            ctx.imageSmoothingEnabled = false;
+            if (!work) return;
+
+            // Draw only the visible source rectangle, scaled crisply.
+            const sx0 = Math.max(0, Math.floor(ox));
+            const sy0 = Math.max(0, Math.floor(oy));
+            const sx1 = Math.min(work.w, Math.ceil(ox + cssW / zoom));
+            const sy1 = Math.min(work.h, Math.ceil(oy + cssH / zoom));
+            const sw = sx1 - sx0, sh = sy1 - sy0;
+            if (sw > 0 && sh > 0) {
+                ctx.drawImage(workCanvas, sx0, sy0, sw, sh,
+                    (sx0 - ox) * zoom, (sy0 - oy) * zoom, sw * zoom, sh * zoom);
+            }
+
+            if (els.showGrid.checked) drawGrid(ctx, sx0, sy0, sx1, sy1);
+            drawHover(ctx);
+        }
+
+        function sxToScreen(x) { return (x - ox) * zoom; }
+        function syToScreen(y) { return (y - oy) * zoom; }
+
+        function drawGrid(ctx, sx0, sy0, sx1, sy1) {
+            const N = Math.max(2, parseInt(els.stepN.value) || 4);
+            const offX = Math.max(0, parseInt(els.offX.value) || 0);
+            const offY = Math.max(0, parseInt(els.offY.value) || 0);
+
+            // Fine per-pixel grid only when zoomed in enough to be useful.
+            if (zoom >= 6) {
+                ctx.strokeStyle = "rgba(140,140,140,0.22)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let x = sx0; x <= sx1; x++) { const px = Math.round(sxToScreen(x)) + 0.5; ctx.moveTo(px, 0); ctx.lineTo(px, cssH); }
+                for (let y = sy0; y <= sy1; y++) { const py = Math.round(syToScreen(y)) + 0.5; ctx.moveTo(0, py); ctx.lineTo(cssW, py); }
+                ctx.stroke();
+            }
+
+            // Bold step grid.
+            ctx.strokeStyle = "rgba(76,175,172,0.9)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            let xStart = offX + Math.ceil((sx0 - offX) / N) * N;
+            for (let x = xStart; x <= sx1; x += N) { const px = Math.round(sxToScreen(x)) + 0.5; ctx.moveTo(px, 0); ctx.lineTo(px, cssH); }
+            let yStart = offY + Math.ceil((sy0 - offY) / N) * N;
+            for (let y = yStart; y <= sy1; y += N) { const py = Math.round(syToScreen(y)) + 0.5; ctx.moveTo(0, py); ctx.lineTo(cssW, py); }
+            ctx.stroke();
+        }
+
+        function hoveredPixel() {
+            const x = Math.floor(ox + mouse.x / zoom);
+            const y = Math.floor(oy + mouse.y / zoom);
+            return { x, y };
+        }
+
+        function drawHover(ctx) {
+            if (!mouse.inside || mode === "pan" || panKey) return;
+            const { x, y } = hoveredPixel();
+            const add = mode === "addV" || mode === "addH";
+            ctx.fillStyle = add ? "rgba(132,197,115,0.5)" : "rgba(255,210,76,0.45)";
+            if ((mode === "cutV" || mode === "addV") && x >= 0 && x < work.w) ctx.fillRect(sxToScreen(x), 0, zoom, cssH);
+            else if ((mode === "cutH" || mode === "addH") && y >= 0 && y < work.h) ctx.fillRect(0, syToScreen(y), cssW, zoom);
+        }
+
+        // ---- Pointer handling --------------------------------------------------
+        function viewMouse(e) {
+            const r = els.view.getBoundingClientRect();
+            return { x: e.clientX - r.left, y: e.clientY - r.top };
+        }
+        els.view.addEventListener("mousemove", e => {
+            const m = viewMouse(e); mouse.x = m.x; mouse.y = m.y; mouse.inside = true;
+            if (panning && lastPan) {
+                ox -= (m.x - lastPan.x) / zoom; oy -= (m.y - lastPan.y) / zoom;
+                lastPan = m; clampView();
+            }
+            render();
+        });
+        els.view.addEventListener("mouseleave", () => { mouse.inside = false; render(); });
+        els.view.addEventListener("mousedown", e => {
+            const m = viewMouse(e); mouse.x = m.x; mouse.y = m.y;
+            if (mode === "pan" || panKey || e.button === 1 || e.button === 2) {
+                panning = true; lastPan = m; els.view.classList.add("panning"); e.preventDefault(); return;
+            }
+            if (e.button !== 0) return;
+            const { x, y } = hoveredPixel();
+            if (mode === "cutV") doCut("v", x, false);
+            else if (mode === "addV") doCut("v", x, true);
+            else if (mode === "cutH") doCut("h", y, false);
+            else if (mode === "addH") doCut("h", y, true);
+        });
+        els.view.addEventListener("contextmenu", e => e.preventDefault());
+        window.addEventListener("mouseup", () => { panning = false; lastPan = null; els.view.classList.remove("panning"); });
+
+        els.view.addEventListener("wheel", e => {
+            e.preventDefault();
+            const m = viewMouse(e);
+            const beforeX = ox + m.x / zoom, beforeY = oy + m.y / zoom;
+            const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
+            let nz = zoom * factor;
+            nz = Math.max(0.2, Math.min(64, nz));
+            if (nz >= 1) nz = Math.round(nz);
+            zoom = nz;
+            ox = beforeX - m.x / zoom; oy = beforeY - m.y / zoom;
+            els.zoom.value = Math.min(48, Math.max(1, Math.round(zoom)));
+            els.zoomVal.textContent = (Math.round(zoom * 10) / 10) + "x";
+            clampView(); render();
+        }, { passive: false });
+
+        els.zoom.addEventListener("input", () => {
+            const nz = parseInt(els.zoom.value);
+            const cx = ox + (cssW / 2) / zoom, cy = oy + (cssH / 2) / zoom;
+            zoom = nz; els.zoomVal.textContent = nz + "x";
+            ox = cx - (cssW / 2) / zoom; oy = cy - (cssH / 2) / zoom;
+            clampView(); render();
+        });
+
+        function typingInField() {
+            const a = document.activeElement;
+            return a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
+        }
+        document.addEventListener("keydown", e => {
+            if (e.code === "KeyH" && !typingInField() && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                panKey = true; els.view.classList.add("pan");
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undo(); }
+        });
+        document.addEventListener("keyup", e => {
+            if (e.code === "KeyH") { panKey = false; if (mode !== "pan") els.view.classList.remove("pan"); }
+        });
+
+        els.modeSeg.addEventListener("click", e => {
+            const b = e.target.closest("button"); if (!b) return;
+            mode = b.dataset.mode;
+            [...els.modeSeg.children].forEach(x => x.classList.toggle("active", x === b));
+            els.view.className = mode === "pan" ? "pan" : "cut";
+            render();
+        });
+
+        [els.showGrid, els.stepN, els.offX, els.offY].forEach(el =>
+            el.addEventListener("input", () => { render(); updateInfo(); }));
+
+        // ---- Info / alignment --------------------------------------------------
+        function updateInfo() {
+            if (!work) return;
+            els.imgStat.textContent = `image: ${work.w} x ${work.h} px`;
+            const N = Math.max(2, parseInt(els.stepN.value) || 4);
+            const offX = Math.max(0, parseInt(els.offX.value) || 0);
+            const offY = Math.max(0, parseInt(els.offY.value) || 0);
+            const rw = (work.w - offX) % N, rh = (work.h - offY) % N;
+            const cols = Math.floor((work.w - offX) / N), rows = Math.floor((work.h - offY) / N);
+            const clean = rw === 0 && rh === 0;
+            els.alignStat.innerHTML = clean
+                ? `<span class="ok">aligned: ${cols} x ${rows} blocks, clean multiples of ${N}</span>`
+                : `<span class="warn">not aligned: width leaves ${rw}, height leaves ${rh} extra px</span>`;
+        }
+
+        // ---- Reduce ------------------------------------------------------------
+        let outData = null, nC = 0, nR = 0;
+        function reduce() {
+            const N = Math.max(2, parseInt(els.stepN.value) || 4);
+            const offX = Math.max(0, parseInt(els.offX.value) || 0);
+            const offY = Math.max(0, parseInt(els.offY.value) || 0);
+            nC = Math.floor((work.w - offX) / N);
+            nR = Math.floor((work.h - offY) / N);
+            if (nC < 1 || nR < 1) return;
+            const pal = els.snapOut.checked ? parsePalette() : null;
+            const d = work.data, w = work.w;
+            outData = new Uint8ClampedArray(nC * nR * 4);
+            const counts = new Map();
+            for (let r = 0; r < nR; r++) {
+                for (let c = 0; c < nC; c++) {
+                    counts.clear();
+                    let bestKey = 0, best = 0;
+                    for (let yy = 0; yy < N; yy++) {
+                        const sy = offY + r * N + yy;
+                        for (let xx = 0; xx < N; xx++) {
+                            const sx = offX + c * N + xx;
+                            const i = (sy * w + sx) * 4;
+                            const key = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+                            const v = (counts.get(key) || 0) + 1; counts.set(key, v);
+                            if (v > best) { best = v; bestKey = key; }
+                        }
+                    }
+                    let rr = (bestKey >> 16) & 255, gg = (bestKey >> 8) & 255, bb = bestKey & 255;
+                    if (pal && pal.length) { const cc = nearestPalette(rr, gg, bb, pal); rr = cc[0]; gg = cc[1]; bb = cc[2]; }
+                    const oi = (r * nC + c) * 4;
+                    outData[oi] = rr; outData[oi + 1] = gg; outData[oi + 2] = bb; outData[oi + 3] = 255;
+                }
+            }
+            renderPreview();
+            els.downloadPng.disabled = els.downloadSvg.disabled = els.copyBtn.disabled = false;
+        }
+        els.reduceBtn.addEventListener("click", reduce);
+        els.snapOut.addEventListener("change", () => { if (outData) reduce(); });
+
+        function outCanvas() {
+            const c = document.createElement("canvas"); c.width = nC; c.height = nR;
+            c.getContext("2d").putImageData(new ImageData(outData, nC, nR), 0, 0);
+            return c;
+        }
+        function scaledCanvas(scale) {
+            const base = outCanvas();
+            if (scale === 1) return base;
+            const c = document.createElement("canvas"); c.width = nC * scale; c.height = nR * scale;
+            const ctx = c.getContext("2d"); ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(base, 0, 0, nC * scale, nR * scale); return c;
+        }
+        function renderPreview() {
+            const base = outCanvas();
+            const target = 320;
+            const scale = Math.max(1, Math.floor(target / Math.max(nC, nR)));
+            const pv = els.previewCanvas; pv.width = nC * scale; pv.height = nR * scale;
+            const ctx = pv.getContext("2d"); ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(base, 0, 0, nC * scale, nR * scale);
+            const colors = new Set();
+            for (let i = 0; i < outData.length; i += 4) colors.add((outData[i] << 16) | (outData[i + 1] << 8) | outData[i + 2]);
+            els.outStat.textContent = `${nC} x ${nR} px  -  ${colors.size} colors`;
+        }
+
+        els.downloadPng.addEventListener("click", () => {
+            const a = document.createElement("a");
+            a.href = scaledCanvas(parseInt(els.scale.value)).toDataURL("image/png");
+            a.download = `pixelart_${nC}x${nR}.png`; a.click();
+        });
+        els.downloadSvg.addEventListener("click", () => {
+            let s = `<svg xmlns="http://www.w3.org/2000/svg" width="${nC}" height="${nR}" viewBox="0 0 ${nC} ${nR}" shape-rendering="crispEdges">`;
+            for (let r = 0; r < nR; r++) for (let c = 0; c < nC; c++) {
+                const i = (r * nC + c) * 4;
+                const hex = "#" + (((outData[i] << 16) | (outData[i + 1] << 8) | outData[i + 2]) >>> 0).toString(16).padStart(6, "0");
+                s += `<rect x="${c}" y="${r}" width="1" height="1" fill="${hex}"/>`;
+            }
+            s += "</svg>";
+            const url = URL.createObjectURL(new Blob([s], { type: "image/svg+xml" }));
+            const a = document.createElement("a"); a.href = url; a.download = `pixelart_${nC}x${nR}.svg`; a.click();
+            URL.revokeObjectURL(url);
+        });
+        els.copyBtn.addEventListener("click", async () => {
+            try {
+                const blob = await new Promise(res => scaledCanvas(parseInt(els.scale.value)).toBlob(res, "image/png"));
+                await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                els.copyBtn.textContent = "Copied"; setTimeout(() => els.copyBtn.textContent = "Copy", 1200);
+            } catch { els.copyBtn.textContent = "Copy failed"; setTimeout(() => els.copyBtn.textContent = "Copy", 1200); }
+        });
+    </script>
+</body>
+
+</html>
