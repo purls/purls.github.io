@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Page Organizer</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../tools.css" />
+    <!-- PDF.js reads and renders pages, pdf-lib builds the output document -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+      body {
+        max-width: 900px;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      button:disabled {
+        background-color: #1e1e1e;
+        color: #555;
+        cursor: not-allowed;
+      }
+
+      .file-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        margin: 10px 0;
+        font-size: 13px;
+        color: #b0b0b0;
+      }
+
+      .file-legend span::before {
+        content: "";
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 6px;
+        background-color: var(--swatch, #4a4a4a);
+      }
+
+      #pageGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+        margin: 15px 0;
+        min-height: 60px;
+      }
+
+      .page-card {
+        background-color: #1e1e1e;
+        border: 1px solid #3d3d3d;
+        border-top: 3px solid var(--file-color, #3d3d3d);
+        padding: 6px;
+        cursor: grab;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        user-select: none;
+      }
+
+      .page-card:focus {
+        outline: 2px solid #4cafac;
+      }
+
+      .page-card.dragging {
+        opacity: 0.4;
+      }
+
+      .page-card.drop-target {
+        outline: 2px dashed #4cafac;
+      }
+
+      .page-card canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        background-color: #fff;
+        cursor: zoom-in;
+      }
+
+      .page-card .meta {
+        font-size: 11px;
+        color: #b0b0b0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .page-card .actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .page-card .actions button {
+        flex: 1;
+        padding: 4px 0;
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .page-card .actions .delete-btn:hover {
+        background-color: #663333;
+      }
+
+      #emptyHint {
+        grid-column: 1 / -1;
+        color: #666;
+        font-size: 14px;
+        border: 1px dashed #3d3d3d;
+        padding: 30px;
+        text-align: center;
+      }
+
+      /* Full size confirm view */
+      #viewer {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.85);
+        z-index: 10;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        gap: 10px;
+      }
+
+      #viewer.open {
+        display: flex;
+      }
+
+      #viewer canvas {
+        max-width: 100%;
+        max-height: 85vh;
+        background-color: #fff;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      }
+
+      #viewerCaption {
+        color: #e0e0e0;
+        font-size: 13px;
+      }
+
+      #status {
+        color: #80cccc;
+        font-size: 13px;
+        min-height: 1.6em;
+        margin: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header-top">
+      <h1 style="margin: 0">PDF Page Organizer</h1>
+      <a href="https://localhost.beer" class="home-link"> &larr; home </a>
+    </div>
+    <p style="margin: 0">
+      Load one or more PDFs, then drag pages to reorder, rotate, delete, or
+      interleave. Click a thumbnail to confirm it at full size. Everything runs
+      in this tab; nothing is uploaded anywhere.
+    </p>
+    <br />
+
+    <div class="toolbar">
+      <button id="loadBtn" aria-label="Load PDF files">+ Load PDFs</button>
+      <input
+        type="file"
+        id="fileInput"
+        accept="application/pdf,.pdf"
+        multiple
+      />
+      <button
+        id="interleaveFwd"
+        disabled
+        title="Alternate pages: file 1 page 1, file 2 page 1, file 1 page 2, and so on"
+        aria-label="Interleave two files in forward order"
+      >
+        Interleave A1 B1 A2 B2
+      </button>
+      <button
+        id="interleaveRev"
+        disabled
+        title="For back sides scanned in reverse: file 1 page 1, file 2 last page, file 1 page 2, and so on"
+        aria-label="Interleave two files with the second file reversed"
+      >
+        Interleave A1 B-last A2
+      </button>
+      <button
+        id="swapAB"
+        disabled
+        title="Swap which file counts as A and which as B for interleaving"
+        aria-label="Swap the A and B file roles"
+      >
+        Swap A/B
+      </button>
+      <button
+        id="rotateAllBtn"
+        disabled
+        title="Rotate every page 90 degrees clockwise"
+        aria-label="Rotate all pages 90 degrees clockwise"
+      >
+        Rotate all &#8635;
+      </button>
+      <button
+        id="reverseBtn"
+        disabled
+        title="Reverse the order of all pages in the grid"
+        aria-label="Reverse the order of all pages"
+      >
+        Reverse order
+      </button>
+      <button id="exportBtn" disabled aria-label="Export combined PDF">
+        Export PDF
+      </button>
+      <button id="clearBtn" disabled aria-label="Remove all loaded pages">
+        Clear
+      </button>
+    </div>
+
+    <p id="status" role="status"></p>
+
+    <div class="file-legend" id="fileLegend"></div>
+
+    <div id="pageGrid" aria-label="Loaded PDF pages">
+      <div id="emptyHint">
+        No pages loaded yet. Click "+ Load PDFs" to start.
+      </div>
+    </div>
+
+    <hr />
+    <p>
+      Rotation is applied on top of whatever rotation the source file already
+      has, so sideways scans come out upright. The interleave and swap shortcuts
+      only activate when exactly two files are loaded. Pages can also be moved
+      with the &#9664; and &#9654; buttons on each card, or by focusing a card
+      (Tab) and using the arrow keys. While a card is focused: R rotates, Delete
+      removes, Enter opens the full size view.
+    </p>
+
+    <div id="viewer" aria-label="Full size page view">
+      <canvas id="viewerCanvas"></canvas>
+      <span id="viewerCaption"></span>
+      <button id="viewerClose" aria-label="Close full size view">
+        Close (Esc)
+      </button>
+    </div>
+
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+      const FILE_COLORS = [
+        "#4cafac",
+        "#cc8f66",
+        "#8f7fcc",
+        "#7fcc7f",
+        "#cc7fa8",
+        "#cccc66",
+      ];
+      const THUMB_WIDTH = 300; // rendered at 2x the ~150px display width for sharpness
+
+      // files[i] = { name, pdfjsDoc, bytes, color }
+      // pages is the single source of truth for order. Each entry:
+      // { id, fileIdx, pageIdx, nativeRotation, delta, card, canvas }
+      let files = [];
+      let pages = [];
+      let nextId = 1;
+      let abSwapped = false;
+
+      const grid = document.getElementById("pageGrid");
+      const emptyHint = document.getElementById("emptyHint");
+      const status = document.getElementById("status");
+      const fileInput = document.getElementById("fileInput");
+      const legend = document.getElementById("fileLegend");
+
+      function setStatus(msg) {
+        status.textContent = msg;
+      }
+
+      function effectiveRotation(p) {
+        return (((p.nativeRotation + p.delta) % 360) + 360) % 360;
+      }
+
+      // A/B roles follow load order, not current grid order, so dragging
+      // pages around never silently changes which file is which. Swap A/B
+      // flips them explicitly.
+      function liveFileIndices() {
+        const live = [...new Set(pages.map((p) => p.fileIdx))].sort(
+          (a, b) => a - b,
+        );
+        if (abSwapped && live.length === 2) live.reverse();
+        return live;
+      }
+
+      function updateControls() {
+        const twoFiles = liveFileIndices().length === 2;
+        document.getElementById("interleaveFwd").disabled = !twoFiles;
+        document.getElementById("interleaveRev").disabled = !twoFiles;
+        document.getElementById("swapAB").disabled = !twoFiles;
+        document.getElementById("rotateAllBtn").disabled = pages.length === 0;
+        document.getElementById("reverseBtn").disabled = pages.length < 2;
+        document.getElementById("exportBtn").disabled = pages.length === 0;
+        document.getElementById("clearBtn").disabled = pages.length === 0;
+        emptyHint.style.display = pages.length === 0 ? "" : "none";
+      }
+
+      function updateLegend() {
+        legend.innerHTML = "";
+        const live = liveFileIndices();
+        files.forEach((f, i) => {
+          if (!live.includes(i)) return;
+          const label =
+            live.length === 2 ? (live.indexOf(i) === 0 ? "A: " : "B: ") : "";
+          const span = document.createElement("span");
+          span.style.setProperty("--swatch", f.color);
+          span.textContent = label + f.name;
+          legend.appendChild(span);
+        });
+      }
+
+      async function renderPageToCanvas(p, canvas, targetWidth) {
+        const page = await files[p.fileIdx].pdfjsDoc.getPage(p.pageIdx + 1);
+        const rotation = effectiveRotation(p);
+        const base = page.getViewport({ scale: 1, rotation });
+        const viewport = page.getViewport({
+          scale: targetWidth / base.width,
+          rotation,
+        });
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport })
+          .promise;
+      }
+
+      // Move a page one slot left (-1) or right (+1) in the order
+      function movePage(p, dir) {
+        const i = pages.findIndex((q) => q.id === p.id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= pages.length) return;
+        [pages[i], pages[j]] = [pages[j], pages[i]];
+        syncGridOrder();
+      }
+
+      function buildCard(p) {
+        const card = document.createElement("div");
+        card.className = "page-card";
+        card.draggable = true;
+        card.tabIndex = 0;
+        card.dataset.id = p.id;
+        card.style.setProperty("--file-color", files[p.fileIdx].color);
+
+        const canvas = document.createElement("canvas");
+        canvas.title = "Click to view full size";
+        canvas.addEventListener("click", () => openViewer(p));
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `${files[p.fileIdx].name} p.${p.pageIdx + 1}`;
+        meta.title = meta.textContent;
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const leftBtn = document.createElement("button");
+        leftBtn.textContent = "\u25c0";
+        leftBtn.setAttribute("aria-label", "Move page one position earlier");
+        leftBtn.title = "Move earlier";
+        leftBtn.addEventListener("click", () => movePage(p, -1));
+
+        const rightBtn = document.createElement("button");
+        rightBtn.textContent = "\u25b6";
+        rightBtn.setAttribute("aria-label", "Move page one position later");
+        rightBtn.title = "Move later";
+        rightBtn.addEventListener("click", () => movePage(p, 1));
+
+        const rotBtn = document.createElement("button");
+        rotBtn.textContent = "\u21bb 90\u00b0";
+        rotBtn.setAttribute("aria-label", "Rotate page 90 degrees clockwise");
+        rotBtn.addEventListener("click", async () => {
+          p.delta = (p.delta + 90) % 360;
+          await renderPageToCanvas(p, canvas, THUMB_WIDTH);
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "\u00d7";
+        delBtn.setAttribute("aria-label", "Delete page");
+        delBtn.addEventListener("click", () => {
+          pages = pages.filter((q) => q.id !== p.id);
+          card.remove();
+          updateControls();
+          updateLegend();
+        });
+
+        actions.appendChild(leftBtn);
+        actions.appendChild(rotBtn);
+        actions.appendChild(delBtn);
+        actions.appendChild(rightBtn);
+        card.appendChild(canvas);
+        card.appendChild(meta);
+        card.appendChild(actions);
+
+        // Keyboard controls while the card itself has focus
+        card.addEventListener("keydown", (e) => {
+          if (e.target !== card) return;
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            movePage(p, -1);
+            card.focus();
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            movePage(p, 1);
+            card.focus();
+          } else if (e.key === "r" || e.key === "R") {
+            e.preventDefault();
+            rotBtn.click();
+          } else if (e.key === "Delete" || e.key === "Backspace") {
+            e.preventDefault();
+            const i = pages.findIndex((q) => q.id === p.id);
+            const neighbor = pages[i + 1] || pages[i - 1];
+            delBtn.click();
+            if (neighbor) neighbor.card.focus();
+          } else if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openViewer(p);
+          }
+        });
+
+        // Native drag and drop, order tracked in the pages array
+        card.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", String(p.id));
+          e.dataTransfer.effectAllowed = "move";
+          card.classList.add("dragging");
+        });
+        card.addEventListener("dragend", () =>
+          card.classList.remove("dragging"),
+        );
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          card.classList.add("drop-target");
+        });
+        card.addEventListener("dragleave", () =>
+          card.classList.remove("drop-target"),
+        );
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("drop-target");
+          const draggedId = Number(e.dataTransfer.getData("text/plain"));
+          if (!draggedId || draggedId === p.id) return;
+          const from = pages.findIndex((q) => q.id === draggedId);
+          let to = pages.findIndex((q) => q.id === p.id);
+          if (from < 0 || to < 0) return;
+          const [moved] = pages.splice(from, 1);
+          to = pages.findIndex((q) => q.id === p.id);
+          // Drop before the target if coming from the right, after if from the left
+          pages.splice(from < to ? to + 1 : to, 0, moved);
+          syncGridOrder();
+        });
+
+        p.card = card;
+        p.canvas = canvas;
+        return card;
+      }
+
+      // Reorder existing DOM nodes to match the pages array without re-rendering canvases
+      function syncGridOrder() {
+        for (const p of pages) grid.appendChild(p.card);
+      }
+
+      async function loadFiles(fileList) {
+        for (const file of fileList) {
+          setStatus(`Loading ${file.name} ...`);
+          try {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            // pdf.js may transfer the buffer to its worker, so keep an untouched copy for pdf-lib
+            const pdfjsDoc = await pdfjsLib.getDocument({ data: bytes.slice() })
+              .promise;
+            const color = FILE_COLORS[files.length % FILE_COLORS.length];
+            const fileIdx = files.length;
+            files.push({ name: file.name, pdfjsDoc, bytes, color });
+
+            for (let i = 0; i < pdfjsDoc.numPages; i++) {
+              const page = await pdfjsDoc.getPage(i + 1);
+              const p = {
+                id: nextId++,
+                fileIdx,
+                pageIdx: i,
+                nativeRotation: page.rotate || 0,
+                delta: 0,
+                card: null,
+                canvas: null,
+              };
+              pages.push(p);
+              grid.appendChild(buildCard(p));
+              updateControls();
+              await renderPageToCanvas(p, p.canvas, THUMB_WIDTH);
+            }
+          } catch (err) {
+            console.error("Failed to load", file.name, err);
+            setStatus(
+              `Could not read ${file.name}. Is it a valid, unencrypted PDF?`,
+            );
+            continue;
+          }
+        }
+        updateControls();
+        updateLegend();
+        setStatus(
+          `${pages.length} page${pages.length === 1 ? "" : "s"} loaded.`,
+        );
+      }
+
+      function interleave(reverseSecond) {
+        const live = liveFileIndices();
+        if (live.length !== 2) return;
+        const a = pages.filter((p) => p.fileIdx === live[0]);
+        const b = pages.filter((p) => p.fileIdx === live[1]);
+        if (reverseSecond) b.reverse();
+        const merged = [];
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+          if (i < a.length) merged.push(a[i]);
+          if (i < b.length) merged.push(b[i]);
+        }
+        pages = merged;
+        syncGridOrder();
+        setStatus(
+          reverseSecond
+            ? "Interleaved with second file reversed (flipped-stack scan order)."
+            : "Interleaved in forward order.",
+        );
+      }
+
+      async function exportPdf() {
+        const btn = document.getElementById("exportBtn");
+        btn.disabled = true;
+        setStatus("Building PDF ...");
+        try {
+          const { PDFDocument, degrees } = PDFLib;
+          const out = await PDFDocument.create();
+          const srcCache = new Map();
+
+          for (const p of pages) {
+            let src = srcCache.get(p.fileIdx);
+            if (!src) {
+              src = await PDFDocument.load(files[p.fileIdx].bytes, {
+                ignoreEncryption: true,
+              });
+              srcCache.set(p.fileIdx, src);
+            }
+            const [copied] = await out.copyPages(src, [p.pageIdx]);
+            copied.setRotation(degrees(effectiveRotation(p)));
+            out.addPage(copied);
+          }
+
+          const outBytes = await out.save();
+          const blob = new Blob([outBytes], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "organized.pdf";
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          setStatus(
+            `Exported ${pages.length} page${pages.length === 1 ? "" : "s"} as organized.pdf`,
+          );
+        } catch (err) {
+          console.error("Export failed:", err);
+          setStatus("Export failed. Check the browser console for details.");
+        } finally {
+          btn.disabled = pages.length === 0;
+        }
+      }
+
+      // Full size confirm view
+      const viewer = document.getElementById("viewer");
+      const viewerCanvas = document.getElementById("viewerCanvas");
+      const viewerCaption = document.getElementById("viewerCaption");
+
+      async function openViewer(p) {
+        viewer.classList.add("open");
+        viewerCaption.textContent =
+          `${files[p.fileIdx].name} p.${p.pageIdx + 1}` +
+          (p.delta ? ` (rotated ${p.delta}\u00b0)` : "");
+        // Render wide enough for the viewport at device resolution
+        const targetWidth =
+          Math.min(window.innerWidth, 1600) * (window.devicePixelRatio || 1);
+        await renderPageToCanvas(p, viewerCanvas, targetWidth);
+      }
+
+      function closeViewer() {
+        viewer.classList.remove("open");
+      }
+
+      document
+        .getElementById("viewerClose")
+        .addEventListener("click", closeViewer);
+      viewer.addEventListener("click", (e) => {
+        if (e.target === viewer) closeViewer();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeViewer();
+      });
+
+      // Toolbar wiring
+      document
+        .getElementById("loadBtn")
+        .addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", async () => {
+        if (fileInput.files.length) await loadFiles([...fileInput.files]);
+        fileInput.value = "";
+      });
+      document
+        .getElementById("interleaveFwd")
+        .addEventListener("click", () => interleave(false));
+      document
+        .getElementById("interleaveRev")
+        .addEventListener("click", () => interleave(true));
+      document.getElementById("swapAB").addEventListener("click", () => {
+        abSwapped = !abSwapped;
+        updateLegend();
+        const live = liveFileIndices();
+        setStatus(
+          `A is now ${files[live[0]].name}, B is now ${files[live[1]].name}.`,
+        );
+      });
+      document
+        .getElementById("rotateAllBtn")
+        .addEventListener("click", async () => {
+          const btn = document.getElementById("rotateAllBtn");
+          btn.disabled = true;
+          // Bump every delta first so export is correct even if someone
+          // exports before the thumbnails finish redrawing
+          for (const p of pages) p.delta = (p.delta + 90) % 360;
+          const snapshot = [...pages];
+          for (let i = 0; i < snapshot.length; i++) {
+            const p = snapshot[i];
+            // Skip pages deleted mid-redraw
+            if (!pages.includes(p)) continue;
+            setStatus(`Rotating ${i + 1} of ${snapshot.length} ...`);
+            await renderPageToCanvas(p, p.canvas, THUMB_WIDTH);
+          }
+          setStatus("Rotated all pages 90\u00b0 clockwise.");
+          btn.disabled = pages.length === 0;
+        });
+      document.getElementById("reverseBtn").addEventListener("click", () => {
+        pages.reverse();
+        syncGridOrder();
+        setStatus("Page order reversed.");
+      });
+      document.getElementById("exportBtn").addEventListener("click", exportPdf);
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        for (const p of pages) p.card.remove();
+        pages = [];
+        files = [];
+        abSwapped = false;
+        legend.innerHTML = "";
+        updateControls();
+        setStatus("Cleared.");
+      });
+
+      // Drag files straight onto the page as an alternative to the button
+      document.body.addEventListener("dragover", (e) => {
+        if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+      });
+      document.body.addEventListener("drop", async (e) => {
+        if (!e.dataTransfer.files.length) return;
+        e.preventDefault();
+        const pdfs = [...e.dataTransfer.files].filter(
+          (f) =>
+            f.type === "application/pdf" ||
+            f.name.toLowerCase().endsWith(".pdf"),
+        );
+        if (pdfs.length) await loadFiles(pdfs);
+      });
+    </script>
+  </body>
+</html>
