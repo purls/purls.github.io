@@ -54,6 +54,14 @@
                     <input type="text" class="tag-text-input" id="tldExcludeInput" placeholder="e.g. xyz ↵" />
                 </div>
             </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>In file:</label>
+                <select id="tldList" style="flex:1;">
+                    <option value="">* no file loaded *</option>
+                </select>
+                <button type="button" class="mini-btn" id="tldAddInclude">+ Inc</button>
+                <button type="button" class="mini-btn" id="tldAddExclude">- Exc</button>
+            </div>
         </div>
 
         <!-- Character toggles -->
@@ -157,13 +165,59 @@
         </div>
 
         <!-- Substrings -->
-        <div class="filter-group">
-            <h3>Substrings (domain must contain one)</h3>
+        <div class="filter-group full-width">
+            <h3>Substrings</h3>
             <div class="filter-row">
+                <label>Include any:</label>
                 <div class="tag-input-wrap" id="substringWrap">
                     <input type="text" class="tag-text-input" id="substringInput" placeholder="e.g. crypto ↵" />
                 </div>
+                <select id="subIncScope" title="Which part of the name dotless terms are matched against">
+                    <option value="sld">Ignore TLD</option>
+                    <option value="tld">Include TLD</option>
+                </select>
             </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>Exclude any:</label>
+                <div class="tag-input-wrap" id="subExcludeWrap">
+                    <input type="text" class="tag-text-input" id="subExcludeInput" placeholder="e.g. xxx ↵" />
+                </div>
+                <select id="subExcScope" title="Which part of the name dotless terms are matched against">
+                    <option value="sld">Ignore TLD</option>
+                    <option value="tld">Include TLD</option>
+                </select>
+            </div>
+            <p class="hint">
+                <em>Ignore TLD</em> matches only the part before the first dot; <em>Include TLD</em> matches the
+                name with its dots removed, so <code>example</code> finds <code>exampl.e</code>.
+                A term containing a dot (<code>foo.co</code>) always matches against the full name, dots and all.
+                This matches both <code>foo.com</code> and <code>foo.co.com</code>.
+            </p>
+        </div>
+
+        <!-- Structure -->
+        <div class="filter-group">
+            <h3>Structure</h3>
+            <div class="filter-row">
+                <label>Pattern:</label>
+                <div class="tag-input-wrap" id="structureWrap">
+                    <input type="text" class="tag-text-input" id="structureInput" placeholder="e.g. CVCN ↵" />
+                </div>
+            </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>Match:</label>
+                <select id="structScope">
+                    <option value="sld">Ignore TLD</option>
+                    <option value="tld">Include TLD</option>
+                </select>
+            </div>
+            <p class="hint">
+                <code>L</code> letter · <code>C</code> consonant · <code>V</code> vowel · <code>N</code> number ·
+                <code>-</code> hyphen · <code>*</code> any · any other character matches itself.
+                Vowels are <code>aeiou</code>, so <code>y</code> counts as a consonant.
+                Patterns match the whole name, so <code>CVV-CVCN</code> gives <code>foo-bar2</code> and
+                <code>LL*N</code> gives <code>de-4</code>. Add several to match any of them.
+            </p>
         </div>
 
         <!-- Auction-only: Max Renew -->
@@ -254,6 +308,10 @@
     <p>
         <strong>Tri-toggles:</strong> <em>Yes</em> = must have, <em>No</em> = must not have, <em>Any</em> = don't care.
         For TLDs and substrings, press Enter to add tags.
+    </p>
+    <p>
+        <strong>TLD dropdown:</strong> lists every TLD found in the uploaded file with its row count,
+        sorted by frequency. Pick one and hit <em>+ Inc</em> or <em>- Exc</em> to add it as a tag.
     </p>
     <p>
         <strong>Keyboard Patterns:</strong> Analyzes domain names against a US QWERTY layout.
