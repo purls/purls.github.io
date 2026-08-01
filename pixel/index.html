@@ -106,6 +106,49 @@
             letter-spacing: 0.5px;
         }
 
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .panel-head h2 {
+            margin: 0 0 10px;
+        }
+
+        button.collapse-btn {
+            background-color: transparent;
+            color: #80cccc;
+            font-size: 12px;
+            line-height: 1;
+            padding: 2px 6px;
+            margin: 0 0 10px;
+        }
+
+        button.collapse-btn:hover:not(:disabled) {
+            background-color: #244444;
+            color: #c8f0f0;
+        }
+
+        .collapse-btn span {
+            display: inline-block;
+            transition: transform 0.12s ease;
+        }
+
+        .panel.collapsed .panel-head h2,
+        .panel.collapsed .collapse-btn {
+            margin-bottom: 0;
+        }
+
+        .panel.collapsed .collapse-btn span {
+            transform: rotate(-90deg);
+        }
+
+        .panel.collapsed .panel-body {
+            display: none;
+        }
+
         .row {
             display: flex;
             flex-wrap: wrap;
@@ -261,7 +304,7 @@
 
 <body>
     <div class="header-top">
-        <h1>Pixel Strip Editor</h1>
+        <h1>Pixel Art Cleaner</h1>
         <a href="https://localhost.beer" class="home-link">&larr; home</a>
     </div>
     <p class="lede">
@@ -272,7 +315,7 @@
 
     <div id="dropzone">
         <p><strong>Drop an image here</strong>, click to browse, or paste from the clipboard.</p>
-        <p style="font-size:13px;margin-top:8px;">PNG screenshots work best. Nothing is uploaded.</p>
+        <p style="font-size:13px;margin-top:8px;">PNG screenshots work best. Nothing is uploaded to a server.</p>
         <input type="file" id="fileInput" accept="image/*" hidden />
     </div>
 
@@ -309,27 +352,121 @@
             </p>
         </div>
 
-        <div class="panel">
-            <h2>reference grid</h2>
-            <div class="row">
-                <div class="field inline">
-                    <input type="checkbox" id="showGrid" checked />
-                    <label for="showGrid">show grid</label>
+        <div class="panel" id="gridPanel">
+            <div class="panel-head">
+                <h2>reference grid</h2>
+                <button class="collapse-btn" data-collapse="gridPanel" aria-expanded="true"
+                    aria-controls="gridPanelBody" title="Collapse"><span>&#9660;</span></button>
+            </div>
+            <div class="panel-body" id="gridPanelBody">
+                <div class="row">
+                    <div class="field inline">
+                        <input type="checkbox" id="showGrid" checked />
+                        <label for="showGrid">show grid</label>
+                    </div>
+                    <div class="field inline">
+                        <label for="stepN">bold every</label>
+                        <input type="number" id="stepN" min="2" max="64" step="1" value="4" />
+                        <label>px</label>
+                    </div>
+                    <div class="field inline">
+                        <label for="offX">x offset</label>
+                        <input type="number" id="offX" min="0" step="1" value="0" />
+                    </div>
+                    <div class="field inline">
+                        <label for="offY">y offset</label>
+                        <input type="number" id="offY" min="0" step="1" value="0" />
+                    </div>
+                    <span class="stat" id="alignStat"></span>
                 </div>
-                <div class="field inline">
-                    <label for="stepN">bold every</label>
-                    <input type="number" id="stepN" min="2" max="64" step="1" value="4" />
-                    <label>px</label>
+            </div>
+        </div>
+
+        <div class="panel" id="ivPanel">
+            <div class="panel-head">
+                <h2>interval cutter</h2>
+                <button class="collapse-btn" data-collapse="ivPanel" aria-expanded="true" aria-controls="ivPanelBody"
+                    title="Collapse"><span>&#9660;</span></button>
+            </div>
+            <div class="panel-body" id="ivPanelBody">
+                <div class="row" style="margin-bottom:8px;">
+                    <span style="color:#c8c8c8;min-width:64px;">columns</span>
+                    <div class="field inline">
+                        <label for="ivColPeriod">every</label>
+                        <input type="number" id="ivColPeriod" min="2" max="512" step="1" value="9" />
+                        <label>px</label>
+                    </div>
+                    <div class="field inline">
+                        <label for="ivColAction">action</label>
+                        <select id="ivColAction">
+                            <option value="cut">cut</option>
+                            <option value="dup">duplicate</option>
+                        </select>
+                    </div>
+                    <div class="field inline">
+                        <label for="ivColPos">at px</label>
+                        <input type="number" id="ivColPos" min="0" step="1" value="8" />
+                    </div>
+                    <div class="field inline">
+                        <label for="ivColOff">offset</label>
+                        <input type="number" id="ivColOff" min="0" step="1" value="0" />
+                    </div>
+                    <div class="field inline">
+                        <input type="checkbox" id="ivColSnap" checked />
+                        <label for="ivColSnap">snap to duplicate</label>
+                    </div>
+                    <div class="field inline">
+                        <input type="checkbox" id="ivColOn" />
+                        <label for="ivColOn">preview</label>
+                    </div>
+                    <button id="ivColApply" disabled>Apply</button>
+                    <span class="stat" id="ivColStat" style="margin:0;"></span>
                 </div>
-                <div class="field inline">
-                    <label for="offX">x offset</label>
-                    <input type="number" id="offX" min="0" step="1" value="0" />
+                <div class="row">
+                    <span style="color:#c8c8c8;min-width:64px;">rows</span>
+                    <div class="field inline">
+                        <label for="ivRowPeriod">every</label>
+                        <input type="number" id="ivRowPeriod" min="2" max="512" step="1" value="9" />
+                        <label>px</label>
+                    </div>
+                    <div class="field inline">
+                        <label for="ivRowAction">action</label>
+                        <select id="ivRowAction">
+                            <option value="cut">cut</option>
+                            <option value="dup">duplicate</option>
+                        </select>
+                    </div>
+                    <div class="field inline">
+                        <label for="ivRowPos">at px</label>
+                        <input type="number" id="ivRowPos" min="0" step="1" value="8" />
+                    </div>
+                    <div class="field inline">
+                        <label for="ivRowOff">offset</label>
+                        <input type="number" id="ivRowOff" min="0" step="1" value="0" />
+                    </div>
+                    <div class="field inline">
+                        <input type="checkbox" id="ivRowSnap" checked />
+                        <label for="ivRowSnap">snap to duplicate</label>
+                    </div>
+                    <div class="field inline">
+                        <input type="checkbox" id="ivRowOn" />
+                        <label for="ivRowOn">preview</label>
+                    </div>
+                    <button id="ivRowApply" disabled>Apply</button>
+                    <span class="stat" id="ivRowStat" style="margin:0;"></span>
                 </div>
-                <div class="field inline">
-                    <label for="offY">y offset</label>
-                    <input type="number" id="offY" min="0" step="1" value="0" />
-                </div>
-                <span class="stat" id="alignStat"></span>
+                <p class="help" style="margin:10px 0 0;">
+                    For distortions that repeat on a beat: a 4x upscale that reads
+                    4,&thinsp;5,&thinsp;4,&thinsp;5&hellip; has one extra strip every
+                    <code>9</code> px. Set <strong>every</strong> to the interval,
+                    then nudge <strong>offset</strong> until the highlighted strips sit on
+                    the duplicates (<strong>at px</strong> is the 0-based position inside
+                    each interval and defaults to its last pixel).
+                    <strong>Snap to duplicate</strong> shifts each cut to the nearest strip
+                    in its interval that exactly matches its neighbor, which keeps mostly
+                    regular patterns safe. <strong>Duplicate</strong> handles the opposite
+                    defect, a missing strip every interval. Apply is a single undo step.
+                </p>
             </div>
         </div>
 
@@ -387,8 +524,10 @@
         <strong>Workflow.</strong> Set the bold step to the original upscale factor
         (4 in the wplace example). Line the bold grid up with a block edge using the
         offsets, then cut any block that runs a pixel wide or tall until every block
-        fills exactly one bold cell. The alignment readout turns green when the
-        width and height are clean multiples of the step. Then reduce.
+        fills exactly one bold cell. If the extra strips land on a regular beat, the
+        interval cutter previews and removes them all in one shot; stragglers are a
+        manual cut each. The alignment readout turns green when the width and height
+        are clean multiples of the step. Then reduce.
     </p>
 
     <script>
@@ -399,10 +538,12 @@
             "dropzone", "fileInput", "tool", "modeSeg", "zoom", "zoomVal", "fitBtn", "undoBtn",
             "resetBtn", "newImageBtn", "showGrid", "stepN", "offX", "offY", "alignStat",
             "editorWrap", "view", "imgStat", "reduceBtn", "snapOut", "previewCanvas", "outStat",
-            "scale", "downloadPng", "downloadSvg", "copyBtn", "cleanBtn", "palette"
+            "scale", "downloadPng", "downloadSvg", "copyBtn", "cleanBtn", "palette",
+            "ivColPeriod", "ivColAction", "ivColPos", "ivColOff", "ivColSnap", "ivColOn", "ivColApply", "ivColStat",
+            "ivRowPeriod", "ivRowAction", "ivRowPos", "ivRowOff", "ivRowSnap", "ivRowOn", "ivRowApply", "ivRowStat"
         ].forEach(id => els[id] = document.getElementById(id));
 
-        // ---- Working bitmap ----------------------------------------------------
+        // Working bitmap
         // work holds the current editable image as raw RGBA. original keeps a copy
         // for the reset button. workCanvas is what we draw from.
         let work = null;          // { w, h, data: Uint8ClampedArray }
@@ -410,7 +551,7 @@
         let workCanvas = document.createElement("canvas");
         let workCtx = workCanvas.getContext("2d");
 
-        // ---- View state --------------------------------------------------------
+        // View state
         let zoom = 8;             // CSS px per source pixel
         let ox = 0, oy = 0;       // top-left source coordinate shown
         let mode = "cutV";
@@ -422,7 +563,7 @@
         const undoStack = [];
         const UNDO_MAX = 500;
 
-        // ---- Default palette (wplace) -----------------------------------------
+        // Default palette (wplace)
         const DEFAULT_PALETTE = [
             "#000000", "#3c3c3c", "#787878", "#aaaaaa", "#d2d2d2", "#ffffff", "#600018", "#a50e1e",
             "#ed1c24", "#fa8072", "#e45c1a", "#ff7f27", "#f6aa09", "#f9dd3b", "#fffabc", "#9c8431",
@@ -458,7 +599,7 @@
             return pal[best];
         }
 
-        // ---- Loading -----------------------------------------------------------
+        // Loading
         function loadFile(file) {
             if (!file || !file.type.startsWith("image/")) return;
             const img = new Image();
@@ -502,7 +643,7 @@
             for (const it of items) if (it.type.startsWith("image/")) { loadFile(it.getAsFile()); break; }
         });
 
-        // ---- Strip operations --------------------------------------------------
+        // Strip operations
         function removeCol(x) {
             const { w, h, data } = work; const nw = w - 1;
             const nd = new Uint8ClampedArray(nw * h * 4);
@@ -566,7 +707,7 @@
         }
         function rowStrip(y) { const rb = work.w * 4; return work.data.slice(y * rb, (y + 1) * rb); }
 
-        // ---- Undo --------------------------------------------------------------
+        // Undo
         function pushUndo(entry) { undoStack.push(entry); if (undoStack.length > UNDO_MAX) undoStack.shift(); updateUndo(); }
         function updateUndo() { els.undoBtn.disabled = undoStack.length === 0; }
         function undo() {
@@ -585,7 +726,7 @@
             undoStack.length = 0; updateUndo(); syncWorkCanvas(); fitView(); updateInfo();
         });
 
-        // ---- Source palette cleanup -------------------------------------------
+        // Source palette cleanup
         els.cleanBtn.addEventListener("click", () => {
             const pal = parsePalette(); if (!pal.length) return;
             pushUndo({ t: "full", w: work.w, h: work.h, data: new Uint8ClampedArray(work.data) });
@@ -597,7 +738,7 @@
             syncWorkCanvas(); render();
         });
 
-        // ---- View sizing -------------------------------------------------------
+        // View sizing
         function resizeView() {
             dpr = window.devicePixelRatio || 1;
             cssW = els.editorWrap.clientWidth;
@@ -622,6 +763,17 @@
         }
         els.fitBtn.addEventListener("click", fitView);
 
+        // Collapsible panels
+        document.querySelectorAll(".collapse-btn").forEach(btn => {
+            const panel = document.getElementById(btn.dataset.collapse);
+            btn.addEventListener("click", () => {
+                const collapsed = panel.classList.toggle("collapsed");
+                btn.setAttribute("aria-expanded", String(!collapsed));
+                btn.title = collapsed ? "Expand" : "Collapse";
+                resizeView();
+            });
+        });
+
         function clampView() {
             if (!work) return;
             const viewW = cssW / zoom, viewH = cssH / zoom;
@@ -630,7 +782,7 @@
             oy = Math.max(-viewH + minVisible, Math.min(work.h - minVisible, oy));
         }
 
-        // ---- Rendering ---------------------------------------------------------
+        // Rendering
         function render() {
             const ctx = els.view.getContext("2d");
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -650,6 +802,7 @@
             }
 
             if (els.showGrid.checked) drawGrid(ctx, sx0, sy0, sx1, sy1);
+            drawIntervalPreview(ctx);
             drawHover(ctx);
         }
 
@@ -697,7 +850,7 @@
             else if ((mode === "cutH" || mode === "addH") && y >= 0 && y < work.h) ctx.fillRect(0, syToScreen(y), cssW, zoom);
         }
 
-        // ---- Pointer handling --------------------------------------------------
+        // Pointer handling
         function viewMouse(e) {
             const r = els.view.getBoundingClientRect();
             return { x: e.clientX - r.left, y: e.clientY - r.top };
@@ -774,7 +927,7 @@
         [els.showGrid, els.stepN, els.offX, els.offY].forEach(el =>
             el.addEventListener("input", () => { render(); updateInfo(); }));
 
-        // ---- Info / alignment --------------------------------------------------
+        // Info / alignment
         function updateInfo() {
             if (!work) return;
             els.imgStat.textContent = `image: ${work.w} x ${work.h} px`;
@@ -787,9 +940,205 @@
             els.alignStat.innerHTML = clean
                 ? `<span class="ok">aligned: ${cols} x ${rows} blocks, clean multiples of ${N}</span>`
                 : `<span class="warn">not aligned: width leaves ${rw}, height leaves ${rh} extra px</span>`;
+            ivRefresh();
         }
 
-        // ---- Reduce ------------------------------------------------------------
+        // Interval cutter
+        // Removes (or duplicates) one strip per fixed interval, for upscales where
+        // an extra strip lands on a regular beat (blocks reading 4,5,4,5...).
+        const iv = {
+            v: {
+                on: els.ivColOn, period: els.ivColPeriod, pos: els.ivColPos, off: els.ivColOff,
+                snap: els.ivColSnap, action: els.ivColAction, stat: els.ivColStat, apply: els.ivColApply
+            },
+            h: {
+                on: els.ivRowOn, period: els.ivRowPeriod, pos: els.ivRowPos, off: els.ivRowOff,
+                snap: els.ivRowSnap, action: els.ivRowAction, stat: els.ivRowStat, apply: els.ivRowApply
+            }
+        };
+        const ivCache = { v: [], h: [] };
+
+        function ivRead(axis) {
+            const g = iv[axis];
+            return {
+                on: g.on.checked,
+                period: Math.max(2, parseInt(g.period.value) || 2),
+                pos: Math.max(0, parseInt(g.pos.value) || 0),
+                off: Math.max(0, parseInt(g.off.value) || 0),
+                snap: g.snap.checked,
+                action: g.action.value
+            };
+        }
+
+        // A strip is a safe cut when it is an exact copy of the strip before it.
+        function isDupCol(x) {
+            if (x <= 0 || x >= work.w) return false;
+            const { w, h, data } = work;
+            for (let y = 0; y < h; y++) {
+                const i = (y * w + x) * 4, j = i - 4;
+                if (data[i] !== data[j] || data[i + 1] !== data[j + 1] ||
+                    data[i + 2] !== data[j + 2] || data[i + 3] !== data[j + 3]) return false;
+            }
+            return true;
+        }
+        function isDupRow(y) {
+            if (y <= 0 || y >= work.h) return false;
+            const rb = work.w * 4, d = work.data, i0 = y * rb, j0 = i0 - rb;
+            for (let k = 0; k < rb; k++) if (d[i0 + k] !== d[j0 + k]) return false;
+            return true;
+        }
+        function snapToDup(axis, x, lo, hi) {
+            const isDup = axis === "v" ? isDupCol : isDupRow;
+            if (isDup(x)) return x;
+            for (let d = 1; d < hi - lo; d++) {
+                if (x + d < hi && isDup(x + d)) return x + d;
+                if (x - d >= lo && isDup(x - d)) return x - d;
+            }
+            return x;
+        }
+
+        function ivCompute(axis) {
+            if (!work) return [];
+            const c = ivRead(axis);
+            const len = axis === "v" ? work.w : work.h;
+            const pos = Math.min(c.pos, c.period - 1);
+            const out = [];
+            for (let s = c.off; s + c.period <= len; s += c.period) {
+                let x = s + pos;
+                if (c.snap) x = snapToDup(axis, x, s, s + c.period);
+                out.push(x);
+            }
+            return out;
+        }
+
+        function ivRefresh() {
+            if (!work) return;
+            ivCache.v = ivCompute("v");
+            ivCache.h = ivCompute("h");
+            ivStat("v"); ivStat("h");
+            render();
+        }
+
+        function ivStat(axis) {
+            const g = iv[axis], c = ivRead(axis), hits = ivCache[axis];
+            if (!hits.length) {
+                g.stat.textContent = "no full interval in range";
+                g.apply.disabled = true;
+                return;
+            }
+            g.apply.disabled = false;
+            const len = axis === "v" ? work.w : work.h;
+            const newLen = c.action === "cut" ? len - hits.length : len + hits.length;
+            const N = Math.max(2, parseInt(els.stepN.value) || 4);
+            const gOff = Math.max(0, parseInt((axis === "v" ? els.offX : els.offY).value) || 0);
+            const r = (newLen - gOff) % N;
+            const verb = c.action === "cut" ? "cuts" : "adds";
+            g.stat.innerHTML = `${verb} ${hits.length} &rarr; ${newLen} px ` +
+                (r === 0 ? `<span class="ok">(/${N} ok)</span>`
+                    : `<span class="warn">(/${N} leaves ${r})</span>`);
+        }
+
+        function drawIntervalPreview(ctx) {
+            if (!work) return;
+            for (const axis of ["v", "h"]) {
+                const g = iv[axis];
+                if (!g.on.checked || !ivCache[axis].length) continue;
+                ctx.fillStyle = g.action.value === "cut" ? "rgba(255,92,92,0.45)" : "rgba(132,197,115,0.5)";
+                const size = Math.max(1, zoom);
+                for (const i of ivCache[axis]) {
+                    if (axis === "v") {
+                        const px = sxToScreen(i);
+                        if (px + size >= 0 && px <= cssW) ctx.fillRect(px, 0, size, cssH);
+                    } else {
+                        const py = syToScreen(i);
+                        if (py + size >= 0 && py <= cssH) ctx.fillRect(0, py, cssW, size);
+                    }
+                }
+            }
+        }
+
+        // Bulk strip ops: one pass over the image instead of one removeCol per cut.
+        function removeCols(xs) {
+            const { w, h, data } = work; const nw = w - xs.length;
+            const drop = new Uint8Array(w); for (const x of xs) drop[x] = 1;
+            const keep = new Int32Array(nw);
+            let k = 0; for (let x = 0; x < w; x++) if (!drop[x]) keep[k++] = x;
+            const nd = new Uint8ClampedArray(nw * h * 4);
+            for (let y = 0; y < h; y++) {
+                const ro = y * w * 4, dof = y * nw * 4;
+                for (let i = 0; i < nw; i++) {
+                    const si = ro + keep[i] * 4, di = dof + i * 4;
+                    nd[di] = data[si]; nd[di + 1] = data[si + 1];
+                    nd[di + 2] = data[si + 2]; nd[di + 3] = data[si + 3];
+                }
+            }
+            work = { w: nw, h, data: nd };
+        }
+        function removeRows(ys) {
+            const { w, h, data } = work; const rb = w * 4;
+            const drop = new Uint8Array(h); for (const y of ys) drop[y] = 1;
+            const nd = new Uint8ClampedArray((h - ys.length) * rb);
+            let dy = 0;
+            for (let y = 0; y < h; y++) {
+                if (drop[y]) continue;
+                nd.set(data.subarray(y * rb, (y + 1) * rb), dy * rb); dy++;
+            }
+            work = { w, h: h - ys.length, data: nd };
+        }
+        function dupCols(xs) {
+            const { w, h, data } = work; const nw = w + xs.length;
+            const dup = new Uint8Array(w); for (const x of xs) dup[x] = 1;
+            const map = new Int32Array(nw);
+            let k = 0; for (let x = 0; x < w; x++) { map[k++] = x; if (dup[x]) map[k++] = x; }
+            const nd = new Uint8ClampedArray(nw * h * 4);
+            for (let y = 0; y < h; y++) {
+                const ro = y * w * 4, dof = y * nw * 4;
+                for (let i = 0; i < nw; i++) {
+                    const si = ro + map[i] * 4, di = dof + i * 4;
+                    nd[di] = data[si]; nd[di + 1] = data[si + 1];
+                    nd[di + 2] = data[si + 2]; nd[di + 3] = data[si + 3];
+                }
+            }
+            work = { w: nw, h, data: nd };
+        }
+        function dupRows(ys) {
+            const { w, h, data } = work; const rb = w * 4;
+            const dup = new Uint8Array(h); for (const y of ys) dup[y] = 1;
+            const nd = new Uint8ClampedArray((h + ys.length) * rb);
+            let dy = 0;
+            for (let y = 0; y < h; y++) {
+                nd.set(data.subarray(y * rb, (y + 1) * rb), dy * rb); dy++;
+                if (dup[y]) { nd.set(data.subarray(y * rb, (y + 1) * rb), dy * rb); dy++; }
+            }
+            work = { w, h: h + ys.length, data: nd };
+        }
+
+        function ivApply(axis) {
+            if (!work) return;
+            const c = ivRead(axis);
+            const hits = [...new Set(ivCompute(axis))].sort((a, b) => a - b);
+            if (!hits.length) return;
+            pushUndo({ t: "full", w: work.w, h: work.h, data: new Uint8ClampedArray(work.data) });
+            if (c.action === "cut") axis === "v" ? removeCols(hits) : removeRows(hits);
+            else axis === "v" ? dupCols(hits) : dupRows(hits);
+            iv[axis].on.checked = false;
+            syncWorkCanvas(); clampView(); render(); updateInfo();
+        }
+
+        ["v", "h"].forEach(axis => {
+            const g = iv[axis];
+            g.period.addEventListener("input", () => {
+                const P = Math.max(2, parseInt(g.period.value) || 2);
+                g.pos.value = P - 1;
+                ivRefresh();
+            });
+            [g.pos, g.off].forEach(el => el.addEventListener("input", ivRefresh));
+            [g.snap, g.on].forEach(el => el.addEventListener("change", ivRefresh));
+            g.action.addEventListener("change", ivRefresh);
+            g.apply.addEventListener("click", () => ivApply(axis));
+        });
+
+        // Reduce
         let outData = null, nC = 0, nR = 0;
         function reduce() {
             const N = Math.max(2, parseInt(els.stepN.value) || 4);
