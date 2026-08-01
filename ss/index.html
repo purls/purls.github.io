@@ -4,13 +4,18 @@
 <head>
     <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Screensaver</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../tools.css" />
     <style>
         body {
             max-width: 700px;
+        }
+
+        html.ss-open,
+        html.ss-open body {
+            overflow: hidden;
         }
 
         .section-title {
@@ -37,7 +42,17 @@
             font-size: 13px;
         }
 
-        input[type="text"],
+        .field-row.stacked {
+            align-items: flex-start;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #555;
+            margin: -6px 0 12px 98px;
+        }
+
+        textarea#textInput,
         select {
             background-color: #2d2d2d;
             color: #e0e0e0;
@@ -48,12 +63,18 @@
             font-size: 13px;
         }
 
-        input[type="text"] {
+        textarea#textInput {
             flex: 1;
             min-width: 0;
+            width: auto;
+            margin-bottom: 0;
+            line-height: 1.4;
+            min-height: 62px;
+            field-sizing: content;
+            max-height: 40vh;
         }
 
-        input[type="text"]:focus,
+        textarea#textInput:focus,
         select:focus {
             outline: 2px solid #4cafac;
         }
@@ -99,12 +120,20 @@
             background: #050505;
             border: 1px solid #2a2a2a;
             border-radius: 4px;
-            height: 90px;
+            height: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             margin-bottom: 16px;
+        }
+
+        #previewText {
+            white-space: pre;
+            text-align: center;
+            font-weight: bold;
+            line-height: 1.2;
+            width: max-content;
         }
 
         .launch-btn {
@@ -119,15 +148,45 @@
             background-color: #226666;
         }
 
+        @media (max-width: 560px) {
+
+            /* 16px keeps iOS from zooming the page when a field is focused */
+            textarea#textInput,
+            select {
+                font-size: 16px;
+            }
+
+            .field-row label {
+                min-width: 100%;
+            }
+
+            .hint {
+                margin-left: 0;
+            }
+
+            .launch-btn {
+                width: 100%;
+            }
+        }
+
         /* Screensaver overlay */
         #screensaver {
             display: none;
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
             background: #000;
             z-index: 9999;
             overflow: hidden;
             cursor: none;
+            touch-action: none;
+            overscroll-behavior: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #screensaver.active {
@@ -150,8 +209,8 @@
 
         #exit-hint {
             position: absolute;
-            bottom: 14px;
-            right: 16px;
+            bottom: calc(14px + env(safe-area-inset-bottom));
+            right: calc(16px + env(safe-area-inset-right));
             color: rgba(255, 255, 255, 0.12);
             font-size: 10px;
             font-family: 'JetBrains Mono', monospace;
@@ -167,8 +226,8 @@
 
         #click-dots {
             position: absolute;
-            bottom: 14px;
-            left: 16px;
+            bottom: calc(14px + env(safe-area-inset-bottom));
+            left: calc(16px + env(safe-area-inset-left));
             display: flex;
             gap: 6px;
             z-index: 2;
@@ -226,28 +285,30 @@
         <a href="https://localhost.beer" class="home-link">← home</a>
     </div>
     <p style="margin: 0 0 2px;">Configure your screensaver-style text display, then go fullscreen.</p>
-    <p style="font-size: 12px; color: #555; margin: 0;">Triple-click anywhere (or press Escape) to exit.</p>
+    <p style="font-size: 12px; color: #555; margin: 0;">Triple-click/tap anywhere (or press Escape) to exit.</p>
 
     <!-- Text -->
     <div class="section-title">Text</div>
-    <div class="field-row">
-        <label>Display text</label>
-        <input type="text" id="textInput" placeholder="localhost.beer" value="localhost.beer" maxlength="80" />
+    <div class="field-row stacked">
+        <label for="textInput" style="padding-top: 7px;">Display text</label>
+        <textarea id="textInput" rows="2" maxlength="300" spellcheck="false"
+            placeholder="localhost.beer">localhost.beer</textarea>
     </div>
+    <div class="hint">Multiple lines are supported. Press Enter for a new line, Ctrl+Enter to launch.</div>
     <div class="field-row">
-        <label>Font size</label>
+        <label for="fontSize">Font size</label>
         <select id="fontSize">
-            <option value="28">Small</option>
-            <option value="52" selected>Medium</option>
-            <option value="80">Large</option>
-            <option value="120">Huge</option>
+            <option value="4">Small</option>
+            <option value="7" selected>Medium</option>
+            <option value="12">Large</option>
+            <option value="18">Huge</option>
         </select>
     </div>
 
     <!-- Animation -->
     <div class="section-title">Animation</div>
     <div class="field-row">
-        <label>Mode</label>
+        <label for="animMode">Mode</label>
         <select id="animMode">
             <option value="static">Static: Text centered</option>
             <option value="dvd">DVD: Bouncing text</option>
@@ -259,7 +320,7 @@
         </select>
     </div>
     <div class="field-row">
-        <label>Speed</label>
+        <label for="speed">Speed</label>
         <select id="speed">
             <option value="0.5">Slow</option>
             <option value="1" selected>Normal</option>
@@ -288,7 +349,7 @@
     <!-- Preview -->
     <div class="section-title">Preview</div>
     <div class="preview-box">
-        <span id="previewText" style="font-size: 28px; font-weight: bold; color: #4cafac;">localhost.beer</span>
+        <div id="previewText" style="font-size: 26px; color: #4cafac;">localhost.beer</div>
     </div>
 
     <button class="launch-btn" id="launchBtn">▶ Launch Screensaver</button>
@@ -297,7 +358,7 @@
     <div id="screensaver">
         <canvas id="ss-canvas"></canvas>
         <div id="ss-content"></div>
-        <div id="exit-hint">click × 3 to exit</div>
+        <div id="exit-hint">click/tap × 3 to exit</div>
         <div id="click-dots">
             <div class="click-dot" id="dot1"></div>
             <div class="click-dot" id="dot2"></div>
@@ -310,9 +371,13 @@
             // State
             let selectedColor = 'rainbow';
             let cleanupFns = [];
-            let clickCount = 0, clickTimer = null, hintTimer = null;
+            let resizeFns = [];
+            let clickCount = 0, clickTimer = null, hintTimer = null, resizeRaf = null;
+            let wakeLock = null;
 
+            const FONT = "'JetBrains Mono', monospace";
             const RAINBOW = ['#ff6b6b', '#ffb86c', '#f1fa8c', '#50fa7b', '#4cafac', '#bd93f9', '#ff79c6', '#8be9fd'];
+            const GRADIENT = 'linear-gradient(90deg,#ff6b6b,#ffb86c,#f1fa8c,#50fa7b,#4cafac,#bd93f9)';
 
             // Config elements
             const textInput = document.getElementById('textInput');
@@ -321,6 +386,7 @@
             const speedEl = document.getElementById('speed');
             const launchBtn = document.getElementById('launchBtn');
             const prevText = document.getElementById('previewText');
+            const prevBox = prevText.parentElement;
 
             // Screensaver elements
             const screensaver = document.getElementById('screensaver');
@@ -345,31 +411,45 @@
                 updatePreview();
             });
 
+            function currentText() {
+                return textInput.value.replace(/\r\n?/g, '\n').replace(/^\s*\n+|\s+$/g, '');
+            }
+
             function updatePreview() {
-                const text = textInput.value || 'screensaver';
-                prevText.textContent = text;
+                prevText.textContent = currentText() || 'localhost.beer';
                 prevText.style.removeProperty('background');
                 prevText.style.removeProperty('-webkit-background-clip');
                 prevText.style.removeProperty('-webkit-text-fill-color');
                 if (selectedColor === 'rainbow') {
-                    prevText.style.background = 'linear-gradient(90deg,#ff6b6b,#ffb86c,#f1fa8c,#50fa7b,#4cafac,#bd93f9)';
+                    prevText.style.background = GRADIENT;
                     prevText.style.webkitBackgroundClip = 'text';
                     prevText.style.webkitTextFillColor = 'transparent';
                 } else {
                     prevText.style.color = selectedColor;
                 }
+                // shrink the preview so long / multi-line text stays fully visible
+                prevText.style.fontSize = '26px';
+                const w = prevText.offsetWidth, h = prevText.offsetHeight;
+                if (w && h) {
+                    const s = Math.min(1, (prevBox.clientWidth - 16) / w, (prevBox.clientHeight - 12) / h);
+                    prevText.style.fontSize = Math.max(7, Math.floor(26 * s)) + 'px';
+                }
             }
 
             textInput.addEventListener('input', updatePreview);
+            textInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); launch(); }
+            });
 
             // Launch
-            launchBtn.addEventListener('click', () => {
-                const text = textInput.value.trim() || 'localhost.beer';
-                const fontSize = parseInt(fontSizeEl.value);
+            function launch() {
+                const text = currentText() || 'localhost.beer';
+                const sizeVmin = parseFloat(fontSizeEl.value);
                 const mode = animModeEl.value;
                 const speed = parseFloat(speedEl.value);
-                startScreensaver(text, fontSize, mode, selectedColor, speed);
-            });
+                startScreensaver(text, sizeVmin, mode, selectedColor, speed);
+            }
+            launchBtn.addEventListener('click', launch);
 
             // Exit triggers
             screensaver.addEventListener('click', handleClick);
@@ -380,7 +460,21 @@
 
             document.addEventListener('fullscreenchange', () => {
                 if (!document.fullscreenElement && screensaver.classList.contains('active')) exitScreensaver();
+                else fireResize();
             });
+
+            // Viewport changes: fullscreen transitions, rotation, mobile toolbar show/hide
+            window.addEventListener('resize', fireResize);
+            window.addEventListener('orientationchange', fireResize);
+
+            function fireResize() {
+                if (resizeRaf) cancelAnimationFrame(resizeRaf);
+                resizeRaf = requestAnimationFrame(() => {
+                    resizeRaf = null;
+                    if (!screensaver.classList.contains('active')) { updatePreview(); return; }
+                    resizeFns.forEach(fn => { try { fn(); } catch (_) { } });
+                });
+            }
 
             function handleClick() {
                 clickCount++;
@@ -394,7 +488,7 @@
             }
 
             // Core: start / exit
-            function startScreensaver(text, fontSize, mode, color, speed) {
+            function startScreensaver(text, sizeVmin, mode, color, speed) {
                 clickCount = 0;
                 dots.forEach(d => d.classList.remove('lit'));
 
@@ -404,19 +498,27 @@
 
                 screensaver.style.background = (mode === 'neon') ? '#020008' : '#000';
                 screensaver.classList.add('active');
+                document.documentElement.classList.add('ss-open');
                 screensaver.requestFullscreen?.().catch(() => { });
+                requestWakeLock();
 
                 ssContent.innerHTML = '';
                 ssCanvas.style.display = 'none';
                 ssCanvas.getContext('2d').clearRect(0, 0, ssCanvas.width, ssCanvas.height);
 
-                if (mode === 'static') startStatic(text, fontSize, color, speed);
-                else if (mode === 'dvd') startDVD(text, fontSize, color, speed);
-                else if (mode === 'matrix') startMatrix(text, fontSize, color, speed);
-                else if (mode === 'typewriter') startTypewriter(text, fontSize, color, speed);
-                else if (mode === 'glitch') startGlitch(text, fontSize, color, speed);
-                else if (mode === 'neon') startNeon(text, fontSize, color, speed);
-                else if (mode === 'float') startFloat(text, fontSize, color, speed);
+                if (mode === 'static') startStatic(text, sizeVmin, color, speed);
+                else if (mode === 'dvd') startDVD(text, sizeVmin, color, speed);
+                else if (mode === 'matrix') startMatrix(text, sizeVmin, color, speed);
+                else if (mode === 'typewriter') startTypewriter(text, sizeVmin, color, speed);
+                else if (mode === 'glitch') startGlitch(text, sizeVmin, color, speed);
+                else if (mode === 'neon') startNeon(text, sizeVmin, color, speed);
+                else if (mode === 'float') startFloat(text, sizeVmin, color, speed);
+
+                // The viewport keeps growing as fullscreen / mobile chrome settles,
+                // so re-measure a couple of times after launch.
+                [80, 300, 700].forEach(ms => setTimeout(() => {
+                    if (screensaver.classList.contains('active')) fireResize();
+                }, ms));
             }
 
             function exitScreensaver() {
@@ -424,17 +526,66 @@
                 if (clickTimer) clearTimeout(clickTimer);
                 dots.forEach(d => d.classList.remove('lit'));
                 screensaver.classList.remove('active');
+                document.documentElement.classList.remove('ss-open');
                 screensaver.style.background = '#000';
                 cleanupFns.forEach(fn => { try { fn(); } catch (_) { } });
                 cleanupFns = [];
+                resizeFns = [];
                 ssContent.innerHTML = '';
                 ssCanvas.style.display = 'none';
-                document.exitFullscreen?.().catch(() => { });
+                releaseWakeLock();
+                if (document.fullscreenElement) document.exitFullscreen?.().catch(() => { });
+                updatePreview();
             }
 
             function reg(fn) { cleanupFns.push(fn); }
+            function onResize(fn) { resizeFns.push(fn); }
+
+            // Keep the display awake while it is showing text
+            function requestWakeLock() {
+                if (!navigator.wakeLock) return;
+                navigator.wakeLock.request('screen')
+                    .then(lock => {
+                        if (!screensaver.classList.contains('active')) { lock.release().catch(() => { }); return; }
+                        wakeLock = lock;
+                    })
+                    .catch(() => { });
+            }
+
+            function releaseWakeLock() {
+                if (wakeLock) { wakeLock.release().catch(() => { }); wakeLock = null; }
+            }
 
             // Helpers
+            function dims() {
+                const r = screensaver.getBoundingClientRect();
+                return {
+                    W: Math.round(r.width) || window.innerWidth,
+                    H: Math.round(r.height) || window.innerHeight,
+                };
+            }
+
+            // Font size options are expressed in vmin so they adapt to phone screens.
+            function basePx(sizeVmin) {
+                const { W, H } = dims();
+                return Math.max(9, Math.round(Math.min(W, H) * sizeVmin / 100));
+            }
+
+            // Set the font size, then shrink it until the block fits the screen.
+            // Text metrics scale linearly, so a single corrective pass is exact.
+            function fitEl(el, sizeVmin, ratio) {
+                const { W, H } = dims();
+                const px = basePx(sizeVmin);
+                el.style.fontSize = px + 'px';
+                const w = Math.max(el.offsetWidth, el.scrollWidth);
+                const h = Math.max(el.offsetHeight, el.scrollHeight);
+                if (!w || !h) return px;
+                const s = Math.min(1, (W * ratio) / w, (H * ratio) / h);
+                const fs = Math.max(7, Math.floor(px * s));
+                el.style.fontSize = fs + 'px';
+                return fs;
+            }
+
             function pickColor(color, idx) {
                 return color === 'rainbow' ? RAINBOW[((idx % RAINBOW.length) + RAINBOW.length) % RAINBOW.length] : color;
             }
@@ -447,43 +598,57 @@
                 return el;
             }
 
-            // Static (text centered, no animation)
-            function startStatic(text, fontSize, color) {
-                const el = makeEl('div', {
+            // Base style for any block of display text: honours newlines, never wraps,
+            // and shrink-wraps to its longest line so it can be measured accurately.
+            function textCss(extra) {
+                return Object.assign({
+                    fontFamily: FONT,
+                    fontWeight: 'bold',
+                    whiteSpace: 'pre',
+                    lineHeight: '1.2',
+                    textAlign: 'center',
+                    width: 'max-content',
+                    userSelect: 'none',
+                }, extra);
+            }
+
+            function centered(extra) {
+                return textCss(Object.assign({
                     position: 'absolute',
                     top: '50%', left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    fontSize: fontSize + 'px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
-                    textAlign: 'center',
-                }, text);
+                }, extra));
+            }
+
+            // Static (text centered, no animation)
+            function startStatic(text, sizeVmin, color) {
+                const el = makeEl('div', centered(), text);
 
                 if (color === 'rainbow') {
-                    el.style.background = 'linear-gradient(90deg,#ff6b6b,#ffb86c,#f1fa8c,#50fa7b,#4cafac,#bd93f9)';
+                    el.style.background = GRADIENT;
                     el.style.webkitBackgroundClip = 'text';
                     el.style.webkitTextFillColor = 'transparent';
                 } else {
                     el.style.color = color;
                 }
+
+                const fit = () => fitEl(el, sizeVmin, 0.9);
+                fit();
+                onResize(fit);
             }
 
             // DVD (bouncing text, changes color on wall hit)
-            function startDVD(text, fontSize, color, speed) {
-                const el = makeEl('div', {
+            function startDVD(text, sizeVmin, color, speed) {
+                const el = makeEl('div', textCss({
                     position: 'absolute',
-                    fontSize: fontSize + 'px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
                     textShadow: '0 0 18px currentColor',
-                }, text);
+                }), text);
+
+                const fit = () => fitEl(el, sizeVmin, 0.55);
+                fit();
 
                 const base = speed * 2.2;
-                let x = 120, y = 120;
+                let x = 0, y = 0;
                 let dx = base * (Math.random() > 0.5 ? 1 : -1);
                 let dy = base * 0.72 * (Math.random() > 0.5 ? 1 : -1);
                 let colorIdx = 0;
@@ -491,9 +656,22 @@
                 function applyColor() { el.style.color = pickColor(color, colorIdx++); }
                 applyColor();
 
+                {
+                    const { W, H } = dims();
+                    x = Math.max(0, (W - el.offsetWidth) / 2);
+                    y = Math.max(0, (H - el.offsetHeight) / 2);
+                }
+
+                onResize(() => {
+                    fit();
+                    const { W, H } = dims();
+                    x = Math.min(Math.max(0, x), Math.max(0, W - el.offsetWidth));
+                    y = Math.min(Math.max(0, y), Math.max(0, H - el.offsetHeight));
+                });
+
                 let rafId;
                 function frame() {
-                    const W = window.innerWidth, H = window.innerHeight;
+                    const { W, H } = dims();
                     const w = el.offsetWidth, h = el.offsetHeight;
                     x += dx; y += dy;
                     let hit = false;
@@ -511,48 +689,67 @@
             }
 
             // Matrix (katakana rain + glowing center text)
-            function startMatrix(text, fontSize, color, speed) {
+            function startMatrix(text, sizeVmin, color, speed) {
                 const rainColor = (color === 'rainbow' || color === '#ffffff') ? '#00ff41' : color;
+                const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF#+-=/<>';
 
                 ssCanvas.style.display = 'block';
-                ssCanvas.width = window.innerWidth;
-                ssCanvas.height = window.innerHeight;
                 const ctx = ssCanvas.getContext('2d');
 
-                const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF#+-=/<>';
-                const COL_W = 18;
-                const cols = Math.ceil(ssCanvas.width / COL_W);
-                const drops = Array.from({ length: cols }, () => (Math.random() * -50) | 0);
-                const skipInterval = Math.max(1, Math.round(3 / speed));
-                let frame = 0;
+                let W = 0, H = 0, colW = 18, rowH = 20, drops = [];
+
+                // Size the canvas from the overlay itself (not window.innerWidth), and
+                // redo it on every viewport change. Otherwise, the rain stops short of
+                // the bottom once fullscreen or a mobile toolbar changes the height.
+                function layout() {
+                    const d = dims();
+                    W = d.W; H = d.H;
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    ssCanvas.width = Math.round(W * dpr);
+                    ssCanvas.height = Math.round(H * dpr);
+                    ssCanvas.style.width = W + 'px';
+                    ssCanvas.style.height = H + 'px';
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, W, H);
+
+                    colW = Math.max(10, Math.min(20, Math.round(Math.min(W, H) / 42)));
+                    rowH = Math.round(colW * 1.15);
+                    const cols = Math.ceil(W / colW);
+                    const prev = drops;
+                    drops = Array.from({ length: cols }, (_, i) =>
+                        i < prev.length ? prev[i] : -((Math.random() * (H / rowH)) | 0));
+                }
+                layout();
 
                 // glowing center overlay
-                makeEl('div', {
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: fontSize + 'px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 'bold',
+                const label = makeEl('div', centered({
                     color: rainColor,
                     textShadow: `0 0 20px ${rainColor}, 0 0 40px ${rainColor}80`,
-                    whiteSpace: 'nowrap',
-                    userSelect: 'none',
                     zIndex: '2',
-                }, text);
+                }), text);
 
-                let rafId;
+                const fit = () => fitEl(label, sizeVmin, 0.85);
+                fit();
+                onResize(() => { layout(); fit(); });
+
+                const skipInterval = Math.max(1, Math.round(3 / speed));
+                let frameNum = 0, rafId;
+
                 function draw() {
-                    frame++;
-                    if (frame % skipInterval === 0) {
+                    frameNum++;
+                    if (frameNum % skipInterval === 0) {
                         ctx.fillStyle = 'rgba(0,0,0,0.05)';
-                        ctx.fillRect(0, 0, ssCanvas.width, ssCanvas.height);
+                        ctx.fillRect(0, 0, W, H);
                         ctx.fillStyle = rainColor;
-                        ctx.font = '15px monospace';
+                        ctx.font = Math.round(colW * 0.86) + 'px monospace';
+                        ctx.textBaseline = 'top';
                         for (let i = 0; i < drops.length; i++) {
-                            const ch = CHARS[Math.random() * CHARS.length | 0];
-                            ctx.fillText(ch, i * COL_W, drops[i] * 16);
-                            if (drops[i] * 16 > ssCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                            const y = drops[i] * rowH;
+                            if (y > -rowH && y < H) {
+                                ctx.fillText(CHARS[Math.random() * CHARS.length | 0], i * colW, y);
+                            }
+                            if (y > H && Math.random() > 0.975) drops[i] = 0;
                             drops[i]++;
                         }
                     }
@@ -566,23 +763,30 @@
             }
 
             // Typewriter (text types & deletes in a loop)
-            function startTypewriter(text, fontSize, color, speed) {
-                const container = makeEl('div', {
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: fontSize + 'px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 'bold',
-                    whiteSpace: 'pre',
-                    userSelect: 'none',
-                });
+            function startTypewriter(text, sizeVmin, color, speed) {
+                const container = makeEl('div', centered({
+                    display: 'inline-grid',
+                    textAlign: 'left',
+                }));
 
+                // A hidden copy of the full text holds the box open, so the centered
+                // block never jumps around as characters and lines are added.
+                const ghost = document.createElement('span');
+                ghost.style.cssText = 'grid-area: 1 / 1; visibility: hidden;';
+                ghost.textContent = text.split('\n').map(l => l + '█').join('\n');
+
+                const live = document.createElement('span');
+                live.style.cssText = 'grid-area: 1 / 1;';
                 const textSpan = document.createElement('span');
                 const cursorSpan = document.createElement('span');
                 cursorSpan.className = 'tw-cursor';
                 cursorSpan.textContent = '█';
-                container.append(textSpan, cursorSpan);
+                live.append(textSpan, cursorSpan);
+                container.append(ghost, live);
+
+                const fit = () => fitEl(container, sizeVmin, 0.85);
+                fit();
+                onResize(fit);
 
                 let colorIdx = 0;
                 function applyColor() {
@@ -607,7 +811,9 @@
                             phase = 'pausing';
                             timer = setTimeout(tick, pauseMs);
                         } else {
-                            timer = setTimeout(tick, typeMs * (0.6 + Math.random() * 0.8));
+                            // newlines land instantly instead of stalling on a blank frame
+                            const delay = text[charIdx - 1] === '\n' ? typeMs * 1.6 : typeMs * (0.6 + Math.random() * 0.8);
+                            timer = setTimeout(tick, delay);
                         }
                     } else if (phase === 'pausing') {
                         phase = 'deleting';
@@ -629,36 +835,35 @@
             }
 
             // Glitch (centered text with RGB-split scramble bursts)
-            function startGlitch(text, fontSize, color, speed) {
-                const outer = makeEl('div', {
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    userSelect: 'none',
-                    textAlign: 'center',
-                });
+            function startGlitch(text, sizeVmin, color, speed) {
+                const outer = makeEl('div', centered());
 
-                const textCss = `
-                font-size: ${fontSize}px;
-                font-family: 'JetBrains Mono', monospace;
+                const layerCss = `
+                font-size: inherit;
+                font-family: ${FONT};
                 font-weight: bold;
-                white-space: nowrap;
-                display: inline-block;
+                white-space: pre;
+                line-height: 1.2;
+                text-align: center;
             `;
 
                 const wrap = document.createElement('div');
                 wrap.style.cssText = 'position: relative; display: inline-block;';
                 const main = document.createElement('div');
-                main.style.cssText = textCss + 'position: relative;';
+                main.style.cssText = layerCss + 'position: relative;';
                 main.textContent = text;
                 const redGhost = document.createElement('div');
-                redGhost.style.cssText = textCss + 'position: absolute; top: 0; left: 0; color: #ff0040; opacity: 0; pointer-events: none;';
+                redGhost.style.cssText = layerCss + 'position: absolute; top: 0; left: 0; width: 100%; color: #ff0040; opacity: 0; pointer-events: none;';
                 redGhost.textContent = text;
                 const blueGhost = document.createElement('div');
-                blueGhost.style.cssText = textCss + 'position: absolute; top: 0; left: 0; color: #00ffff; opacity: 0; pointer-events: none;';
+                blueGhost.style.cssText = layerCss + 'position: absolute; top: 0; left: 0; width: 100%; color: #00ffff; opacity: 0; pointer-events: none;';
                 blueGhost.textContent = text;
                 wrap.append(main, redGhost, blueGhost);
                 outer.appendChild(wrap);
+
+                const fit = () => fitEl(outer, sizeVmin, 0.82);
+                fit();
+                onResize(fit);
 
                 let colorIdx = 0;
                 function applyColor() {
@@ -694,7 +899,10 @@
                         if (stopped) return;
                         let s = '';
                         for (let i = 0; i < text.length; i++) {
-                            s += Math.random() < 0.35 ? GCHARS[Math.random() * GCHARS.length | 0] : text[i];
+                            // keep line breaks intact so the block keeps its shape
+                            s += (text[i] !== '\n' && Math.random() < 0.35)
+                                ? GCHARS[Math.random() * GCHARS.length | 0]
+                                : text[i];
                         }
                         main.textContent = s;
                         n++;
@@ -716,19 +924,14 @@
             }
 
             // Neon (centered text with layered neon glow, cycles color)
-            function startNeon(text, fontSize, color, speed) {
-                const el = makeEl('div', {
-                    position: 'absolute',
-                    top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: fontSize + 'px',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 'bold',
-                    whiteSpace: 'nowrap',
-                    textAlign: 'center',
-                    userSelect: 'none',
+            function startNeon(text, sizeVmin, color, speed) {
+                const el = makeEl('div', centered({
                     animation: `neonPulse ${2 / speed}s ease-in-out infinite`,
-                }, text);
+                }), text);
+
+                const fit = () => fitEl(el, sizeVmin, 0.82);
+                fit();
+                onResize(fit);
 
                 let colorIdx = 0;
                 function applyNeon() {
@@ -762,43 +965,51 @@
             }
 
             // Float (words drift around the screen)
-            function startFloat(text, fontSize, color, speed) {
-                const words = text.trim().split(/\s+/).filter(Boolean);
-                const pool = words.length > 1 ? words : [text];
-                const count = Math.max(7, Math.min(18, pool.length * 4));
+            function startFloat(text, sizeVmin, color, speed) {
+                const words = text.split(/\s+/).filter(Boolean);
+                const pool = words.length > 1 ? words : [text.replace(/\s+/g, ' ')];
+                const { W: W0, H: H0 } = dims();
+                // fewer copies on a small screen so it doesn't turn into soup
+                const density = Math.min(W0, H0) < 500 ? 2 : 4;
+                const count = Math.max(6, Math.min(18, pool.length * density));
                 const items = [];
 
                 for (let i = 0; i < count; i++) {
                     const word = pool[i % pool.length];
                     const scale = 0.3 + Math.random() * 0.95;
-                    const fs = Math.round(fontSize * scale);
                     const c = pickColor(color, i);
                     const op = (0.2 + Math.random() * 0.7).toFixed(2);
-                    const el = makeEl('div', {
+                    const el = makeEl('div', textCss({
                         position: 'absolute',
-                        fontSize: fs + 'px',
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontWeight: 'bold',
                         color: c,
                         opacity: op,
-                        userSelect: 'none',
                         pointerEvents: 'none',
-                        whiteSpace: 'nowrap',
-                    }, word);
+                    }), word);
 
-                    const x = Math.random() * Math.max(0, window.innerWidth - 200);
-                    const y = Math.random() * Math.max(0, window.innerHeight - 60);
+                    fitEl(el, sizeVmin * scale, 0.8);
+
+                    const x = Math.random() * Math.max(0, W0 - el.offsetWidth);
+                    const y = Math.random() * Math.max(0, H0 - el.offsetHeight);
                     el.style.left = x + 'px';
                     el.style.top = y + 'px';
 
                     const angle = Math.random() * Math.PI * 2;
                     const spd = (0.25 + Math.random() * 0.85) * speed;
-                    items.push({ el, x, y, dx: Math.cos(angle) * spd, dy: Math.sin(angle) * spd });
+                    items.push({ el, scale, x, y, dx: Math.cos(angle) * spd, dy: Math.sin(angle) * spd });
                 }
+
+                onResize(() => {
+                    const { W, H } = dims();
+                    items.forEach(it => {
+                        fitEl(it.el, sizeVmin * it.scale, 0.8);
+                        it.x = Math.min(Math.max(0, it.x), Math.max(0, W - it.el.offsetWidth));
+                        it.y = Math.min(Math.max(0, it.y), Math.max(0, H - it.el.offsetHeight));
+                    });
+                });
 
                 let rafId;
                 function frame() {
-                    const W = window.innerWidth, H = window.innerHeight;
+                    const { W, H } = dims();
                     items.forEach(it => {
                         it.x += it.dx; it.y += it.dy;
                         const w = it.el.offsetWidth || 80, h = it.el.offsetHeight || 40;
