@@ -86,25 +86,41 @@
             flex-wrap: wrap;
         }
 
+        /* Virtualized viewport: only the rows in view exist in the DOM. */
         .hex-viewer {
+            --row-h: 24px;
             background-color: #1e1e1e;
             border: 1px solid #3d3d3d;
             border-radius: 8px;
-            padding: 20px;
             overflow: auto;
             max-height: 600px;
             position: relative;
             font-size: 14px;
-            line-height: 1.8;
+        }
+
+        .hex-canvas {
+            position: relative;
+            width: 100%;
+        }
+
+        /* max-content keeps wide rows (32 bytes) horizontally scrollable */
+        .hex-window {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: max-content;
+            min-width: 100%;
         }
 
         .hex-row {
             display: flex;
             align-items: center;
-            margin-bottom: 2px;
+            height: var(--row-h);
+            padding: 0 16px;
+            box-sizing: border-box;
         }
 
-        .hex-row:hover .hex-byte[data-offset],
+        .hex-row:hover .hex-byte,
         .hex-row:hover .ascii-char {
             opacity: 0.5;
         }
@@ -128,34 +144,13 @@
             width: 28px;
             text-align: center;
             cursor: pointer;
-            padding: 2px 0;
             border-radius: 3px;
+            flex-shrink: 0;
             transition: transform 0.1s ease, opacity 0.1s ease;
-            position: relative;
         }
 
-        .hex-byte:hover {
-            background-color: #2a2a2a !important;
-            color: #60c8c5 !important;
-            transform: scale(1.1);
-            opacity: 1 !important;
-        }
-
-        .hex-byte:hover~.hex-byte {
-            opacity: 0.5 !important;
-        }
-
-        .hex-bytes:hover .hex-byte {
-            opacity: 0.5;
-        }
-
-        .hex-bytes .hex-byte:hover {
-            opacity: 1 !important;
-        }
-
-        .hex-byte.selected {
-            background-color: #244444;
-            color: #60c8c5;
+        .hex-byte.pad {
+            visibility: hidden;
         }
 
         .hex-byte.modified {
@@ -163,66 +158,44 @@
             color: #ffcc66;
         }
 
-        .hex-byte.modified:hover {
-            background-color: #554433 !important;
-            color: #ffdd77 !important;
+        .hex-byte.highlight {
+            background-color: #445544;
+            color: #88ff88;
         }
 
         .hex-ascii {
             color: #888;
-            white-space: pre;
             font-size: 13px;
             display: flex;
-            gap: 0;
+            flex-shrink: 0;
         }
 
         .ascii-char {
             width: 16px;
             text-align: center;
-            padding: 2px 0;
-            transition: transform 0.1s ease, opacity 0.1s ease;
             border-radius: 2px;
+            flex-shrink: 0;
             cursor: default;
+            transition: transform 0.1s ease, opacity 0.1s ease;
         }
 
-        /* Sometimes my genius is almost frightening */
-        .hex-row:has(.hex-byte:nth-child(1):hover) .ascii-char:nth-child(1),
-        .hex-row:has(.hex-byte:nth-child(2):hover) .ascii-char:nth-child(2),
-        .hex-row:has(.hex-byte:nth-child(3):hover) .ascii-char:nth-child(3),
-        .hex-row:has(.hex-byte:nth-child(4):hover) .ascii-char:nth-child(4),
-        .hex-row:has(.hex-byte:nth-child(5):hover) .ascii-char:nth-child(5),
-        .hex-row:has(.hex-byte:nth-child(6):hover) .ascii-char:nth-child(6),
-        .hex-row:has(.hex-byte:nth-child(7):hover) .ascii-char:nth-child(7),
-        .hex-row:has(.hex-byte:nth-child(8):hover) .ascii-char:nth-child(8),
-        .hex-row:has(.hex-byte:nth-child(9):hover) .ascii-char:nth-child(9),
-        .hex-row:has(.hex-byte:nth-child(10):hover) .ascii-char:nth-child(10),
-        .hex-row:has(.hex-byte:nth-child(11):hover) .ascii-char:nth-child(11),
-        .hex-row:has(.hex-byte:nth-child(12):hover) .ascii-char:nth-child(12),
-        .hex-row:has(.hex-byte:nth-child(13):hover) .ascii-char:nth-child(13),
-        .hex-row:has(.hex-byte:nth-child(14):hover) .ascii-char:nth-child(14),
-        .hex-row:has(.hex-byte:nth-child(15):hover) .ascii-char:nth-child(15),
-        .hex-row:has(.hex-byte:nth-child(16):hover) .ascii-char:nth-child(16),
-        .hex-row:has(.hex-byte:nth-child(17):hover) .ascii-char:nth-child(17),
-        .hex-row:has(.hex-byte:nth-child(18):hover) .ascii-char:nth-child(18),
-        .hex-row:has(.hex-byte:nth-child(19):hover) .ascii-char:nth-child(19),
-        .hex-row:has(.hex-byte:nth-child(20):hover) .ascii-char:nth-child(20),
-        .hex-row:has(.hex-byte:nth-child(21):hover) .ascii-char:nth-child(21),
-        .hex-row:has(.hex-byte:nth-child(22):hover) .ascii-char:nth-child(22),
-        .hex-row:has(.hex-byte:nth-child(23):hover) .ascii-char:nth-child(23),
-        .hex-row:has(.hex-byte:nth-child(24):hover) .ascii-char:nth-child(24),
-        .hex-row:has(.hex-byte:nth-child(25):hover) .ascii-char:nth-child(25),
-        .hex-row:has(.hex-byte:nth-child(26):hover) .ascii-char:nth-child(26),
-        .hex-row:has(.hex-byte:nth-child(27):hover) .ascii-char:nth-child(27),
-        .hex-row:has(.hex-byte:nth-child(28):hover) .ascii-char:nth-child(28),
-        .hex-row:has(.hex-byte:nth-child(29):hover) .ascii-char:nth-child(29),
-        .hex-row:has(.hex-byte:nth-child(30):hover) .ascii-char:nth-child(30),
-        .hex-row:has(.hex-byte:nth-child(31):hover) .ascii-char:nth-child(31),
-        .hex-row:has(.hex-byte:nth-child(32):hover) .ascii-char:nth-child(32) {
+        /* Hovering a byte lights up its ASCII twin, and vice versa.
+           Pairing is done in JS -- it used to be 32 :has() selectors. */
+        .hex-byte:hover,
+        .ascii-char:hover,
+        .hex-byte.peer,
+        .ascii-char.peer {
             background-color: #333;
             color: #60c8c5;
             font-weight: bold;
             transform: scale(1.1);
             opacity: 1 !important;
+        }
+
+        .hex-byte.modified:hover,
+        .hex-byte.modified.peer {
+            background-color: #554433;
+            color: #ffdd77;
         }
 
         .search-container {
@@ -241,12 +214,28 @@
             width: 200px;
         }
 
+        .search-status {
+            color: #666;
+            font-size: 13px;
+            min-width: 90px;
+        }
+
         .hex-stats {
             background-color: #1a1a1a;
             padding: 15px;
             border-radius: 8px;
             margin-top: 20px;
             display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+        }
+
+        .stats-label {
+            color: #60c8c5;
         }
 
         .loading {
@@ -312,11 +301,6 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .highlight {
-            background-color: #445544 !important;
-            color: #88ff88 !important;
-        }
-
         hr {
             border: none;
             border-top: 1px solid #3d3d3d;
@@ -327,7 +311,7 @@
 
 <body>
     <div class="header-top">
-        <h1 style="margin: 0;">Binary File Analyzer & Hex Editor</h1>
+        <h1 style="margin: 0;">Binary File Analyzer &amp; Hex Editor</h1>
         <a href="https://localhost.beer" class="home-link">
             ← home
         </a>
@@ -360,6 +344,7 @@
                 <input type="text" class="search-input" id="searchInput" placeholder="Search hex (e.g., FF 00 1A)">
                 <button id="searchBtn">Search</button>
                 <button id="searchNext" disabled>Next</button>
+                <span class="search-status" id="searchStatus"></span>
             </div>
             <div>
                 <label for="bytesPerRow">Bytes per row:</label>
@@ -370,7 +355,11 @@
                 </select>
             </div>
         </div>
-        <div class="hex-viewer" id="hexViewer"></div>
+        <div class="hex-viewer" id="hexViewer">
+            <div class="hex-canvas" id="hexCanvas">
+                <div class="hex-window" id="hexWindow"></div>
+            </div>
+        </div>
         <div class="hex-stats" id="hexStats"></div>
     </div>
 
@@ -390,16 +379,39 @@
     <p>
         This tool allows you to analyze any file at the binary level. View file metadata, magic numbers,
         and explore the raw hex data. You can edit individual bytes and download the modified file.
-        Supports files up to 10MB for optimal performance.
+        Rows are rendered on demand, so files up to 128MB stay responsive.
     </p>
 
     <script>
-        // Global variables
+        'use strict';
+
+        const MAX_FILE_SIZE = 128 * 1024 * 1024;
+        // Browsers clamp element heights (Firefox ~17.8M px).
+        // Past this, the scrollbar is scaled instead of mapping 1:1 to rows.
+        const MAX_CANVAS_PX = 15000000;
+        const OVERSCAN = 6;
+        const MAX_SEARCH_RESULTS = 100000;
+
+        // State. `data` is the working copy. `edits` maps offset -> original byte,
+        // so tracking changes without holding a second copy of the file.
         let currentFile = null;
-        let fileData = null;
-        let modifiedData = null;
+        let data = null;
+        let edits = new Map();
+        let freq = null;
         let searchResults = [];
-        let currentSearchIndex = 0;
+        let currentSearchIndex = -1;
+        let searchLength = 0;
+        let lastQuery = '';
+
+        // Layout state
+        let rowHeight = 24;
+        let bpr = 16;
+        let totalRows = 0;
+        let canvasPx = 0;
+        let scrollScale = 1;
+        let renderVersion = 0;
+        let paintedKey = '';
+        let rafPending = false;
 
         // DOM elements
         const fileInput = document.getElementById('fileInput');
@@ -409,15 +421,36 @@
         const fileInfoGrid = document.getElementById('fileInfoGrid');
         const hexContainer = document.getElementById('hexContainer');
         const hexViewer = document.getElementById('hexViewer');
+        const hexCanvas = document.getElementById('hexCanvas');
+        const hexWindow = document.getElementById('hexWindow');
         const hexStats = document.getElementById('hexStats');
         const downloadBtn = document.getElementById('downloadModified');
         const resetBtn = document.getElementById('resetChanges');
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const searchNextBtn = document.getElementById('searchNext');
-        const bytesPerRow = document.getElementById('bytesPerRow');
+        const searchStatus = document.getElementById('searchStatus');
+        const bytesPerRowSelect = document.getElementById('bytesPerRow');
         const editModal = document.getElementById('editModal');
         const modalOverlay = document.getElementById('modalOverlay');
+        const newValueInput = document.getElementById('newValue');
+
+        // Lookup tables: building row HTML is the hot path,
+        // so no per-byte toString/padStart/charCode work happens during rendering.
+        const HEX = new Array(256);
+        const ASCII = new Array(256);
+        for (let i = 0; i < 256; i++) {
+            HEX[i] = i.toString(16).toUpperCase().padStart(2, '0');
+            ASCII[i] = i < 32 || i > 126 ? '.'
+                : i === 38 ? '&amp;'
+                    : i === 60 ? '&lt;'
+                        : i === 62 ? '&gt;'
+                            : String.fromCharCode(i);
+        }
+
+        const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => (
+            c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;'
+        ));
 
         // File type magic numbers
         const magicNumbers = {
@@ -467,49 +500,31 @@
             '72616421': 'RAR Archive v5'
         };
 
-        // Event listeners
-        fileInput.addEventListener('change', handleFileSelect);
-        dropZone.addEventListener('dragover', handleDragOver);
-        dropZone.addEventListener('dragleave', handleDragLeave);
-        dropZone.addEventListener('drop', handleDrop);
-        downloadBtn.addEventListener('click', downloadModified);
-        resetBtn.addEventListener('click', resetChanges);
-        searchBtn.addEventListener('click', performSearch);
-        searchNextBtn.addEventListener('click', searchNext);
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') performSearch();
-        });
-        bytesPerRow.addEventListener('change', () => renderHexDump());
-        document.getElementById('saveEdit').addEventListener('click', saveByteEdit);
-        document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
-        modalOverlay.addEventListener('click', closeEditModal);
-
-        // File handling
-        function handleFileSelect(e) {
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) processFile(file);
-        }
+        });
 
-        function handleDragOver(e) {
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('drag-over');
-        }
+        });
 
-        function handleDragLeave(e) {
+        dropZone.addEventListener('dragleave', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
-        }
+        });
 
-        function handleDrop(e) {
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
             const file = e.dataTransfer.files[0];
             if (file) processFile(file);
-        }
+        });
 
         async function processFile(file) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File size exceeds 10MB. For optimal performance, please use a smaller file.');
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`File size exceeds ${formatFileSize(MAX_FILE_SIZE)}. Please use a smaller file.`);
                 return;
             }
 
@@ -519,18 +534,26 @@
             hexContainer.style.display = 'none';
 
             try {
-                const arrayBuffer = await file.arrayBuffer();
-                fileData = new Uint8Array(arrayBuffer);
-                modifiedData = new Uint8Array(fileData);
+                data = new Uint8Array(await file.arrayBuffer());
+                edits = new Map();
+                freq = buildFrequency(data);
+                resetSearch();
 
-                displayFileInfo();
-                renderHexDump();
+                const magic = getMagicNumber();
+                displayFileInfo(magic);
                 updateStats();
+
+                downloadBtn.disabled = true;
+                resetBtn.disabled = true;
 
                 loading.style.display = 'none';
                 fileInfo.style.display = 'block';
                 hexContainer.style.display = 'block';
                 hexStats.style.display = 'block';
+
+                hexViewer.scrollTop = 0;
+                measureRowHeight();
+                relayout();
             } catch (error) {
                 console.error('Error processing file:', error);
                 loading.style.display = 'none';
@@ -538,57 +561,67 @@
             }
         }
 
-        function displayFileInfo() {
-            const info = {
-                'File Name': currentFile.name,
-                'File Size': formatFileSize(currentFile.size),
-                'File Type': getMimeType(currentFile),
-                'Magic Number': getMagicNumber(),
-                'Last Modified': new Date(currentFile.lastModified).toLocaleString(),
-                'SHA-256 Hash': 'Calculating...',
-                'Entropy': calculateEntropy().toFixed(4)
-            };
+        // One pass over the file yields entropy, null count and non-ASCII count.
+        // Edits update the table in place, so stats stay O(256).
+        function buildFrequency(arr) {
+            const f = new Uint32Array(256);
+            for (let i = 0; i < arr.length; i++) f[arr[i]]++;
+            return f;
+        }
 
-            fileInfoGrid.innerHTML = '';
-            for (const [label, value] of Object.entries(info)) {
-                fileInfoGrid.innerHTML += `
-                    <div class="file-info-label">${label}:</div>
-                    <div class="file-info-value">${value}</div>
-                `;
-            }
-
-            // Calculate SHA-256 asynchronously
-            calculateSHA256().then(hash => {
-                const hashElement = Array.from(fileInfoGrid.children).find(
-                    el => el.textContent === 'SHA-256 Hash:'
-                );
-                if (hashElement && hashElement.nextElementSibling) {
-                    hashElement.nextElementSibling.textContent = hash;
+        function calculateEntropy() {
+            const len = data.length;
+            if (!len) return 0;
+            let entropy = 0;
+            for (let i = 0; i < 256; i++) {
+                const count = freq[i];
+                if (count > 0) {
+                    const p = count / len;
+                    entropy -= p * Math.log2(p);
                 }
+            }
+            return entropy;
+        }
+
+        function displayFileInfo(magic) {
+            const magicType = magic.split(' - ')[1];
+            const type = currentFile.type || 'Unknown';
+
+            const rows = [
+                ['File Name', escapeHtml(currentFile.name)],
+                ['File Size', formatFileSize(currentFile.size)],
+                ['File Type', escapeHtml(magicType ? `${type} (${magicType})` : type)],
+                ['Magic Number', escapeHtml(magic)],
+                ['Last Modified', new Date(currentFile.lastModified).toLocaleString()],
+                ['SHA-256 Hash', '<span id="infoHash">Calculating…</span>'],
+                ['Entropy', `<span id="infoEntropy">${calculateEntropy().toFixed(4)}</span>`]
+            ];
+
+            fileInfoGrid.innerHTML = rows.map(([label, value]) =>
+                `<div class="file-info-label">${label}:</div><div class="file-info-value">${value}</div>`
+            ).join('');
+
+            const target = data;
+            calculateSHA256(target).then((hash) => {
+                // Ignore a stale hash if another file was loaded meanwhile.
+                if (data !== target) return;
+                const el = document.getElementById('infoHash');
+                if (el) el.textContent = hash;
+            }).catch(() => {
+                const el = document.getElementById('infoHash');
+                if (el) el.textContent = 'Unavailable';
             });
         }
 
-        function getMimeType(file) {
-            const type = file.type || 'Unknown';
-            const magicType = getMagicNumber().split(' - ')[1];
-            return magicType ? `${type} (${magicType})` : type;
-        }
-
         function getMagicNumber() {
-            if (!fileData || fileData.length === 0) return 'No data';
+            if (!data || data.length === 0) return 'No data';
 
-            const hexString = Array.from(fileData.slice(0, 16))
-                .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
-                .join('');
+            let hexString = '';
+            for (let i = 0; i < 16 && i < data.length; i++) hexString += HEX[data[i]];
 
-            // Check magic numbers
-            for (const [magic, type] of Object.entries(magicNumbers)) {
-                if (hexString.startsWith(magic)) {
-                    return `${magic} - ${type}`;
-                }
+            for (const magic in magicNumbers) {
+                if (hexString.startsWith(magic)) return `${magic} - ${magicNumbers[magic]}`;
             }
-
-            // Return first few bytes if no match
             return hexString.slice(0, 8) + ' - Unknown';
         }
 
@@ -596,121 +629,232 @@
             const units = ['B', 'KB', 'MB', 'GB'];
             let size = bytes;
             let unitIndex = 0;
-
             while (size >= 1024 && unitIndex < units.length - 1) {
                 size /= 1024;
                 unitIndex++;
             }
-
             return `${size.toFixed(2)} ${units[unitIndex]} (${bytes.toLocaleString()} bytes)`;
         }
 
-        function calculateEntropy() {
-            if (!fileData || fileData.length === 0) return 0;
-
-            const frequency = new Array(256).fill(0);
-            for (const byte of fileData) {
-                frequency[byte]++;
-            }
-
-            let entropy = 0;
-            const len = fileData.length;
-
-            for (const count of frequency) {
-                if (count > 0) {
-                    const probability = count / len;
-                    entropy -= probability * Math.log2(probability);
-                }
-            }
-
-            return entropy;
+        async function calculateSHA256(arr) {
+            const hashBuffer = await crypto.subtle.digest('SHA-256', arr);
+            const hashArray = new Uint8Array(hashBuffer);
+            let out = '';
+            for (let i = 0; i < hashArray.length; i++) out += HEX[hashArray[i]];
+            return out.toLowerCase();
         }
 
-        async function calculateSHA256() {
-            const hashBuffer = await crypto.subtle.digest('SHA-256', fileData);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        // Row height comes from CSS, so read it back rather than hardcoding it.
+        function measureRowHeight() {
+            hexWindow.innerHTML = '<div class="hex-row"><div class="hex-offset">00000000</div></div>';
+            const h = hexWindow.firstChild.getBoundingClientRect().height;
+            if (h > 0) rowHeight = h;
+            hexWindow.innerHTML = '';
         }
 
-        function renderHexDump() {
-            if (!modifiedData) return;
+        function relayout() {
+            bpr = parseInt(bytesPerRowSelect.value, 10);
+            totalRows = data ? Math.ceil(data.length / bpr) : 0;
 
-            const bytesPerRowValue = parseInt(bytesPerRow.value);
-            let html = '';
+            const contentPx = totalRows * rowHeight;
+            canvasPx = Math.min(contentPx, MAX_CANVAS_PX);
+            scrollScale = contentPx > canvasPx ? contentPx / canvasPx : 1;
 
-            for (let offset = 0; offset < modifiedData.length; offset += bytesPerRowValue) {
-                html += '<div class="hex-row">';
+            hexCanvas.style.height = canvasPx + 'px';
+            paintedKey = '';
+            paint();
+        }
 
-                // Offset
-                html += `<div class="hex-offset">${offset.toString(16).toUpperCase().padStart(8, '0')}</div>`;
+        function firstVisibleRow() {
+            const viewportRows = Math.ceil(hexViewer.clientHeight / rowHeight);
+            if (scrollScale === 1) {
+                return Math.max(0, Math.floor(hexViewer.scrollTop / rowHeight) - OVERSCAN);
+            }
+            // Scaled mode: map scroll position proportionally onto the rows.
+            const maxStart = Math.max(0, totalRows - viewportRows);
+            const range = Math.max(1, canvasPx - hexViewer.clientHeight);
+            return Math.min(maxStart, Math.round((hexViewer.scrollTop / range) * maxStart));
+        }
 
-                // Hex bytes container
-                html += '<div class="hex-bytes">';
-                for (let i = 0; i < bytesPerRowValue; i++) {
-                    if (offset + i < modifiedData.length) {
-                        const byte = modifiedData[offset + i];
-                        const isModified = fileData[offset + i] !== byte;
-                        html += `<div class="hex-byte ${isModified ? 'modified' : ''}" 
-                                data-offset="${offset + i}">${byte.toString(16).toUpperCase().padStart(2, '0')}</div>`;
-                    } else {
-                        html += '<div class="hex-byte" style="visibility: hidden;">00</div>';
-                    }
+        function paint() {
+            if (!data) return;
+
+            const startRow = firstVisibleRow();
+            const viewportRows = Math.ceil(hexViewer.clientHeight / rowHeight);
+            const count = Math.min(
+                totalRows - startRow,
+                viewportRows + (scrollScale === 1 ? OVERSCAN * 2 : 1)
+            );
+
+            // In scaled mode the window is pinned to the scroll position,
+            // since row index and pixel offset no longer line up.
+            const top = scrollScale === 1 ? startRow * rowHeight : hexViewer.scrollTop;
+            hexWindow.style.top = top + 'px';
+
+            const key = startRow + '/' + count + '/' + renderVersion;
+            if (key === paintedKey) return;
+            paintedKey = key;
+
+            hexWindow.innerHTML = buildRows(startRow, count);
+        }
+
+        function buildRows(startRow, count) {
+            const parts = [];
+            const len = data.length;
+            const hlStart = currentSearchIndex >= 0 ? searchResults[currentSearchIndex] : -1;
+            const hlEnd = hlStart >= 0 ? hlStart + searchLength : -1;
+            const hasEdits = edits.size > 0;
+
+            for (let r = startRow, end = startRow + count; r < end; r++) {
+                const rowOffset = r * bpr;
+                const rowEnd = Math.min(rowOffset + bpr, len);
+
+                parts.push(
+                    '<div class="hex-row"><div class="hex-offset">',
+                    rowOffset.toString(16).toUpperCase().padStart(8, '0'),
+                    '</div><div class="hex-bytes">'
+                );
+
+                for (let i = rowOffset; i < rowEnd; i++) {
+                    let cls = 'hex-byte';
+                    if (hasEdits && edits.has(i)) cls += ' modified';
+                    if (i >= hlStart && i < hlEnd) cls += ' highlight';
+                    parts.push('<div class="', cls, '" data-offset="', i, '">', HEX[data[i]], '</div>');
                 }
-                html += '</div>';
-
-                // ASCII representation
-                html += '<div class="hex-ascii">';
-                for (let i = 0; i < bytesPerRowValue && offset + i < modifiedData.length; i++) {
-                    const byte = modifiedData[offset + i];
-                    const char = (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
-                    html += `<div class="ascii-char">${char}</div>`;
+                for (let i = rowEnd; i < rowOffset + bpr; i++) {
+                    parts.push('<div class="hex-byte pad">00</div>');
                 }
-                html += '</div>';
 
-                html += '</div>';
+                parts.push('</div><div class="hex-ascii">');
+                for (let i = rowOffset; i < rowEnd; i++) {
+                    parts.push('<div class="ascii-char">', ASCII[data[i]], '</div>');
+                }
+                parts.push('</div></div>');
             }
 
-            hexViewer.innerHTML = html;
+            return parts.join('');
         }
 
-        // Use event delegation for click handling
-        hexViewer.addEventListener('click', function (e) {
-            if (e.target.classList.contains('hex-byte') && e.target.dataset.offset) {
-                editByte(parseInt(e.target.dataset.offset));
+        function invalidate() {
+            renderVersion++;
+            paint();
+        }
+
+        function scrollToOffset(offset, align) {
+            const viewportRows = Math.ceil(hexViewer.clientHeight / rowHeight);
+            const row = Math.floor(offset / bpr);
+            const target = align === 'top'
+                ? row
+                : Math.max(0, row - Math.floor(viewportRows / 2));
+
+            if (scrollScale === 1) {
+                hexViewer.scrollTop = target * rowHeight;
+            } else {
+                const maxStart = Math.max(1, totalRows - viewportRows);
+                const range = Math.max(1, canvasPx - hexViewer.clientHeight);
+                hexViewer.scrollTop = (Math.min(target, maxStart) / maxStart) * range;
+            }
+            paint();
+        }
+
+        hexViewer.addEventListener('scroll', () => {
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(() => {
+                rafPending = false;
+                paint();
+            });
+        }, { passive: true });
+
+        new ResizeObserver(() => paint()).observe(hexViewer);
+
+        bytesPerRowSelect.addEventListener('change', () => {
+            // Keep the byte at the top of the viewport in view across relayout.
+            const topOffset = firstVisibleRow() * bpr;
+            relayout();
+            scrollToOffset(topOffset, 'top');
+        });
+
+        // Pair a hovered byte with its ASCII twin (and vice versa).
+        let peerEl = null;
+
+        function childIndex(el) {
+            let i = 0;
+            while ((el = el.previousElementSibling) !== null) i++;
+            return i;
+        }
+
+        hexWindow.addEventListener('mouseover', (e) => {
+            if (peerEl) {
+                peerEl.classList.remove('peer');
+                peerEl = null;
+            }
+            const t = e.target;
+            const isByte = t.classList.contains('hex-byte') && !t.classList.contains('pad');
+            const isChar = t.classList.contains('ascii-char');
+            if (!isByte && !isChar) return;
+
+            const row = t.parentElement.parentElement;
+            const twin = row.querySelector(isByte ? '.hex-ascii' : '.hex-bytes');
+            const candidate = twin && twin.children[childIndex(t)];
+            if (candidate) {
+                candidate.classList.add('peer');
+                peerEl = candidate;
             }
         });
 
-        function editByte(offset) {
-            const currentByte = modifiedData[offset];
-            document.getElementById('editOffset').textContent = `0x${offset.toString(16).toUpperCase().padStart(8, '0')}`;
-            document.getElementById('currentValue').textContent = `0x${currentByte.toString(16).toUpperCase().padStart(2, '0')}`;
-            document.getElementById('newValue').value = currentByte.toString(16).toUpperCase().padStart(2, '0');
+        hexWindow.addEventListener('mouseleave', () => {
+            if (peerEl) {
+                peerEl.classList.remove('peer');
+                peerEl = null;
+            }
+        });
 
+        hexWindow.addEventListener('click', (e) => {
+            const t = e.target;
+            if (t.classList.contains('hex-byte') && t.dataset.offset !== undefined) {
+                openEditModal(parseInt(t.dataset.offset, 10));
+            }
+        });
+
+        function openEditModal(offset) {
+            const currentByte = data[offset];
+            document.getElementById('editOffset').textContent = '0x' + offset.toString(16).toUpperCase().padStart(8, '0');
+            document.getElementById('currentValue').textContent = '0x' + HEX[currentByte];
+            newValueInput.value = HEX[currentByte];
+
+            editModal.dataset.offset = offset;
             editModal.style.display = 'block';
             modalOverlay.style.display = 'block';
-            document.getElementById('newValue').focus();
-            document.getElementById('newValue').select();
-
-            // Store current offset for saving
-            editModal.dataset.offset = offset;
+            newValueInput.focus();
+            newValueInput.select();
         }
 
         function saveByteEdit() {
-            const offset = parseInt(editModal.dataset.offset);
-            const newValueStr = document.getElementById('newValue').value;
-            const newValue = parseInt(newValueStr, 16);
+            const offset = parseInt(editModal.dataset.offset, 10);
+            const newValue = parseInt(newValueInput.value, 16);
 
-            if (isNaN(newValue) || newValue < 0 || newValue > 255) {
+            if (!Number.isInteger(newValue) || newValue < 0 || newValue > 255) {
                 alert('Please enter a valid hex value (00-FF)');
                 return;
             }
 
-            modifiedData[offset] = newValue;
-            renderHexDump();
-            updateStats();
+            const old = data[offset];
+            if (old !== newValue) {
+                if (!edits.has(offset)) {
+                    edits.set(offset, old);
+                } else if (edits.get(offset) === newValue) {
+                    edits.delete(offset); // back to the original byte
+                }
+                data[offset] = newValue;
+                freq[old]--;
+                freq[newValue]++;
 
-            downloadBtn.disabled = false;
-            resetBtn.disabled = false;
+                downloadBtn.disabled = edits.size === 0;
+                resetBtn.disabled = edits.size === 0;
+                updateStats();
+                invalidate();
+            }
 
             closeEditModal();
         }
@@ -720,126 +864,161 @@
             modalOverlay.style.display = 'none';
         }
 
+        function resetChanges() {
+            for (const [offset, original] of edits) {
+                freq[data[offset]]--;
+                freq[original]++;
+                data[offset] = original;
+            }
+            edits.clear();
+            downloadBtn.disabled = true;
+            resetBtn.disabled = true;
+            updateStats();
+            invalidate();
+        }
+
         function downloadModified() {
-            const blob = new Blob([modifiedData], { type: 'application/octet-stream' });
+            const blob = new Blob([data], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `modified_${currentFile.name}`;
+            a.download = 'modified_' + currentFile.name;
             a.click();
-            URL.revokeObjectURL(url);
+            // Revoking synchronously can cancel the download in some browsers.
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
         }
 
-        function resetChanges() {
-            modifiedData = new Uint8Array(fileData);
-            renderHexDump();
-            updateStats();
-            downloadBtn.disabled = true;
-            resetBtn.disabled = true;
-        }
+        document.getElementById('saveEdit').addEventListener('click', saveByteEdit);
+        document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
+        modalOverlay.addEventListener('click', closeEditModal);
+        downloadBtn.addEventListener('click', downloadModified);
+        resetBtn.addEventListener('click', resetChanges);
 
-        function performSearch() {
-            const searchValue = searchInput.value.trim().replace(/\s+/g, '');
-            if (!searchValue || searchValue.length % 2 !== 0) {
-                alert('Please enter valid hex values (e.g., FF 00 1A)');
-                return;
-            }
+        newValueInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+        });
 
-            // Convert search string to byte array
-            const searchBytes = [];
-            for (let i = 0; i < searchValue.length; i += 2) {
-                searchBytes.push(parseInt(searchValue.substr(i, 2), 16));
-            }
-
-            // Find all occurrences
-            searchResults = [];
-            for (let i = 0; i <= modifiedData.length - searchBytes.length; i++) {
-                let match = true;
-                for (let j = 0; j < searchBytes.length; j++) {
-                    if (modifiedData[i + j] !== searchBytes[j]) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) {
-                    searchResults.push(i);
-                }
-            }
-
-            if (searchResults.length > 0) {
-                currentSearchIndex = 0;
-                highlightSearchResult();
-                searchNextBtn.disabled = searchResults.length <= 1;
-                alert(`Found ${searchResults.length} occurrence(s)`);
-            } else {
-                alert('No matches found');
-                searchNextBtn.disabled = true;
-            }
-        }
-
-        function searchNext() {
-            if (searchResults.length > 0) {
-                currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
-                highlightSearchResult();
-            }
-        }
-
-        function highlightSearchResult() {
-            // Remove previous highlights
-            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-
-            // Highlight current result
-            const offset = searchResults[currentSearchIndex];
-            const searchLength = searchInput.value.trim().replace(/\s+/g, '').length / 2;
-
-            for (let i = 0; i < searchLength; i++) {
-                const byteElement = document.querySelector(`[data-offset="${offset + i}"]`);
-                if (byteElement) {
-                    byteElement.classList.add('highlight');
-                    if (i === 0) {
-                        byteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-            }
-        }
-
-        function updateStats() {
-            const modified = Array.from(modifiedData).filter((byte, i) => byte !== fileData[i]).length;
-            const stats = {
-                'Total Bytes': modifiedData.length.toLocaleString(),
-                'Modified Bytes': modified.toLocaleString(),
-                'Null Bytes': Array.from(modifiedData).filter(b => b === 0).length.toLocaleString(),
-                'Non-ASCII Bytes': Array.from(modifiedData).filter(b => b < 32 || b > 126).length.toLocaleString()
-            };
-
-            let statsHtml = '<h3>Statistics</h3><div style="display: grid; grid-template-columns: auto 1fr; gap: 10px;">';
-            for (const [label, value] of Object.entries(stats)) {
-                statsHtml += `
-                    <div style="color: #60c8c5;">${label}:</div>
-                    <div>${value}</div>
-                `;
-            }
-            statsHtml += '</div>';
-
-            hexStats.innerHTML = statsHtml;
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'f') {
-                    e.preventDefault();
-                    searchInput.focus();
-                } else if (e.key === 's' && !downloadBtn.disabled) {
-                    e.preventDefault();
-                    downloadModified();
-                }
+        newValueInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveByteEdit();
             }
         });
 
-        // Validate hex input in edit modal
-        document.getElementById('newValue').addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+        function resetSearch() {
+            searchResults = [];
+            currentSearchIndex = -1;
+            searchLength = 0;
+            lastQuery = '';
+            searchNextBtn.disabled = true;
+            searchStatus.textContent = '';
+        }
+
+        function performSearch() {
+            if (!data) return;
+
+            const query = searchInput.value.trim().replace(/\s+/g, '').toUpperCase();
+            if (!query || query.length % 2 !== 0 || /[^0-9A-F]/.test(query)) {
+                searchStatus.textContent = 'invalid hex';
+                return;
+            }
+
+            const needle = new Uint8Array(query.length / 2);
+            for (let i = 0; i < needle.length; i++) {
+                needle[i] = parseInt(query.substring(i * 2, i * 2 + 2), 16);
+            }
+
+            // indexOf on a typed array skips ahead in native code,
+            // which is far faster than checking every position from JS.
+            const results = [];
+            const first = needle[0];
+            const last = data.length - needle.length;
+            let i = 0;
+            while (i <= last && results.length < MAX_SEARCH_RESULTS) {
+                i = data.indexOf(first, i);
+                if (i === -1 || i > last) break;
+                let match = true;
+                for (let j = 1; j < needle.length; j++) {
+                    if (data[i + j] !== needle[j]) { match = false; break; }
+                }
+                if (match) results.push(i);
+                i++;
+            }
+
+            searchResults = results;
+            searchLength = needle.length;
+            lastQuery = query;
+
+            if (results.length === 0) {
+                currentSearchIndex = -1;
+                searchNextBtn.disabled = true;
+                searchStatus.textContent = 'no matches';
+                invalidate();
+                return;
+            }
+
+            currentSearchIndex = 0;
+            searchNextBtn.disabled = results.length <= 1;
+            showSearchResult();
+        }
+
+        function searchNext() {
+            if (searchResults.length === 0) return;
+            currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+            showSearchResult();
+        }
+
+        function showSearchResult() {
+            const capped = searchResults.length >= MAX_SEARCH_RESULTS ? '+' : '';
+            searchStatus.textContent = `${currentSearchIndex + 1} of ${searchResults.length}${capped}`;
+            invalidate();
+            scrollToOffset(searchResults[currentSearchIndex]);
+        }
+
+        searchBtn.addEventListener('click', performSearch);
+        searchNextBtn.addEventListener('click', searchNext);
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const query = searchInput.value.trim().replace(/\s+/g, '').toUpperCase();
+            // Repeat Enter on the same query walks through the matches.
+            if (query === lastQuery && searchResults.length > 0) searchNext();
+            else performSearch();
+        });
+
+        function updateStats() {
+            let printable = 0;
+            for (let i = 32; i <= 126; i++) printable += freq[i];
+
+            const stats = [
+                ['Total Bytes', data.length.toLocaleString()],
+                ['Modified Bytes', edits.size.toLocaleString()],
+                ['Null Bytes', freq[0].toLocaleString()],
+                ['Non-ASCII Bytes', (data.length - printable).toLocaleString()]
+            ];
+
+            hexStats.innerHTML = '<h3>Statistics</h3><div class="stats-grid">' + stats.map(
+                ([label, value]) => `<div class="stats-label">${label}:</div><div>${value}</div>`
+            ).join('') + '</div>';
+
+            const entropyEl = document.getElementById('infoEntropy');
+            if (entropyEl) entropyEl.textContent = calculateEntropy().toFixed(4);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && editModal.style.display === 'block') {
+                closeEditModal();
+                return;
+            }
+            if (!e.ctrlKey && !e.metaKey) return;
+            if (e.key === 'f' && data) {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            } else if (e.key === 's' && !downloadBtn.disabled) {
+                e.preventDefault();
+                downloadModified();
+            }
         });
     </script>
 </body>
