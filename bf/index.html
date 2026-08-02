@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Brute Force</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 820px;
+        }
+
+        h1 {
+            font-size: clamp(1.3rem, 6.2vw, 2em);
+        }
+
+        .section-title {
+            color: #555;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 22px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .field-row label {
+            min-width: 132px;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #555;
+            margin: -6px 0 12px 142px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        input[type="number"] {
+            width: 84px;
+        }
+
+        #pwInput {
+            flex: 1;
+            min-width: 220px;
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+
+        #customAlphabet {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        #disallowed {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .checkbox-row input {
+            accent-color: #4cafac;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0 24px;
+        }
+
+        .panel {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 14px 16px;
+            margin: 12px 0;
+        }
+
+        .rule-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .rule-list li {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            font-size: 13px;
+            padding: 3px 0;
+        }
+
+        .rule-list .mark {
+            width: 14px;
+            flex-shrink: 0;
+        }
+
+        .rule-list .pass .mark {
+            color: #7ec699;
+        }
+
+        .rule-list .fail .mark {
+            color: #ff6b6b;
+        }
+
+        .rule-list .fail .detail,
+        .rule-list .pass .detail {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .verdict {
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .verdict.pass {
+            color: #7ec699;
+        }
+
+        .verdict.fail {
+            color: #ff6b6b;
+        }
+
+        .big-result {
+            font-size: 30px;
+            color: #4cafac;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+        .big-result .unit {
+            font-size: 18px;
+            color: #888;
+        }
+
+        .big-caption {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .big-trivia {
+            font-size: 12px;
+            color: #b58bd9;
+            margin-top: 6px;
+            min-height: 16px;
+        }
+
+        .big-trivia::before {
+            content: '✦ ';
+            color: #8f6fb5;
+        }
+
+        .big-trivia:empty {
+            display: none;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-item {
+            padding: 8px 10px;
+            background-color: #252525;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            color: #4cafac;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            min-height: 20px;
+            margin: 8px 0;
+        }
+
+        .alphabet-preview {
+            font-size: 12px;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        .alphabet-head {
+            color: #777;
+            margin-bottom: 6px;
+        }
+
+        .alphabet-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+
+        .alphabet-chips .chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-ligatures: none;
+            font-feature-settings: "liga" 0, "calt" 0;
+            font-size: 12px;
+            line-height: 1;
+            min-width: 20px;
+            padding: 4px 2px;
+            text-align: center;
+            background: #252525;
+            border: 1px solid #303030;
+            border-radius: 3px;
+            color: #9a9a9a;
+        }
+
+        .alphabet-chips .chip.lower {
+            color: #7ec699;
+        }
+
+        .alphabet-chips .chip.upper {
+            color: #6cb6d9;
+        }
+
+        .alphabet-chips .chip.digit {
+            color: #d7a86a;
+        }
+
+        .alphabet-chips .chip.special {
+            color: #b58bd9;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #777;
+            border-left: 3px solid #4cafac;
+            background-color: #1e1e1e;
+            border-radius: 4px;
+            padding: 10px 12px;
+            margin: 14px 0;
+        }
+
+        .note ul {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+
+        .note li {
+            margin: 3px 0;
+        }
+
+        code {
+            background: #2d2d2d;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 600px) {
+            .field-row label {
+                min-width: 100%;
+            }
+
+            .hint {
+                margin-left: 0;
+            }
+
+            #pwInput,
+            #customAlphabet,
+            #disallowed {
+                min-width: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Password Brute Force Calculator</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 2px;">Brute-force time estimate for an ASCII password, plus a policy rule check.
+    </p>
+    <p style="font-size: 12px; color: #555; margin: 0;">Everything runs locally in your browser. Nothing is sent
+        anywhere.</p>
+
+    <!-- Password -->
+    <div class="section-title">Password</div>
+    <div class="field-row">
+        <label for="pwInput">Password</label>
+        <input type="text" id="pwInput" maxlength="512" spellcheck="false" autocomplete="off" autocapitalize="off"
+            placeholder="Type or paste an ASCII password" />
+        <span class="checkbox-row"><input type="checkbox" id="maskInput" /><label for="maskInput"
+                style="min-width: 0;">mask</label></span>
+    </div>
+    <div class="hint" id="pwSummary">Length 0 &middot; no characters</div>
+    <div class="error-message" id="pwError"></div>
+
+    <div class="grid-2">
+        <div>
+            <!-- Rules -->
+            <div class="section-title">Rules</div>
+            <div class="field-row">
+                <label for="minLen">Minimum length</label>
+                <input type="number" id="minLen" min="0" max="512" step="1" value="8" />
+            </div>
+            <div class="field-row">
+                <label for="maxLen">Maximum length</label>
+                <input type="number" id="maxLen" min="0" max="512" step="1" value="0" />
+            </div>
+            <div class="hint">0 = no maximum.</div>
+            <div class="field-row">
+                <label for="minLower">Min. lowercase</label>
+                <input type="number" id="minLower" min="0" max="512" step="1" value="0" />
+            </div>
+            <div class="field-row">
+                <label for="minUpper">Min. uppercase</label>
+                <input type="number" id="minUpper" min="0" max="512" step="1" value="0" />
+            </div>
+            <div class="field-row">
+                <label for="minDigit">Min. numbers</label>
+                <input type="number" id="minDigit" min="0" max="512" step="1" value="0" />
+            </div>
+            <div class="field-row">
+                <label for="minSpecial">Min. special</label>
+                <input type="number" id="minSpecial" min="0" max="512" step="1" value="0" />
+            </div>
+            <div class="field-row">
+                <label for="disallowed">Disallowed characters</label>
+                <input type="text" id="disallowed" spellcheck="false" autocomplete="off"
+                    placeholder="e.g. &nbsp;&lt;&gt;&amp;&quot;" />
+                <select id="disallowedPreset" title="Quick-fill a common set">
+                    <option value="" selected>Disallowed preset&hellip;</option>
+                    <option value="html">HTML-unsafe &nbsp;&lt; &gt; &amp; &quot; '</option>
+                    <option value="injection">Injection-unsafe &nbsp;&lt; &gt; &amp; &quot; ' \ / ; | `</option>
+                    <option value="whitespace">Whitespace (space)</option>
+                    <option value="clear">Clear</option>
+                </select>
+            </div>
+            <div class="hint">Each character listed is banned.<br />No input means no policy.</div>
+        </div>
+
+        <div>
+            <!-- Attack model -->
+            <div class="section-title">Attack model</div>
+            <div class="field-row">
+                <label for="alphabetMode">Attacker alphabet</label>
+                <select id="alphabetMode">
+                    <option value="auto" selected>Character classes used</option>
+                    <option value="full">All printable ASCII (95)</option>
+                    <option value="policy">Printable ASCII minus disallowed</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="field-row" id="customRow" style="display: none;">
+                <label for="customAlphabet">Custom alphabet</label>
+                <input type="text" id="customAlphabet" spellcheck="false" autocomplete="off"
+                    placeholder="abc...XYZ0123!@#" />
+            </div>
+            <div class="field-row">
+                <label for="knowsMin">Start length</label>
+                <span class="checkbox-row"><input type="checkbox" id="knowsMin" /><label for="knowsMin"
+                        style="min-width: 0;">attacker knows it</label></span>
+            </div>
+            <div class="hint">Off: starts at length 1.<br />On: starts at the minimum length.</div>
+            <div class="field-row">
+                <label for="timePer">Time per attempt</label>
+                <input type="number" id="timePer" min="0" step="any" value="1" />
+                <select id="timeUnit">
+                    <option value="1000">seconds</option>
+                    <option value="1" selected>milliseconds</option>
+                    <option value="0.001">microseconds</option>
+                    <option value="0.000001">nanoseconds</option>
+                </select>
+            </div>
+            <div class="field-row">
+                <label for="preset">Preset</label>
+                <select id="preset">
+                    <option value="" selected>&mdash;</option>
+                    <option value="100|1">Online, throttled (10/sec)</option>
+                    <option value="1|1">Online, unthrottled (1,000/sec)</option>
+                    <option value="50|0.001">Offline bcrypt on GPU (20,000/sec)</option>
+                    <option value="0.1|0.000001">Offline SHA-256 rig (10 billion/sec)</option>
+                    <option value="0.01|0.000001">Offline MD5 rig (100 billion/sec)</option>
+                </select>
+            </div>
+            <div class="hint" id="rateHint">&nbsp;</div>
+        </div>
+    </div>
+
+    <!-- Rule check -->
+    <div class="section-title">Rule check</div>
+    <div class="panel">
+        <div class="verdict" id="verdict">Enter a password.</div>
+        <ul class="rule-list" id="ruleList"></ul>
+    </div>
+
+    <!-- Result -->
+    <div class="section-title">Time to reach this password</div>
+    <div class="panel">
+        <div class="big-result" id="bigResult">&mdash;</div>
+        <div class="big-caption" id="bigCaption">Sequential search, ordered by length then by ASCII value.</div>
+        <div class="big-trivia" id="bigTrivia"></div>
+        <div class="error-message" id="calcError"></div>
+        <div class="stats-panel" id="statsPanel">
+            <div class="stat-item">
+                <div class="stat-label">Attempts to reach</div>
+                <div class="stat-value" id="statAttempts">&mdash;</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total keyspace searched</div>
+                <div class="stat-value" id="statKeyspace">&mdash;</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Position in keyspace</div>
+                <div class="stat-value" id="statPosition">&mdash;</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Alphabet size</div>
+                <div class="stat-value" id="statAlphabet">&mdash;</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Keyspace entropy</div>
+                <div class="stat-value" id="statEntropy">&mdash;</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Worst case (whole keyspace)</div>
+                <div class="stat-value" id="statWorst">&mdash;</div>
+            </div>
+        </div>
+        <div class="alphabet-preview" id="alphabetPreview"></div>
+    </div>
+
+    <div class="note">
+        <strong>Model:</strong> The password is treated as a number in base <em>N</em>, where <em>N</em> is the attacker
+        alphabet size. Candidates are tried in strict order of every candidate of length 1, then every candidate of
+        length 2, and so on. Each length is enumerated in ASCII order. No dictionaries, leaked-password lists,
+        or heuristics are used, so:
+        <ul>
+            <li>The result is the exact position of your password in that enumeration, not an average or an accurate
+                estimate in the context of real-world password cracking.
+            </li>
+            <li>A real attacker using common-password lists would very likely be faster. Treat this as an upper bound
+                for a naive attacker, not a promise. If your password is <code>123456</code>, don't count on the
+                calculation
+                to be accurate. It's likely to be tried within the first few attempts, along with the other
+                <a href="https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Passwords/Common-Credentials/10k-most-common.txt"
+                    target="_blank">10k most common passwords</a>.
+            </li>
+            <li>Composition rules (min. uppercase, etc.) are checked but never used to skip candidates.
+                Only the minimum length can shorten the search, and only when that box is ticked.
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        (() => {
+            // // // Constants // // //
+            // Unit lengths in milliseconds, kept as mantissa/exponent so that
+            // dividing by them stays exact at the boundaries (1 day, 1 year, ...).
+            const MS_PER = {
+                millisecond: { m: 1, e: 0 },
+                second: { m: 1, e: 3 },
+                minute: { m: 6, e: 4 },
+                hour: { m: 3.6, e: 6 },
+                day: { m: 8.64, e: 7 },
+                week: { m: 6.048, e: 8 },
+                month: { m: 2.6298, e: 9 },      // 30.4375 days
+                year: { m: 3.15576, e: 10 }      // 365.25 days
+            };
+            const UNIT_ORDER = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+            const LOG2_10 = Math.log2(10);
+
+            // Forward-looking cosmic milestones, as years from now, ascending.
+            // Used as thresholds: if the crack outlasts one, that event is
+            // already in the past by the time the password finally falls.
+            const COSMIC = [
+                { y: { m: 1, e: 9 }, event: 'the end of all life on Earth' },
+                { y: { m: 5, e: 9 }, event: "the Sun's swelling into a red giant" },
+                { y: { m: 1, e: 14 }, event: 'the last stars burning out' },
+                { y: { m: 1, e: 40 }, event: 'the decay of the last protons' },
+                { y: { m: 1, e: 100 }, event: 'the evaporation of the last black holes' }
+            ];
+
+            const PRINTABLE = [];
+            for (let c = 32; c <= 126; c++) PRINTABLE.push(String.fromCharCode(c));
+
+            // Quick-fill sets for the disallowed-characters field. These target
+            // form/injection safety, not password strength — real providers ban
+            // little to nothing.
+            const DISALLOWED_PRESETS = {
+                html: `<>&"'`,
+                injection: `<>&"'\\/;|\``,
+                whitespace: ` `,
+                clear: ``
+            };
+
+            // // // Elements // // //
+            const el = id => document.getElementById(id);
+            const pwInput = el('pwInput'), maskInput = el('maskInput');
+            const minLen = el('minLen'), maxLen = el('maxLen');
+            const minLower = el('minLower'), minUpper = el('minUpper');
+            const minDigit = el('minDigit'), minSpecial = el('minSpecial');
+            const disallowed = el('disallowed'), disallowedPreset = el('disallowedPreset');
+            const alphabetMode = el('alphabetMode'), customRow = el('customRow'), customAlphabet = el('customAlphabet');
+            const knowsMin = el('knowsMin'), timePer = el('timePer'), timeUnit = el('timeUnit'), preset = el('preset');
+
+            // // // Character classes // // //
+            function classOf(ch) {
+                const c = ch.charCodeAt(0);
+                if (c >= 97 && c <= 122) return 'lower';
+                if (c >= 65 && c <= 90) return 'upper';
+                if (c >= 48 && c <= 57) return 'digit';
+                return 'special';
+            }
+
+            function countClasses(pw) {
+                const counts = { lower: 0, upper: 0, digit: 0, special: 0 };
+                for (const ch of pw) counts[classOf(ch)]++;
+                return counts;
+            }
+
+            // // // Big-number helpers // // //
+            // Numbers here routinely exceed what a double can hold, so magnitudes
+            // are carried around as {m, e} meaning m * 10^e with 1 <= m < 10.
+            function norm(m, e) {
+                if (!isFinite(m) || m <= 0) return { m: 0, e: 0 };
+                while (m >= 10) { m /= 10; e++; }
+                while (m < 1) { m *= 10; e--; }
+                return { m, e };
+            }
+
+            function bigToSci(b) {
+                if (b <= 0n) return { m: 0, e: 0 };
+                const s = b.toString();
+                const digits = s.slice(0, 17);
+                return { m: Number(digits) / Math.pow(10, digits.length - 1), e: s.length - 1 };
+            }
+
+            function scaleSci(sci, factor) {
+                if (sci.m === 0 || factor <= 0) return { m: 0, e: 0 };
+                return norm(sci.m * factor, sci.e);
+            }
+
+            function fmtSci(sci, decimals = 2) {
+                if (sci.m === 0) return '0';
+                if (sci.e >= 15 || sci.e <= -5) {
+                    return sci.m.toFixed(3) + ' × 10^' + sci.e;
+                }
+                const val = sci.m * Math.pow(10, sci.e);
+                if (val < 1) return val.toPrecision(3);
+                return val.toLocaleString('en-US', { maximumFractionDigits: sci.e >= 6 ? 0 : decimals });
+            }
+
+            function fmtBig(b) {
+                const s = b.toString();
+                if (s.length <= 21) return b.toLocaleString('en-US');
+                const sci = bigToSci(b);
+                return fmtSci(sci) + ' (' + s.length + ' digits)';
+            }
+
+            function inUnit(msSci, unit) {
+                const u = MS_PER[unit];
+                const v = norm(msSci.m / u.m, msSci.e - u.e);
+                // Pull values a hair under 1 back onto the boundary, so that e.g.
+                // exactly one year reads as "1 year" and not "12 months".
+                return (v.e === -1 && v.m > 9.999999999) ? { m: 1, e: 0 } : v;
+            }
+
+            // Picks the largest time unit in which the value is still >= 1.
+            function fmtDuration(msSci) {
+                if (msSci.m === 0) return { value: '0', unit: 'milliseconds' };
+                for (const unit of UNIT_ORDER) {
+                    const v = inUnit(msSci, unit);
+                    if (v.e >= 0) {
+                        const value = fmtSci(v);
+                        return { value, unit: value === '1' ? unit : unit + 's' };
+                    }
+                }
+                return { value: fmtSci(msSci), unit: fmtSci(msSci) === '1' ? 'millisecond' : 'milliseconds' };
+            }
+
+            // Sign of a - b for two {m, e} magnitudes (both assumed >= 0).
+            function cmpSci(a, b) {
+                if (a.m === 0 && b.m === 0) return 0;
+                if (a.m === 0) return -1;
+                if (b.m === 0) return 1;
+                if (a.e !== b.e) return a.e - b.e;
+                return a.m - b.m;
+            }
+
+            function toYears(msSci) {
+                if (msSci.m === 0) return { m: 0, e: 0 };
+                const u = MS_PER.year;
+                return norm(msSci.m / u.m, msSci.e - u.e);
+            }
+
+            // a - b for two {m, e} magnitudes, assuming a >= b >= 0. When the
+            // exponents are far apart, b vanishes into a's mantissa and the
+            // result is simply a, which is the correct limit.
+            function subSci(a, b) {
+                if (b.m === 0) return a;
+                const m = a.m - b.m * Math.pow(10, b.e - a.e);
+                return m <= 0 ? { m: 0, e: 0 } : norm(m, a.e);
+            }
+
+            // Frames very long crack times as a forward threshold: by the time
+            // the password falls, the largest milestone it outlasts is already
+            // this far in the past.
+            function cosmicTrivia(msSci) {
+                const years = toYears(msSci);
+                if (cmpSci(years, COSMIC[0].y) < 0) return '';
+                let pick = COSMIC[0];
+                for (const m of COSMIC) {
+                    if (cmpSci(years, m.y) >= 0) pick = m; else break;
+                }
+                const past = subSci(years, pick.y);
+                if (past.m === 0) {
+                    return 'By the time it\'s cracked, ' + pick.event + ' would be comparatively close.';
+                }
+                return 'By the time it\'s cracked, ' + pick.event +
+                    ' would have happened ' + fmtSci(past) + ' years ago.';
+            }
+
+            function escapeHtml(s) {
+                return s.replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[c]);
+            }
+
+            function intVal(input) {
+                const n = parseInt(input.value, 10);
+                return isNaN(n) || n < 0 ? 0 : n;
+            }
+
+            // // // Alphabet // // //
+            function buildAlphabet(pw, banned) {
+                const mode = alphabetMode.value;
+                let chars;
+                if (mode === 'full') {
+                    chars = PRINTABLE.slice();
+                } else if (mode === 'policy') {
+                    chars = PRINTABLE.filter(c => !banned.has(c));
+                } else if (mode === 'custom') {
+                    chars = [...new Set(customAlphabet.value.split(''))].filter(c => {
+                        const n = c.charCodeAt(0);
+                        return n >= 32 && n <= 126;
+                    });
+                } else {
+                    const used = new Set([...pw].map(classOf));
+                    chars = PRINTABLE.filter(c => used.has(classOf(c)));
+                }
+                return chars.sort((a, b) => a.charCodeAt(0) - b.charCodeAt(0));
+            }
+
+            // Renders the alphabet as one isolated chip per character, so the
+            // font can't form ligatures across characters and there's no lone
+            // wrapped glyph. Chips stay in ASCII order but are colour-grouped
+            // by character class.
+            function renderAlphabet(alphabet) {
+                const preview = el('alphabetPreview');
+                if (!alphabet.length) { preview.innerHTML = ''; return; }
+                const counts = { lower: 0, upper: 0, digit: 0, special: 0 };
+                const chips = alphabet.map(c => {
+                    const cls = classOf(c);
+                    counts[cls]++;
+                    const disp = c === ' ' ? '␣' : escapeHtml(c);
+                    const cp = 'U+' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+                    return '<span class="chip ' + cls + '" title="' + cp + '">' + disp + '</span>';
+                }).join('');
+                const parts = [];
+                if (counts.lower) parts.push(counts.lower + ' lowercase');
+                if (counts.upper) parts.push(counts.upper + ' uppercase');
+                if (counts.digit) parts.push(counts.digit + ' digit' + (counts.digit === 1 ? '' : 's'));
+                if (counts.special) parts.push(counts.special + ' special');
+                preview.innerHTML =
+                    '<div class="alphabet-head">Alphabet (' + alphabet.length + '): ' + parts.join(' · ') + '</div>' +
+                    '<div class="alphabet-chips">' + chips + '</div>';
+            }
+
+            // // // Rule check // // //
+            function checkRules(pw, banned) {
+                const counts = countClasses(pw);
+                const rules = [];
+                const need = (label, required, actual) => {
+                    if (required > 0) {
+                        rules.push({
+                            label: label + ': at least ' + required,
+                            ok: actual >= required,
+                            detail: 'has ' + actual
+                        });
+                    }
+                };
+
+                const min = intVal(minLen), max = intVal(maxLen);
+                if (min > 0) {
+                    rules.push({
+                        label: 'Minimum length: ' + min,
+                        ok: pw.length >= min,
+                        detail: 'is ' + pw.length
+                    });
+                }
+                if (max > 0) {
+                    rules.push({
+                        label: 'Maximum length: ' + max,
+                        ok: pw.length <= max,
+                        detail: 'is ' + pw.length
+                    });
+                }
+                need('Lowercase letters', intVal(minLower), counts.lower);
+                need('Uppercase letters', intVal(minUpper), counts.upper);
+                need('Numbers', intVal(minDigit), counts.digit);
+                need('Special characters', intVal(minSpecial), counts.special);
+
+                if (banned.size > 0) {
+                    const found = [...new Set([...pw])].filter(c => banned.has(c));
+                    rules.push({
+                        label: 'No disallowed characters',
+                        ok: found.length === 0,
+                        detail: found.length ? 'found ' + found.map(c => c === ' ' ? '(space)' : c).join(' ') : 'none found'
+                    });
+                }
+                return rules;
+            }
+
+            function renderRules(pw, rules) {
+                const list = el('ruleList'), verdict = el('verdict');
+                list.innerHTML = rules.map(r =>
+                    '<li class="' + (r.ok ? 'pass' : 'fail') + '"><span class="mark">' +
+                    (r.ok ? '✓' : '✗') + '</span><span>' + escapeHtml(r.label) +
+                    '</span><span class="detail">' + escapeHtml(r.detail) + '</span></li>'
+                ).join('');
+
+                if (!pw) {
+                    verdict.className = 'verdict';
+                    verdict.textContent = 'Enter a password.';
+                } else if (!rules.length) {
+                    verdict.className = 'verdict';
+                    verdict.textContent = 'No rules configured.';
+                } else {
+                    const failed = rules.filter(r => !r.ok).length;
+                    verdict.className = 'verdict ' + (failed ? 'fail' : 'pass');
+                    verdict.textContent = failed
+                        ? 'Fails ' + failed + ' of ' + rules.length + ' rule' + (rules.length === 1 ? '' : 's') + '.'
+                        : 'Meets all ' + rules.length + ' rule' + (rules.length === 1 ? '' : 's') + '.';
+                }
+            }
+
+            // // // Main calculation // // //
+            function blankStats(message) {
+                el('bigResult').innerHTML = '&mdash;';
+                el('bigTrivia').textContent = '';
+                el('calcError').textContent = message || '';
+                for (const id of ['statAttempts', 'statKeyspace', 'statPosition', 'statAlphabet', 'statEntropy', 'statWorst']) {
+                    el(id).innerHTML = '&mdash;';
+                }
+            }
+
+            function calculate(pw, banned) {
+                const alphabet = buildAlphabet(pw, banned);
+                renderAlphabet(alphabet);
+
+                if (!pw) return blankStats('');
+                if (!alphabet.length) return blankStats('The attacker alphabet is empty.');
+
+                const index = new Map(alphabet.map((c, i) => [c, i]));
+                const missing = [...new Set([...pw])].filter(c => !index.has(c));
+                if (missing.length) {
+                    return blankStats('The alphabet does not contain: ' +
+                        missing.map(c => c === ' ' ? '(space)' : c).join(' ') +
+                        ' — an attacker enumerating it would never reach this password.');
+                }
+
+                const msPer = parseFloat(timePer.value) * parseFloat(timeUnit.value);
+                if (!(msPer > 0)) return blankStats('Time per attempt must be greater than zero.');
+
+                const L = pw.length;
+                const N = BigInt(alphabet.length);
+                const min = intVal(minLen);
+                let start = 1;
+                let note = '';
+                if (knowsMin.checked && min > 1) {
+                    start = Math.min(min, L);
+                    if (L < min) note = ' The password is shorter than the minimum length, so the search still starts at length ' + L + '.';
+                }
+
+                // Candidates of every length below this one.
+                let prior = 0n;
+                let p = N ** BigInt(start);
+                for (let k = start; k < L; k++) { prior += p; p *= N; }
+
+                // Position within this length: the password read as a base-N number.
+                let pos = 0n;
+                for (const ch of pw) pos = pos * N + BigInt(index.get(ch));
+
+                const attempts = prior + pos + 1n;
+
+                // Whole space the attacker would sweep, capped by the max-length rule.
+                const max = intVal(maxLen);
+                const topLen = max > 0 ? Math.max(max, L) : L;
+                let keyspace = 0n;
+                let q = N ** BigInt(start);
+                for (let k = start; k <= topLen; k++) { keyspace += q; q *= N; }
+
+                const attemptsSci = bigToSci(attempts);
+                const totalMs = scaleSci(attemptsSci, msPer);
+                const worstMs = scaleSci(bigToSci(keyspace), msPer);
+                const d = fmtDuration(totalMs);
+
+                el('bigResult').innerHTML = escapeHtml(d.value) + ' <span class="unit">' + d.unit + '</span>';
+                el('calcError').textContent = '';
+                el('bigCaption').textContent =
+                    'Sequential search from length ' + start + ', ordered by length then by ASCII value, at ' +
+                    fmtSci(norm(msPer, 0), 6) + ' ms per attempt.' + note;
+                el('bigTrivia').textContent = cosmicTrivia(totalMs);
+
+                const keyspaceSci = bigToSci(keyspace);
+                const percent = Number((attempts * 1000000n) / keyspace) / 10000;
+
+                el('statAttempts').textContent = fmtBig(attempts);
+                el('statKeyspace').textContent = fmtBig(keyspace);
+                el('statPosition').textContent = (percent < 0.0001 ? '< 0.0001' : percent.toFixed(4)) + ' %';
+                el('statAlphabet').textContent = alphabet.length + ' characters';
+                el('statEntropy').textContent =
+                    ((Math.log10(keyspaceSci.m) + keyspaceSci.e) * LOG2_10).toFixed(1) + ' bits';
+                const w = fmtDuration(worstMs);
+                el('statWorst').textContent = w.value + ' ' + w.unit;
+            }
+
+            // // // Update loop // // //
+            function update() {
+                const pw = pwInput.value;
+                const banned = new Set(disallowed.value.split(''));
+                banned.delete('');
+
+                // ASCII gate: everything downstream assumes 0x20-0x7E.
+                const nonAscii = [...new Set([...pw])].filter(c => {
+                    const n = c.charCodeAt(0);
+                    return n < 32 || n > 126;
+                });
+                const counts = countClasses(pw);
+                el('pwSummary').textContent = 'Length ' + pw.length + ' · ' +
+                    counts.lower + ' lowercase, ' + counts.upper + ' uppercase, ' +
+                    counts.digit + ' number' + (counts.digit === 1 ? '' : 's') + ', ' +
+                    counts.special + ' special';
+
+                const rate = 1000 / (parseFloat(timePer.value) * parseFloat(timeUnit.value));
+                el('rateHint').textContent = isFinite(rate) && rate > 0
+                    ? '≈ ' + fmtSci(norm(rate, 0)) + ' guesses per second'
+                    : ' ';
+
+                renderRules(pw, checkRules(pw, banned));
+
+                if (nonAscii.length) {
+                    el('pwError').textContent =
+                        'Non-ASCII characters are not supported: ' + nonAscii.join(' ');
+                    blankStats('');
+                    el('alphabetPreview').textContent = '';
+                    return;
+                }
+                el('pwError').textContent = '';
+                calculate(pw, banned);
+            }
+
+            // // // Wiring // // //
+            maskInput.addEventListener('change', () => {
+                pwInput.type = maskInput.checked ? 'password' : 'text';
+            });
+
+            alphabetMode.addEventListener('change', () => {
+                customRow.style.display = alphabetMode.value === 'custom' ? '' : 'none';
+                update();
+            });
+
+            preset.addEventListener('change', () => {
+                if (!preset.value) return;
+                const [amount, unit] = preset.value.split('|');
+                timePer.value = amount;
+                timeUnit.value = unit;
+                update();
+            });
+
+            [timePer, timeUnit].forEach(node => node.addEventListener('input', () => {
+                preset.value = '';
+                update();
+            }));
+
+            disallowedPreset.addEventListener('change', () => {
+                const set = DISALLOWED_PRESETS[disallowedPreset.value];
+                if (set === undefined) return;
+                disallowed.value = set;
+                disallowedPreset.value = '';
+                update();
+            });
+
+            [pwInput, minLen, maxLen, minLower, minUpper, minDigit, minSpecial,
+                disallowed, customAlphabet].forEach(node => node.addEventListener('input', update));
+            knowsMin.addEventListener('change', update);
+
+            update();
+            pwInput.focus();
+        })();
+    </script>
+</body>
+
+</html>
