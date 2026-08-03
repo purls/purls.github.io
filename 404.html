@@ -5,7 +5,7 @@
     <link rel="icon" href="images/romero.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
+    <title>Index of /</title>
     <style>
         @font-face {
             font-family: 'JetBrains Mono';
@@ -17,14 +17,12 @@
 
         :root {
             --bg-color: #121212;
-            --card-color: #1e1e1e;
-            --accent-color: #ff6b6b;
+            --text-color: #c7c7c7;
+            --accent-color: #dacdac;
             --info-color: #c99999;
             --link-color: #577577;
             --link-hover: #60aaaa;
-            --text-color: #e0e0e0;
-            --muted-color: #666;
-            --success-color: #60c8c5;
+            --muted-color: #777;
         }
 
         * {
@@ -35,284 +33,250 @@
 
         body {
             font-family: 'JetBrains Mono', monospace;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
             background-color: var(--bg-color);
             color: var(--text-color);
-            line-height: 1.6;
-            overflow: hidden;
-        }
-
-        .container {
-            text-align: center;
-            max-width: 600px;
-            z-index: 10;
-            position: relative;
-        }
-
-        .error-code {
-            font-size: 8rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin: 0;
-            line-height: 1;
-            position: relative;
-            display: inline-block;
-            animation: glitch 2s infinite;
-        }
-
-        @keyframes glitch {
-
-            0%,
-            100% {
-                text-shadow:
-                    0.02em 0 0 rgba(255, 0, 0, 0.75),
-                    -0.02em -0 0 rgba(0, 255, 255, 0.75);
-            }
-
-            50% {
-                text-shadow:
-                    0.05em 0 0 rgba(255, 0, 0, 0.75),
-                    -0.05em -0 0 rgba(0, 255, 255, 0.75);
-            }
-        }
-
-        .error-message {
-            font-size: 1.5rem;
-            margin: 1rem 0 2rem;
-            color: var(--info-color);
-        }
-
-        .terminal {
-            background: var(--card-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            text-align: left;
+            padding: 1.5rem 1rem 2rem;
             font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            position: relative;
+            line-height: 1.5;
         }
 
-        .terminal::before {
-            content: '$ ';
-            color: var(--success-color);
+        main {
+            max-width: 820px;
+            margin: 0 auto;
         }
 
-        .terminal-text {
-            display: inline;
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: var(--accent-color);
+            letter-spacing: -0.5px;
         }
 
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 1.2em;
-            background: var(--success-color);
-            animation: blink 1s infinite;
-            margin-left: 2px;
-            vertical-align: text-bottom;
-        }
-
-        @keyframes blink {
-
-            0%,
-            50% {
-                opacity: 1;
-            }
-
-            51%,
-            100% {
-                opacity: 0;
-            }
-        }
-
-        .actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            background: #244444;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-        }
-
-        .btn:hover {
-            background: #255555;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-primary {
-            background: var(--link-color);
-        }
-
-        .btn-primary:hover {
-            background: var(--link-hover);
-        }
-
-        /* Matrix rain effect */
-        .matrix-rain {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.1;
-            z-index: 1;
-        }
-
-        .matrix-column {
-            position: absolute;
-            top: -100%;
-            font-size: 14px;
-            line-height: 14px;
-            color: #0f0;
-            animation: matrix-fall linear infinite;
-            font-family: monospace;
-        }
-
-        @keyframes matrix-fall {
-            to {
-                transform: translateY(calc(100vh + 100%));
-            }
-        }
-
-        .suggestions {
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .suggestions h3 {
+        .notice {
             color: var(--info-color);
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
+            margin-top: 0.5rem;
         }
 
-        .suggestions ul {
-            list-style: none;
-            padding: 0;
+        .notice code {
+            font: inherit;
+            color: var(--accent-color);
+            word-break: break-all;
         }
 
-        .suggestions li {
-            margin: 0.5rem 0;
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            margin: 0.75rem 0;
         }
 
-        .suggestions a {
+        .listing {
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 520px;
+        }
+
+        th {
+            text-align: left;
+            font-weight: 400;
+            color: var(--info-color);
+            padding: 0 1.5rem 0.25rem 0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.1rem 1.5rem 0.1rem 0;
+            white-space: nowrap;
+            vertical-align: baseline;
+        }
+
+        td:last-child,
+        th:last-child {
+            padding-right: 0;
+            white-space: normal;
+        }
+
+        .size {
+            text-align: right;
+            color: var(--muted-color);
+        }
+
+        .desc {
+            color: var(--muted-color);
+        }
+
+        a {
             color: var(--link-color);
             text-decoration: none;
-            transition: color 0.2s;
         }
 
-        .suggestions a:hover {
+        a:hover {
             color: var(--link-hover);
             text-decoration: underline;
         }
 
-        @media (max-width: 600px) {
-            .error-code {
-                font-size: 5rem;
-            }
-
-            .error-message {
-                font-size: 1.2rem;
-            }
-
-            .terminal {
-                font-size: 0.8rem;
-                padding: 1rem;
-            }
+        address {
+            font-style: normal;
+            color: var(--muted-color);
+            font-size: 0.8rem;
         }
     </style>
 </head>
 
 <body>
-    <div class="matrix-rain" id="matrix"></div>
+    <main>
+        <h1>Index of /</h1>
+        <p class="notice">The requested URL <code id="requested-path">/</code> was not found on this server.</p>
+        <hr>
 
-    <div class="container">
-        <h1 class="error-code">404</h1>
-        <p class="error-message">Page not found</p>
-
-        <div class="terminal">
-            <span class="terminal-text" id="terminal-text"></span><span class="cursor"></span>
+        <div class="listing">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="size">Size</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="listing-body">
+                    <tr>
+                        <td colspan="3" class="desc">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div class="actions">
-            <a href="/" class="btn btn-primary">← Go Home</a>
-            <a href="javascript:history.back()" class="btn">Go Back</a>
-        </div>
-
-        <div class="suggestions">
-            <h3>Tools you might be looking for:</h3>
-            <ul>
-                <li><a href="/bm">Bookmarks</a></li>
-                <li><a href="/fj">JSON Formatter</a></li>
-                <li><a href="/qr">QR Code Generator</a></li>
-                <li><a href="/hex">Hex Dump &amp; Editor</a></li>
-            </ul>
-        </div>
-    </div>
+        <hr>
+        <address>GitHub Pages Server at localhost.beer Port 443</address>
+    </main>
 
     <script>
-        // Terminal typing effect
-        const terminalText = "curl -I https://localhost.beer" + window.location.pathname + "\nHTTP/2 404 Not Found\nServer: GitHub.com\nContent-Type: text/html; charset=utf-8";
-        const terminalElement = document.getElementById('terminal-text');
-        let charIndex = 0;
+        // Directory list is pulled live from the repo tree.
+        // Descriptions are the only hand-maintained part.
+        // a directory with no entry here still gets listed.
+        const descriptions = {
+            '64': 'Base64 encoder & decoder',
+            '754': 'IEEE-754 floating point converter',
+            'a': 'Anchor playground',
+            'ab': 'about:blank notepad',
+            'azdor1099': 'AZ DOR 1099-S e-file generator',
+            'bf': 'Password brute force calculator',
+            'bm': 'Bookmarks',
+            'cards': 'Card tools',
+            'circle': 'Circle PFP cropper',
+            'clipboard': 'Clipboard analyzer',
+            'copy': 'Multi-clipboard',
+            'crypt': 'Encryption & decryption',
+            'dc': 'Diff checker',
+            'dmc': 'Diacritical mark combiner',
+            'files': 'Reference documents',
+            'fj': 'JSON formatter',
+            'h': 'Advanced replace',
+            'hex': 'Binary file analyzer & hex editor',
+            'http': 'HTTP request tool',
+            'json': 'JSON output',
+            'keygen': 'Keygen',
+            'nc': 'Namecheap market parser',
+            'pdf': 'PDF page organizer',
+            'pixel': 'Pixel strip editor',
+            'points': 'Point redemption optimizer',
+            'qr': 'Interactive QR editor',
+            'qrs': 'Sequence & bulk QR',
+            'rng': 'Tuned RNG',
+            'sc': 'Unicode UI stress test characters',
+            'scroll': 'Scroll wheel tester',
+            'skew': 'Skew width calculator',
+            'ss': 'Text screensaver',
+            'text': 'Redirect to /clipboard',
+            'tf2': 'TF2 chat colorizer',
+            'trim': 'Text trimmer',
+            'u': 'String converter',
+        };
 
-        function typeText() {
-            if (charIndex < terminalText.length) {
-                terminalElement.textContent = terminalText.substring(0, charIndex + 1);
-                charIndex++;
-                setTimeout(typeText, Math.random() * 50 + 20);
+        const TREE_URL = 'https://api.github.com/repos/purls/purls.github.io/git/trees/main?recursive=1';
+        const CACHE_KEY = 'index-of-root';
+
+        function formatSize(bytes) {
+            if (bytes === null) return '-';
+            if (bytes < 1024) return bytes + '';
+            if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + 'K';
+            return (bytes / (1024 * 1024)).toFixed(1) + 'M';
+        }
+
+        // A route is a top-level directory holding a non-empty index.html.
+        function routesFromTree(tree) {
+            return tree
+                .filter(node => node.type === 'blob' && node.size > 0 &&
+                    /^[^/]+\/index\.html$/.test(node.path))
+                .map(node => ({ name: node.path.split('/')[0], size: node.size }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        function render(routes) {
+            const body = document.getElementById('listing-body');
+            body.textContent = '';
+
+            const rows = [{ name: null }].concat(routes);
+            for (const route of rows) {
+                const tr = document.createElement('tr');
+
+                const nameCell = document.createElement('td');
+                const link = document.createElement('a');
+                link.href = route.name === null ? '/' : `/${route.name}/`;
+                link.textContent = route.name === null ? 'Parent Directory' : route.name + '/';
+                nameCell.appendChild(link);
+
+                const sizeCell = document.createElement('td');
+                sizeCell.className = 'size';
+                sizeCell.textContent = route.name === null ? '-' : formatSize(route.size);
+
+                const descCell = document.createElement('td');
+                descCell.className = 'desc';
+                descCell.textContent = route.name === null ? '' : (descriptions[route.name] || '');
+
+                tr.append(nameCell, sizeCell, descCell);
+                body.appendChild(tr);
             }
         }
 
-        // Matrix rain effect
-        function createMatrixRain() {
-            const matrix = document.getElementById('matrix');
-            const columns = Math.floor(window.innerWidth / 20);
+        // Last resort if the API is unreachable or rate limited is the list.
+        function renderFallback() {
+            render(Object.keys(descriptions).sort().map(name => ({ name, size: null })));
+        }
 
-            for (let i = 0; i < columns; i++) {
-                const column = document.createElement('div');
-                column.className = 'matrix-column';
-                column.style.left = i * 20 + 'px';
-                column.style.animationDuration = (Math.random() * 5 + 5) + 's';
-                column.style.animationDelay = Math.random() * 5 + 's';
-
-                // Generate random characters
-                let chars = '';
-                for (let j = 0; j < 50; j++) {
-                    chars += String.fromCharCode(33 + Math.floor(Math.random() * 94)) + '<br>';
+        async function loadIndex() {
+            const cached = sessionStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    render(JSON.parse(cached));
+                    return;
+                } catch (error) {
+                    sessionStorage.removeItem(CACHE_KEY);
                 }
-                column.innerHTML = chars;
+            }
 
-                matrix.appendChild(column);
+            try {
+                const response = await fetch(TREE_URL);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const data = await response.json();
+                if (!Array.isArray(data.tree)) throw new Error('unexpected response');
+
+                const routes = routesFromTree(data.tree);
+                if (!routes.length) throw new Error('no routes found');
+
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify(routes));
+                render(routes);
+            } catch (error) {
+                renderFallback();
             }
         }
 
-        // Initialize effects
-        typeText();
-        createMatrixRain();
-
-        // Log 404 to console with style
-        console.log('%c404 - Page Not Found', 'color: #ff6b6b; font-size: 24px; font-weight: bold;');
-        console.log(`%cThe requested path "${window.location.pathname}" could not be found.`, 'color: #c99999;');
+        document.getElementById('requested-path').textContent = window.location.pathname;
+        loadIndex();
     </script>
 </body>
 
