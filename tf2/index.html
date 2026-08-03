@@ -457,6 +457,23 @@
             resize: vertical;
             min-height: 100px;
         }
+
+        .disclaimer-box {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 12px 15px;
+            margin: 10px 0 15px;
+            background-color: #2a2410;
+            border: 1px solid #6b5a1e;
+            border-radius: 4px;
+            color: #e0d090;
+            font-size: 14px;
+        }
+
+        .disclaimer-box .disclaimer-icon {
+            flex-shrink: 0;
+        }
     </style>
 </head>
 
@@ -470,6 +487,12 @@
         </a>
     </div>
     <p style="margin: 0;">Generate color-coded chat messages for TF2 using special characters.</p>
+
+    <div class="disclaimer-box">
+        <span class="disclaimer-icon">⚠️</span>
+        <span>This tool relied on a color-text exploit that was patched on March 6, 2026.<br />
+            It no longer works in-game and this page is kept for reference only.</span>
+    </div>
     <br />
 
     <div class="two-column">
@@ -573,7 +596,8 @@
                             data-color="#D32CE6"></div>
                         <div class="preset-color" style="background-color: #EB4B4B" title="Elite Grade"
                             data-color="#EB4B4B"></div>
-                        <div class="preset-color" style="background-color: transparent; border: none; pointer-events: none;"></div>
+                        <div class="preset-color"
+                            style="background-color: transparent; border: none; pointer-events: none;"></div>
                         <div class="preset-color" style="background-color: #ECE4CC" title="Chat White"
                             data-color="#ECE4CC"></div>
                         <div class="preset-color" style="background-color: #ff4040" title="Red Team"
