@@ -45,6 +45,67 @@
         color: #b0b0b0;
       }
 
+      .range-panel {
+        border: 1px solid #3d3d3d;
+        background-color: #1a1a1a;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+      }
+
+      .range-panel > summary {
+        cursor: pointer;
+        color: #80cccc;
+        font-size: 14px;
+        user-select: none;
+      }
+
+      .range-panel > summary:focus-visible {
+        outline: 2px solid #4cafac;
+      }
+
+      .range-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .range-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .range-row label {
+        font-size: 13px;
+        color: #b0b0b0;
+      }
+
+      .range-panel input[type="number"] {
+        width: 6em;
+        padding: 6px 5px;
+        border: 1px solid #3d3d3d;
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .range-panel input[type="number"]:focus {
+        outline: 2px solid #4cafac;
+      }
+
+      #rangeCount {
+        font-size: 13px;
+        color: #80cccc;
+      }
+
+      .range-note {
+        font-size: 12px;
+        color: #777;
+        margin: 0;
+      }
+
       .file-legend span::before {
         content: "";
         display: inline-block;
@@ -84,6 +145,12 @@
 
       .page-card.drop-target {
         outline: 2px dashed #4cafac;
+      }
+
+      /* Inset ring so it stacks with the focus/drop outlines instead of fighting them */
+      .page-card.in-range {
+        background-color: #26201c;
+        box-shadow: inset 0 0 0 2px #cc8f66;
       }
 
       .page-card canvas {
@@ -174,7 +241,7 @@
     <p style="margin: 0">
       Load one or more PDFs, then drag pages to reorder, rotate, delete, or
       interleave. Click a thumbnail to confirm it at full size. Everything runs
-      in this tab; nothing is uploaded anywhere.
+      in this tab. <b>Nothing is uploaded anywhere.</b>
     </p>
     <br />
 
@@ -234,6 +301,89 @@
       </button>
     </div>
 
+    <details class="range-panel" id="rangePanel" open>
+      <summary>Page range</summary>
+      <div class="range-body">
+        <div class="range-row">
+          <label for="rangeStart">Start</label>
+          <input
+            type="number"
+            id="rangeStart"
+            min="1"
+            step="1"
+            value="1"
+            aria-label="First page of the range"
+          />
+          <label for="rangeEnd">End</label>
+          <input
+            type="number"
+            id="rangeEnd"
+            min="1"
+            step="1"
+            value="1"
+            aria-label="Last page of the range, inclusive"
+          />
+          <button
+            id="rangeAll"
+            disabled
+            title="Set the range to every page in the grid"
+            aria-label="Select all pages as the range"
+          >
+            Select all
+          </button>
+          <span id="rangeCount" role="status"></span>
+        </div>
+        <div class="range-row">
+          <button
+            id="rangeDelete"
+            disabled
+            title="Remove every page in the range"
+            aria-label="Delete the pages in the range"
+          >
+            Delete range
+          </button>
+          <button
+            id="rangeRotate"
+            disabled
+            title="Rotate every page in the range 90 degrees clockwise"
+            aria-label="Rotate the pages in the range 90 degrees clockwise"
+          >
+            Rotate range &#8635;
+          </button>
+          <button
+            id="rangeShiftLeft"
+            disabled
+            title="Move the range earlier, hopping the pages just before it to the far side"
+            aria-label="Shift the range earlier"
+          >
+            &#9664; Shift
+          </button>
+          <button
+            id="rangeShiftRight"
+            disabled
+            title="Move the range later, hopping the pages just after it to the far side"
+            aria-label="Shift the range later"
+          >
+            Shift &#9654;
+          </button>
+          <label for="rangeStep">by</label>
+          <input
+            type="number"
+            id="rangeStep"
+            min="1"
+            step="1"
+            value="1"
+            aria-label="Number of positions to shift by"
+          />
+        </div>
+        <p class="range-note">
+          Numbers are grid positions (1 = first card), not the page numbers
+          printed on the cards. The highlighted cards are what the buttons will
+          act on.
+        </p>
+      </div>
+    </details>
+
     <p id="status" role="status"></p>
 
     <div class="file-legend" id="fileLegend"></div>
@@ -252,6 +402,16 @@
       with the &#9664; and &#9654; buttons on each card, or by focusing a card
       (Tab) and using the arrow keys. While a card is focused: R rotates, Delete
       removes, Enter opens the full size view.
+    </p>
+    <p>
+      The page range section works on a block of pages at once, which beats
+      holding Delete on a long document. Start and End are grid positions
+      counting from 1 and both ends are included; the matching cards light up so
+      you can check the selection before acting. Delete and rotate leave every
+      page outside the range untouched. Shift slides the block earlier or later
+      by the given number of positions, and the pages it steps over move to the
+      opposite side of the block, so the rest of the order is preserved. The
+      range follows the block as it moves, so you can keep clicking.
     </p>
 
     <div id="viewer" aria-label="Full size page view">
@@ -319,6 +479,16 @@
         document.getElementById("exportBtn").disabled = pages.length === 0;
         document.getElementById("clearBtn").disabled = pages.length === 0;
         emptyHint.style.display = pages.length === 0 ? "" : "none";
+        for (const id of [
+          "rangeAll",
+          "rangeDelete",
+          "rangeRotate",
+          "rangeShiftLeft",
+          "rangeShiftRight",
+        ])
+          document.getElementById(id).disabled = pages.length === 0;
+        rangeStart.max = rangeEnd.max = Math.max(pages.length, 1);
+        refreshRange();
       }
 
       function updateLegend() {
@@ -483,6 +653,129 @@
       // Reorder existing DOM nodes to match the pages array without re-rendering canvases
       function syncGridOrder() {
         for (const p of pages) grid.appendChild(p.card);
+        refreshRange();
+      }
+
+      // Start and End are 1-based grid positions and both ends are included.
+      const rangePanel = document.getElementById("rangePanel");
+      const rangeStart = document.getElementById("rangeStart");
+      const rangeEnd = document.getElementById("rangeEnd");
+      const rangeStep = document.getElementById("rangeStep");
+      const rangeCount = document.getElementById("rangeCount");
+
+      function readRange() {
+        if (!pages.length) return null;
+        let s = parseInt(rangeStart.value, 10);
+        let e = parseInt(rangeEnd.value, 10);
+        if (!Number.isFinite(s)) s = 1;
+        if (!Number.isFinite(e)) e = s;
+        if (s > e) [s, e] = [e, s];
+        s = Math.min(Math.max(s, 1), pages.length);
+        e = Math.min(Math.max(e, 1), pages.length);
+        return { start: s, end: e };
+      }
+
+      // Highlight and count only. The inputs are left alone here so
+      // half-typed numbers are not clamped out from under the cursor.
+      function refreshRange() {
+        const r = readRange();
+        const selected = new Set();
+        if (r) {
+          for (let i = r.start - 1; i < r.end; i++) selected.add(pages[i]);
+          const n = r.end - r.start + 1;
+          rangeCount.textContent = `${n} of ${pages.length} page${
+            pages.length === 1 ? "" : "s"
+          } selected`;
+        } else {
+          rangeCount.textContent = "";
+        }
+        const showing = rangePanel.open;
+        for (const p of pages)
+          p.card.classList.toggle("in-range", showing && selected.has(p));
+      }
+
+      // Clamp the inputs to what will actually happen, then hand back the range
+      function normalizeRange() {
+        const r = readRange();
+        if (r) setRange(r.start, r.end);
+        return r;
+      }
+
+      function setRange(start, end) {
+        rangeStart.value = start;
+        rangeEnd.value = end;
+        refreshRange();
+      }
+
+      function deleteRange() {
+        const r = normalizeRange();
+        if (!r) return;
+        const doomed = pages.slice(r.start - 1, r.end);
+        for (const p of doomed) p.card.remove();
+        pages = [...pages.slice(0, r.start - 1), ...pages.slice(r.end)];
+        // Collapse the selection onto whatever slid into the gap
+        const at = Math.min(r.start, pages.length) || 1;
+        rangeStart.value = at;
+        rangeEnd.value = at;
+        updateControls();
+        updateLegend();
+        setStatus(
+          `Deleted ${doomed.length} page${
+            doomed.length === 1 ? "" : "s"
+          } (positions ${r.start}–${r.end}).`,
+        );
+      }
+
+      async function rotateRange() {
+        const r = normalizeRange();
+        if (!r) return;
+        const btn = document.getElementById("rangeRotate");
+        btn.disabled = true;
+        const targets = pages.slice(r.start - 1, r.end);
+        // Bump every delta first so export is correct even if someone
+        // exports before the thumbnails finish redrawing
+        for (const p of targets) p.delta = (p.delta + 90) % 360;
+        for (let i = 0; i < targets.length; i++) {
+          const p = targets[i];
+          // Skip pages deleted mid-redraw
+          if (!pages.includes(p)) continue;
+          setStatus(`Rotating ${i + 1} of ${targets.length} ...`);
+          await renderPageToCanvas(p, p.canvas, THUMB_WIDTH);
+        }
+        setStatus(
+          `Rotated positions ${r.start}–${r.end} 90° clockwise.`,
+        );
+        btn.disabled = pages.length === 0;
+      }
+
+      // Slide the whole block one way. The pages it steps over on that side
+      // come out the other side of the block; nothing else moves.
+      function shiftRange(dir) {
+        const r = normalizeRange();
+        if (!r) return;
+        const step = Math.max(1, parseInt(rangeStep.value, 10) || 1);
+        const from = r.start - 1;
+        const len = r.end - r.start + 1;
+        const room = dir < 0 ? from : pages.length - r.end;
+        const n = Math.min(step, room);
+        if (n === 0) {
+          setStatus(
+            dir < 0
+              ? "Range is already at the start."
+              : "Range is already at the end.",
+          );
+          return;
+        }
+        const block = pages.splice(from, len);
+        const to = from + dir * n;
+        pages.splice(to, 0, ...block);
+        syncGridOrder();
+        setRange(to + 1, to + len);
+        setStatus(
+          `Shifted ${len} page${len === 1 ? "" : "s"} ${n} position${
+            n === 1 ? "" : "s"
+          } ${dir < 0 ? "earlier" : "later"}.`,
+        );
       }
 
       async function loadFiles(fileList) {
@@ -666,6 +959,32 @@
         setStatus("Page order reversed.");
       });
       document.getElementById("exportBtn").addEventListener("click", exportPdf);
+
+      // Range panel wiring
+      document.getElementById("rangeAll").addEventListener("click", () => {
+        if (pages.length) setRange(1, pages.length);
+      });
+      document
+        .getElementById("rangeDelete")
+        .addEventListener("click", deleteRange);
+      document
+        .getElementById("rangeRotate")
+        .addEventListener("click", rotateRange);
+      document
+        .getElementById("rangeShiftLeft")
+        .addEventListener("click", () => shiftRange(-1));
+      document
+        .getElementById("rangeShiftRight")
+        .addEventListener("click", () => shiftRange(1));
+      for (const el of [rangeStart, rangeEnd]) {
+        el.addEventListener("input", refreshRange);
+        el.addEventListener("change", normalizeRange);
+      }
+      rangeStep.addEventListener("change", () => {
+        rangeStep.value = Math.max(1, parseInt(rangeStep.value, 10) || 1);
+      });
+      rangePanel.addEventListener("toggle", refreshRange);
+
       document.getElementById("clearBtn").addEventListener("click", () => {
         for (const p of pages) p.card.remove();
         pages = [];
