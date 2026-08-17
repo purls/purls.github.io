@@ -350,6 +350,12 @@ function applyFilters() {
   const maxLen = document.getElementById("maxLength").value
     ? +document.getElementById("maxLength").value
     : null;
+  const minTldLen = document.getElementById("minTldLength").value
+    ? +document.getElementById("minTldLength").value
+    : null;
+  const maxTldLen = document.getElementById("maxTldLength").value
+    ? +document.getElementById("maxTldLength").value
+    : null;
   const maxRenew = document.getElementById("maxRenew").value
     ? +document.getElementById("maxRenew").value
     : null;
@@ -393,6 +399,10 @@ function applyFilters() {
     // TLD include / exclude
     if (tldInc.length && !tldInc.includes(tldLower)) return false;
     if (tldExc.length && tldExc.includes(tldLower)) return false;
+
+    // TLD length (e.g. omit anything over 2 chars to keep ccTLDs like .io, .co)
+    if (minTldLen !== null && tldLower.length < minTldLen) return false;
+    if (maxTldLen !== null && tldLower.length > maxTldLen) return false;
 
     // Compound TLD (multi-part, e.g. co.uk, com.au)
     if (triStates.compoundTld === "yes" && !tldLower.includes("."))
@@ -681,6 +691,8 @@ document.getElementById("perPage").addEventListener("change", () => {
 document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("minLength").value = "";
   document.getElementById("maxLength").value = "";
+  document.getElementById("minTldLength").value = "";
+  document.getElementById("maxTldLength").value = "";
   document.getElementById("maxRenew").value = "";
   document.getElementById("minAdjacentPct").value = "";
   document.getElementById("sortBy").value = "none";
