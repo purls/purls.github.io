@@ -3,6 +3,8 @@ let rawRows = [];
 let filteredRows = [];
 let headers = [];
 let tableMode = null; // 'auction' or 'buynow'
+let domainCol = "name"; // actual header holding the domain name for the loaded file
+let priceCol = "price"; // actual header holding the price for the loaded file
 let currentPage = 1;
 let triStates = {};
 let tldCounts = new Map();
@@ -256,9 +258,13 @@ function parseCSVLine(line, delim) {
 }
 
 function parseCSV(text) {
-  const firstLine = text.split("\n")[0];
+  // Normalize CRLF/CR line endings first, otherwise the last field of every line
+  // (except the very last, which .trim() cleans up) keeps a trailing "\r" glued on,
+  // silently breaking header lookups like "permalink".
+  const normalized = text.replace(/\r\n?/g, "\n");
+  const firstLine = normalized.split("\n")[0];
   const delim = firstLine.includes("\t") ? "\t" : ",";
-  const lines = text.trim().split("\n");
+  const lines = normalized.trim().split("\n");
   if (lines.length < 2) {
     showError("CSV has no data rows.");
     return;
@@ -266,25 +272,42 @@ function parseCSV(text) {
 
   headers = parseCSVLine(lines[0], delim);
 
-  // Detect table type
+  // Detect table type. Namecheap ships several Buy-Now shapes:
+  // - The full export (permalink,domain,price,extensions_taken)
+  // - A pre-filtered one (name,price_usd,permalink) from filtered/selected results.
+  //   price_usd is a buy-now-only column, so it's as strong a signal as permalink/domain.
   if (headers.includes("bidCount") || headers.includes("startPrice")) {
     tableMode = "auction";
-  } else if (headers.includes("permalink") || headers.includes("domain")) {
+  } else if (
+    headers.includes("permalink") ||
+    headers.includes("domain") ||
+    headers.includes("price_usd")
+  ) {
     tableMode = "buynow";
   } else {
     tableMode = headers.includes("name") ? "auction" : "buynow";
   }
 
+  // Resolve the actual column names present in this file rather than assuming "domain"/"price"
+  // Pre-filtered buy-now export uses "name"/"price_usd".
+  if (tableMode === "auction") {
+    domainCol = "name";
+    priceCol = "price";
+  } else {
+    domainCol = ["domain", "name"].find((c) => headers.includes(c)) || "domain";
+    priceCol =
+      ["price", "price_usd"].find((c) => headers.includes(c)) || "price";
+  }
+
   rawRows = [];
   tldCounts = new Map();
-  const nameCol = tableMode === "auction" ? "name" : "domain";
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
     const vals = parseCSVLine(lines[i], delim);
     const row = {};
     headers.forEach((h, j) => (row[h] = vals[j] || ""));
     rawRows.push(row);
-    const name = row[nameCol];
+    const name = row[domainCol];
     if (name) {
       const dot = name.indexOf(".");
       if (dot > -1) {
@@ -312,11 +335,11 @@ function parseCSV(text) {
 
 // Accessors
 function getNameCol(row) {
-  return tableMode === "auction" ? row["name"] || "" : row["domain"] || "";
+  return row[domainCol] || "";
 }
 
 function getPriceCol(row) {
-  return parseFloat(row["price"]) || 0;
+  return parseFloat(row[priceCol]) || 0;
 }
 
 // Filtering
@@ -370,6 +393,11 @@ function applyFilters() {
     // TLD include / exclude
     if (tldInc.length && !tldInc.includes(tldLower)) return false;
     if (tldExc.length && tldExc.includes(tldLower)) return false;
+
+    // Compound TLD (multi-part, e.g. co.uk, com.au)
+    if (triStates.compoundTld === "yes" && !tldLower.includes("."))
+      return false;
+    if (triStates.compoundTld === "no" && tldLower.includes(".")) return false;
 
     // Character filters
     if (triStates.letters === "yes" && !/[a-z]/i.test(domain)) return false;
@@ -500,7 +528,7 @@ function getDisplayCols() {
       "url",
     ];
   }
-  return ["domain", "price", "extensions_taken", "permalink"];
+  return [domainCol, priceCol, "extensions_taken", "permalink"];
 }
 
 function friendlyHeader(col) {
@@ -508,6 +536,7 @@ function friendlyHeader(col) {
     name: "Domain",
     domain: "Domain",
     price: "Price",
+    price_usd: "Price",
     bidCount: "Bids",
     renewPrice: "Renew $",
     endDate: "Ends",
@@ -566,6 +595,7 @@ function renderTable() {
             }
             if (
               c === "price" ||
+              c === "price_usd" ||
               c === "renewPrice" ||
               c === "estibotValue" ||
               c === "goValue"
