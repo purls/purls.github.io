@@ -1,0 +1,109 @@
+body {
+  max-width: 900px;
+}
+
+.disclaimer {
+  border: 1px solid #663333;
+  background-color: #241a1a;
+  color: #d9a3a3;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin: 15px 0;
+}
+
+.disclaimer strong {
+  color: #e0b0b0;
+}
+
+.email {
+  background-color: #1e1e1e;
+  border: 1px solid #3d3d3d;
+  overflow: hidden;
+  margin: 15px 0;
+}
+
+.email-header,
+.email-subject,
+.email-body,
+.attachment {
+  padding: 10px 14px;
+}
+
+.email-header,
+.email-subject {
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.email-header {
+  font-size: 13px;
+}
+
+.email-subject {
+  background-color: #1a2a2a;
+}
+
+.email-sender,
+.email-recipient,
+.email-subject-label,
+.attachment-label {
+  font-weight: 700;
+  color: #80cccc;
+  margin-right: 4px;
+}
+
+.email-sender-name,
+.email-recipient-name,
+.email-subject-text {
+  color: #e0e0e0;
+  word-break: break-word;
+}
+
+.email-body {
+  font-size: 13px;
+}
+
+.email-body p {
+  margin: 0 0 0.9em;
+}
+
+.email-body p:last-child {
+  margin-bottom: 0;
+}
+
+.email-body img {
+  max-width: 100%;
+  height: auto;
+  /* border: 1px dashed #3d3d3d; */
+}
+
+.attachment {
+  border-top: 1px solid #3d3d3d;
+  background-color: #1a1a1a;
+  font-size: 13px;
+}
+
+.attachment-name {
+  color: #cc8f66;
+}
+
+.attachment-disclaimer {
+  color: #bebeba;
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 5px;
+  display: block;
+}
+
+.attachment-warning {
+  color: #ff6666;
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 5px;
+  display: block;
+}
+
+.editor-note {
+  color: #6b6a6a;
+  font-family: consolas, monospace;
+  font-size: 11px;
+}
