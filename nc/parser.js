@@ -10,36 +10,71 @@ let triStates = {};
 let tldCounts = new Map();
 let learnedRenew = new Map();
 
-// QWERTY keyboard layout
-const KEYBOARD = {
-  1: "`1234567890-=".split(""),
-  2: "qwertyuiop[]\\".split(""),
-  3: "asdfghjkl;'".split(""),
-  4: "zxcvbnm,./".split(""),
-};
+const KEYBOARD_ROWS = ["1234567890-", "qwertyuiop", "asdfghjkl", "zxcvbnm."];
 
-const keyPos = {};
-for (const [row, keys] of Object.entries(KEYBOARD)) {
-  keys.forEach((k, col) => {
-    keyPos[k] = [+row, col];
-  });
-}
-for (let c = 97; c <= 122; c++) {
-  const ch = String.fromCharCode(c);
-  if (keyPos[ch]) keyPos[String.fromCharCode(c - 32)] = keyPos[ch];
+// {key}:{neighbours}
+const ADJACENT_KEYS = `
+1:2q
+2:1qw3
+3:2we4
+4:3er5
+5:4rt6
+6:5ty7
+7:6yu8
+8:7ui9
+9:8io0
+0:9op-
+-:0p
+q:12wa
+w:23qeas
+e:34wrsd
+r:45etdf
+t:56ryfg
+y:67tugh
+u:78yihj
+i:89uojk
+o:90ipkl
+p:0ol-
+a:qwsz
+s:weadzx
+d:ersfxc
+f:rtdgcv
+g:tyfhvb
+h:yugjbn
+j:uihknm
+k:iojlm
+l:opk.
+z:asx
+x:zsdc
+c:xdfv
+v:cfgb
+b:vghn
+n:bhjm
+m:njk
+.:l
+`;
+
+const keyRow = {};
+KEYBOARD_ROWS.forEach((keys, i) => {
+  for (const k of keys) keyRow[k] = i;
+});
+
+const adjacent = {};
+for (const line of ADJACENT_KEYS.trim().split("\n")) {
+  const [key, neighbours] = line.split(":");
+  adjacent[key] = new Set(neighbours);
 }
 
 function keyboardReport(str) {
-  const chars = [...str.toLowerCase()].filter((c) => keyPos[c]);
+  const chars = [...str.toLowerCase()].filter((c) => c in keyRow);
   if (chars.length === 0) return { sameRow: false, adjacentPct: 0 };
-  const rows = chars.map((c) => keyPos[c][0]);
-  const sameRow = new Set(rows).size === 1;
+  const sameRow = new Set(chars.map((c) => keyRow[c])).size === 1;
   let adj = 0;
   for (let i = 0; i < chars.length - 1; i++) {
-    const [r1, c1] = keyPos[chars[i]];
-    const [r2, c2] = keyPos[chars[i + 1]];
-    const dist = Math.sqrt((r2 - r1) ** 2 + (c2 - c1) ** 2);
-    if (dist <= 1.5) adj++;
+    const a = chars[i];
+    const b = chars[i + 1];
+    // A doubled key counts as adjacent
+    if (a === b || adjacent[a]?.has(b)) adj++;
   }
   const adjacentPct = chars.length > 1 ? (adj / (chars.length - 1)) * 100 : 0;
   return { sameRow, adjacentPct };
