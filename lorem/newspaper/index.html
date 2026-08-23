@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Daily Placeholder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=PT+Serif&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #fdfcf9;
+            --text: #1a1a1a;
+            --muted: #666;
+            --rule: #1a1a1a;
+            --accent: #b32424;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'PT Serif', serif;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            padding: 6px 20px;
+            color: var(--muted);
+            border-bottom: 1px solid #ddd;
+        }
+
+        .masthead {
+            text-align: center;
+            padding: 20px 20px 10px;
+        }
+
+        .masthead .kicker {
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 0.75rem;
+            font-family: 'PT Serif', serif;
+        }
+
+        .masthead h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 3.4rem;
+            margin: 6px 0;
+            letter-spacing: -1px;
+        }
+
+        .masthead .dateline {
+            font-size: 0.8rem;
+            color: var(--muted);
+            border-top: 2px solid var(--rule);
+            border-bottom: 1px solid var(--rule);
+            padding: 4px 0;
+        }
+
+        nav.section-nav {
+            text-align: center;
+            padding: 8px;
+            border-bottom: 3px double var(--rule);
+            font-size: 0.85rem;
+        }
+
+        nav.section-nav a {
+            color: var(--text);
+            text-decoration: none;
+            margin: 0 12px;
+        }
+
+        nav.section-nav a:hover {
+            color: var(--accent);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 50px;
+            display: grid;
+            grid-template-columns: 2fr 1px 1fr;
+            gap: 24px;
+        }
+
+        .rule-col {
+            background: #ddd;
+        }
+
+        .lead h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.1rem;
+            line-height: 1.15;
+            margin: 0 0 10px;
+        }
+
+        .lead .byline {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+        }
+
+        .img-placeholder {
+            background: #e9e6df;
+            border: 1px solid #ccc;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            height: 280px;
+            margin-bottom: 12px;
+        }
+
+        .lead p {
+            columns: 2;
+            column-gap: 24px;
+            font-size: 0.95rem;
+        }
+
+        .lead p::first-letter {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            float: left;
+            line-height: 0.8;
+            margin-right: 6px;
+            color: var(--accent);
+        }
+
+        .sidebar article {
+            margin-bottom: 26px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+        }
+
+        .sidebar h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            margin: 0 0 6px;
+        }
+
+        .sidebar .byline {
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .sidebar p {
+            font-size: 0.88rem;
+            margin: 6px 0 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 2px solid var(--rule);
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        @media (max-width: 700px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .rule-col {
+                display: none;
+            }
+
+            .lead p {
+                columns: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topbar">
+        <span>Vol. 1, No. 42</span>
+        <span>Placeholder City Edition</span>
+    </div>
+    <div class="masthead">
+        <div class="kicker">Est. this afternoon</div>
+        <h1>The Daily Placeholder</h1>
+        <div class="dateline">Tuesday, March 4 &mdash; Weather: partly typeset</div>
+    </div>
+    <nav class="section-nav">
+        <a href="#">Front Page</a>
+        <a href="#">World</a>
+        <a href="#">Business</a>
+        <a href="#">Opinion</a>
+        <a href="#">Culture</a>
+    </nav>
+
+    <main>
+        <div class="lead">
+            <h2>Quisque Faucibus Ex Sapien Vitae Pellentesque Sem Placerat</h2>
+            <div class="byline">By A. Correspondent &middot; Staff Writer</div>
+            <div class="img-placeholder">1600 &times; 700 image placeholder</div>
+            <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean
+                sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis
+                massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti
+                sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos. Sed vel lectus in odio
+                sagittis pulvinar. Nam ultricies pellentesque massa vel tincidunt. Curabitur non nulla sit
+                amet nisl tempus convallis quis ac lectus. Cras ultricies ligula sed magna dictum porta.</p>
+        </div>
+
+        <div class="rule-col"></div>
+
+        <div class="sidebar">
+            <article>
+                <div class="byline">Business</div>
+                <h3>Nulla Porttitor Accumsan Tincidunt Reported</h3>
+                <p>Vivamus suscipit tortor eget felis porttitor volutpat. Proin eget tortor risus vestibulum
+                    ac diam.</p>
+            </article>
+            <article>
+                <div class="byline">Opinion</div>
+                <h3>Donec Sollicitudin, In Brief</h3>
+                <p>Curabitur aliquet quam id dui posuere blandit. Praesent sapien massa convallis a
+                    pellentesque.</p>
+            </article>
+            <article>
+                <div class="byline">Culture</div>
+                <h3>Pellentesque In Ipsum Returns</h3>
+                <p>Cras ultricies ligula sed magna dictum porta. Curabitur arcu erat accumsan id imperdiet.</p>
+            </article>
+        </div>
+    </main>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

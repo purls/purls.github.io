@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Quiet Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital@0;1&family=Nunito+Sans:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #faf6ef;
+            --panel: #ffffff;
+            --border: #e6ddcd;
+            --text: #3c3630;
+            --muted: #8a7f6f;
+            --accent: #c1622f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Nunito Sans', sans-serif;
+            line-height: 1.7;
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 20px 30px;
+        }
+
+        .site-title {
+            font-family: 'Lora', serif;
+            font-size: 2.2rem;
+            font-style: italic;
+            color: var(--text);
+        }
+
+        .site-subtitle {
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        nav {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            margin: 0 14px;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+
+        .post {
+            margin-bottom: 46px;
+        }
+
+        .post .meta {
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .post h2 {
+            font-family: 'Lora', serif;
+            font-size: 1.6rem;
+            font-weight: 400;
+            margin: 0 0 14px;
+        }
+
+        .post h2 a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .img-placeholder {
+            background: #f0e8da;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            height: 220px;
+            margin-bottom: 18px;
+        }
+
+        .post p {
+            margin: 0 0 12px;
+        }
+
+        .divider {
+            text-align: center;
+            color: var(--border);
+            margin: 40px 0;
+            letter-spacing: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="site-title">The Quiet Page</div>
+        <div class="site-subtitle">Slow writing on ordinary things</div>
+        <nav>
+            <a href="#">Essays</a>
+            <a href="#">Journal</a>
+            <a href="#">About</a>
+        </nav>
+    </header>
+
+    <main>
+        <article class="post">
+            <div class="meta">Field notes &middot; March 4</div>
+            <h2><a href="#">In id cursus mi pretium tellus</a></h2>
+            <div class="img-placeholder">1000 &times; 560 image placeholder</div>
+            <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                pellentesque sem placerat. In id cursus mi pretium tellus duis convallis.</p>
+            <p>Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum
+                egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere.</p>
+        </article>
+
+        <div class="divider">&bull; &bull; &bull;</div>
+
+        <article class="post">
+            <div class="meta">Journal &middot; February 19</div>
+            <h2><a href="#">Curabitur non nulla sit amet</a></h2>
+            <p>Sed vel lectus in odio sagittis pulvinar. Nam ultricies pellentesque massa vel tincidunt.
+                Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.</p>
+            <p>Cras ultricies ligula sed magna dictum porta. Nulla porttitor accumsan tincidunt. Vivamus
+                suscipit tortor eget felis porttitor volutpat.</p>
+        </article>
+
+        <div class="divider">&bull; &bull; &bull;</div>
+
+        <article class="post">
+            <div class="meta">Essay &middot; January 28</div>
+            <h2><a href="#">Vestibulum ac diam sit amet</a></h2>
+            <div class="img-placeholder">1000 &times; 560 image placeholder</div>
+            <p>Proin eget tortor risus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui.
+                Donec sollicitudin molestie malesuada.</p>
+        </article>
+    </main>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

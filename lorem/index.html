@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lorem Ipsum Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        p.lede {
+            max-width: 700px;
+        }
+
+        h2 {
+            margin-top: 2.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #3d3d3d;
+            padding-bottom: 0.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 14px;
+            margin-top: 1rem;
+        }
+
+        .card {
+            display: block;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            padding: 14px 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #4cafac;
+            text-decoration: none;
+        }
+
+        .card .name {
+            display: block;
+            color: #e0e0e0;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .card .desc {
+            display: block;
+            color: #999;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 8px;
+            border: 1px solid #555;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1>Lorem Ipsum Gallery</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">
+        A sampler of static page layouts filled with placeholder copy. Each one has its own colorway and
+        modest CSS (shadows, outlines, borders). No gradients or animation. Image placeholders are plain
+        boxes. A few lean on well-known retro OS stylesheets instead of custom CSS.
+    </p>
+
+    <h2>Hand-styled pages</h2>
+    <div class="grid">
+        <a class="card" href="blog-dark/"><span class="name"><span class="swatch"
+                    style="background:#1a1c20"></span>Blog, dark mode</span><span class="desc">Personal writing blog,
+                near-black background, teal accent.</span></a>
+        <a class="card" href="blog-warm/"><span class="name"><span class="swatch"
+                    style="background:#f2c14e"></span>Blog, warm light</span><span class="desc">Cream background,
+                terracotta accent, serif editorial feel.</span></a>
+        <a class="card" href="newspaper/"><span class="name"><span class="swatch"
+                    style="background:#b32424"></span>Newspaper front page</span><span class="desc">Multi-column
+                masthead layout with rules and a red kicker.</span></a>
+        <a class="card" href="resume-modern/"><span class="name"><span class="swatch"
+                    style="background:#1f3a5f"></span>Resume, modern</span><span class="desc">Sidebar layout, navy
+                accent, sans-serif.</span></a>
+        <a class="card" href="resume-print/"><span class="name"><span class="swatch"
+                    style="background:#222"></span>Resume, print style</span><span class="desc">Single column, Georgia
+                serif, black and white.</span></a>
+        <a class="card" href="portfolio/"><span class="name"><span class="swatch"
+                    style="background:#ff6b5e"></span>Portfolio landing</span><span class="desc">Dark slate background,
+                coral accent, project card grid.</span></a>
+        <a class="card" href="docs/"><span class="name"><span class="swatch"
+                    style="background:#2f6feb"></span>Documentation site</span><span class="desc">Sidebar nav, light
+                gray background, code block styling.</span></a>
+        <a class="card" href="shop/"><span class="name"><span class="swatch" style="background:#2e7d4f"></span>Shop /
+                product grid</span><span class="desc">Storefront cards with prices and buy buttons.</span></a>
+        <a class="card" href="restaurant/"><span class="name"><span class="swatch"
+                    style="background:#c9a35c"></span>Restaurant site</span><span class="desc">Deep green background,
+                gold accents, elegant menu listing.</span></a>
+        <a class="card" href="agency/"><span class="name"><span class="swatch" style="background:#e8622c"></span>Agency
+                landing page</span><span class="desc">Hero section, services grid, navy and orange.</span></a>
+        <a class="card" href="forum/"><span class="name"><span class="swatch" style="background:#6b7a8f"></span>Forum
+                thread</span><span class="desc">Threaded discussion layout with avatar placeholders.</span></a>
+        <a class="card" href="saas/"><span class="name"><span class="swatch" style="background:#6c4fd6"></span>SaaS
+                product page</span><span class="desc">Hero, feature grid, and pricing table in indigo.</span></a>
+        <a class="card" href="invite/"><span class="name"><span class="swatch" style="background:#e3c7c1"></span>Event
+                invitation</span><span class="desc">Centered, soft blush and sage, formal serif type.</span></a>
+        <a class="card" href="brutalist/"><span class="name"><span class="swatch"
+                    style="background:#fdd700"></span>Neo-brutalist page</span><span class="desc">Thick black borders,
+                hard shadows, no rounded corners.</span></a>
+    </div>
+
+    <h2>Framework-styled pages</h2>
+    <div class="grid">
+        <a class="card" href="xp/"><span class="name"><span class="swatch" style="background:#245edb"></span>Windows
+                XP</span><span class="desc">Built with XP.css &mdash; Luna-style window chrome.</span></a>
+        <a class="card" href="win98/"><span class="name"><span class="swatch" style="background:#c0c0c0"></span>Windows
+                98</span><span class="desc">Built with 98.css &mdash; classic beveled desktop look.</span></a>
+        <a class="card" href="win7/"><span class="name"><span class="swatch" style="background:#3a8fd6"></span>Windows
+                7</span><span class="desc">Built with 7.css &mdash; Aero glass window styling.</span></a>
+        <a class="card" href="macos/"><span class="name"><span class="swatch" style="background:#eeeeee"></span>Classic
+                Mac OS</span><span class="desc">Built with system.css &mdash; System 6/7 chrome and fonts.</span></a>
+    </div>
+</body>
+</html>

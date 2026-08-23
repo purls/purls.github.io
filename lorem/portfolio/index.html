@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sam Okafor &mdash; Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #14161a;
+            --panel: #1b1e24;
+            --border: #2b2f38;
+            --text: #e7e9ee;
+            --muted: #8a90a0;
+            --accent: #ff6b5e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 0;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 22px;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            color: var(--text);
+        }
+
+        .hero {
+            padding: 60px 0 40px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero .eyebrow {
+            color: var(--accent);
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            margin: 10px 0 16px;
+            max-width: 600px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            color: var(--muted);
+            max-width: 500px;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 22px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background: var(--accent);
+            color: #1a1a1a;
+        }
+
+        .work {
+            padding: 50px 0;
+        }
+
+        .work h2 {
+            font-size: 1.3rem;
+            margin-bottom: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 18px;
+        }
+
+        .img-placeholder {
+            background: #23262d;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            height: 150px;
+            margin-bottom: 14px;
+        }
+
+        .card h3 {
+            margin: 0 0 6px;
+            font-size: 1.05rem;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="logo">lorem<span>.</span>ipsum</div>
+            <nav>
+                <a href="#">Work</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <div class="eyebrow">Product Designer</div>
+            <h1>Quisque faucibus ex sapien vitae pellentesque sem placerat.</h1>
+            <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. In id cursus mi pretium tellus duis
+                convallis tempus leo eu aenean.</p>
+            <a class="btn" href="#">View Work</a>
+        </section>
+
+        <section class="work">
+            <h2>Selected Work</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="img-placeholder">400 &times; 260 placeholder</div>
+                    <h3>Pulvinar Vivamus</h3>
+                    <p>Fringilla lacus nec metus bibendum egestas iaculis massa.</p>
+                </div>
+                <div class="card">
+                    <div class="img-placeholder">400 &times; 260 placeholder</div>
+                    <h3>Sed Vel Lectus</h3>
+                    <p>In odio sagittis pulvinar nam ultricies pellentesque massa.</p>
+                </div>
+                <div class="card">
+                    <div class="img-placeholder">400 &times; 260 placeholder</div>
+                    <h3>Curabitur Non Nulla</h3>
+                    <p>Sit amet nisl tempus convallis quis ac lectus cras ultricies.</p>
+                </div>
+                <div class="card">
+                    <div class="img-placeholder">400 &times; 260 placeholder</div>
+                    <h3>Proin Eget Tortor</h3>
+                    <p>Risus vestibulum ac diam sit amet quam vehicula elementum.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

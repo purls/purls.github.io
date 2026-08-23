@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nightfall &mdash; a blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital@0;1&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #15171b;
+            --panel: #1c1f25;
+            --border: #2a2e36;
+            --text: #d8dce3;
+            --muted: #838b99;
+            --accent: #57c7b3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 24px 20px;
+        }
+
+        .wrap {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .site-title {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+
+        .site-title span {
+            color: var(--accent);
+        }
+
+        nav {
+            margin-top: 10px;
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-right: 18px;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        main {
+            padding: 40px 20px 60px;
+        }
+
+        .post {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+        }
+
+        .post .meta {
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+
+        .post h2 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.4rem;
+            margin: 0 0 12px;
+        }
+
+        .post h2 a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .post h2 a:hover {
+            color: var(--accent);
+        }
+
+        .post p {
+            color: #b9c0cc;
+            margin: 0 0 10px;
+        }
+
+        .tags {
+            margin-top: 14px;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 2px 8px;
+            margin-right: 6px;
+        }
+
+        .img-placeholder {
+            background: #23262c;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            height: 160px;
+            margin-bottom: 16px;
+        }
+
+        aside {
+            border: 1px solid var(--border);
+            background: var(--panel);
+            padding: 20px 24px;
+            margin-top: 30px;
+        }
+
+        aside h3 {
+            font-size: 1rem;
+            margin: 0 0 10px;
+            color: var(--accent);
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="wrap">
+            <div class="site-title">night<span>fall</span></div>
+            <nav>
+                <a href="#">Home</a>
+                <a href="#">Archive</a>
+                <a href="#">About</a>
+                <a href="#">RSS</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <article class="post">
+                <div class="meta">March 3 &middot; 6 min read</div>
+                <h2><a href="#">Quisque faucibus ex sapien vitae</a></h2>
+                <div class="img-placeholder">1200 &times; 500 image placeholder</div>
+                <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                    pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu
+                    aenean sed diam urna tempor.</p>
+                <p>Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada
+                    lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu.</p>
+                <div class="tags">
+                    <span class="tag">notes</span>
+                    <span class="tag">longform</span>
+                </div>
+            </article>
+
+            <article class="post">
+                <div class="meta">February 21 &middot; 4 min read</div>
+                <h2><a href="#">Sed vel lectus in odio sagittis</a></h2>
+                <p>Sed vel lectus in odio sagittis pulvinar. Nam ultricies pellentesque massa vel tincidunt.
+                    Curabitur non nulla sit amet nisl tempus convallis quis ac lectus. Cras ultricies ligula sed
+                    magna dictum porta.</p>
+                <p>Nulla porttitor accumsan tincidunt. Vivamus suscipit tortor eget felis porttitor volutpat.</p>
+                <div class="tags">
+                    <span class="tag">short</span>
+                </div>
+            </article>
+
+            <article class="post">
+                <div class="meta">January 30 &middot; 9 min read</div>
+                <h2><a href="#">Proin eget tortor risus vestibulum</a></h2>
+                <div class="img-placeholder">800 &times; 400 image placeholder</div>
+                <p>Proin eget tortor risus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet
+                    dui. Donec sollicitudin molestie malesuada. Curabitur aliquet quam id dui posuere blandit.</p>
+                <div class="tags">
+                    <span class="tag">essay</span>
+                    <span class="tag">notes</span>
+                </div>
+            </article>
+
+            <aside>
+                <h3>About this journal</h3>
+                <p>Vivamus magna justo lacinia eget consectetur sed convallis at tellus. Pellentesque in ipsum
+                    id orci porta dapibus. Cras ultricies ligula sed magna dictum porta.</p>
+            </aside>
+        </div>
+    </main>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

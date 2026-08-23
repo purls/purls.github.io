@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlaceholderBoard &mdash; Thread</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #eef1f5;
+            --panel: #ffffff;
+            --border: #d7dce3;
+            --text: #262c35;
+            --muted: #6b7684;
+            --accent: #6b7a8f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        header {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-weight: 600;
+        }
+
+        header nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 16px;
+            font-size: 0.85rem;
+        }
+
+        .wrap {
+            max-width: 780px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        .breadcrumb {
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            margin: 0 0 4px;
+        }
+
+        .thread-meta {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+
+        .post {
+            display: flex;
+            gap: 14px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 16px 18px;
+            margin-bottom: 14px;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            background: #dde2e9;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .post.op .avatar {
+            background: #e4dcf4;
+        }
+
+        .post-body {
+            flex: 1;
+        }
+
+        .post-head {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .username {
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 0.65rem;
+            background: var(--accent);
+            color: #fff;
+            padding: 1px 6px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .timestamp {
+            color: var(--muted);
+        }
+
+        .post p {
+            margin: 0 0 8px;
+            font-size: 0.92rem;
+        }
+
+        .post-foot {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .post-foot span {
+            margin-right: 14px;
+            cursor: pointer;
+        }
+
+        .post-foot span:hover {
+            color: var(--accent);
+        }
+
+        .reply-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 16px 18px;
+            margin-top: 20px;
+        }
+
+        .reply-box textarea {
+            width: 100%;
+            min-height: 70px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            padding: 8px;
+            resize: vertical;
+        }
+
+        .reply-box button {
+            margin-top: 8px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            font-family: inherit;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">PlaceholderBoard</div>
+        <nav>
+            <a href="#">Categories</a>
+            <a href="#">Members</a>
+            <a href="#">Search</a>
+        </nav>
+    </header>
+
+    <div class="wrap">
+        <div class="breadcrumb">Forum / General Discussion</div>
+        <h1>Quisque faucibus ex sapien vitae, thoughts?</h1>
+        <div class="thread-meta">18 replies &middot; 240 views &middot; last reply 2 hours ago</div>
+
+        <div class="post op">
+            <div class="avatar">img</div>
+            <div class="post-body">
+                <div class="post-head">
+                    <span class="username">loremuser88<span class="badge">OP</span></span>
+                    <span class="timestamp">Today at 9:14 AM</span>
+                </div>
+                <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                    pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Curious what
+                    everyone else thinks about tempus leo eu aenean.</p>
+                <div class="post-foot">
+                    <span>Reply</span><span>Quote</span><span>Report</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="post">
+            <div class="avatar">img</div>
+            <div class="post-body">
+                <div class="post-head">
+                    <span class="username">ipsumfan<span class="badge">MOD</span></span>
+                    <span class="timestamp">Today at 9:40 AM</span>
+                </div>
+                <p>Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada
+                    lacinia integer nunc posuere ut hendrerit semper.</p>
+                <div class="post-foot">
+                    <span>Reply</span><span>Quote</span><span>Report</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="post">
+            <div class="avatar">img</div>
+            <div class="post-body">
+                <div class="post-head">
+                    <span class="username">tempus_leo</span>
+                    <span class="timestamp">Today at 10:02 AM</span>
+                </div>
+                <p>Sed vel lectus in odio sagittis pulvinar. Nam ultricies pellentesque massa vel tincidunt
+                    curabitur non nulla sit amet nisl.</p>
+                <div class="post-foot">
+                    <span>Reply</span><span>Quote</span><span>Report</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="reply-box">
+            <textarea placeholder="Write a reply..."></textarea>
+            <button>Post Reply</button>
+        </div>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notepad - README.TXT</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/98.css@0.1.20/dist/98.css" />
+    <style>
+        body {
+            margin: 0;
+            background: #008080;
+            min-height: 100vh;
+            font-family: 'Pixelated MS Sans Serif', Arial, sans-serif;
+            padding: 30px 16px;
+        }
+
+        .wrap {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .window {
+            margin-bottom: 16px;
+        }
+
+        .placeholder-img {
+            background: #fff;
+            border: 1px solid #808080;
+            color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 16px;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="window" style="width: 100%;">
+            <div class="title-bar">
+                <div class="title-bar-text">README.TXT - Notepad</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <textarea rows="10" style="width: 100%; resize: vertical;">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat.
+
+In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor.
+
+Pulvinar vivamus fringilla lacus nec metus bibendum egestas iaculis massa nisl malesuada.</textarea>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">Paint - untitled</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <div class="placeholder-img">400 &times; 300 image placeholder</div>
+                <div class="field-row" style="justify-content: flex-end;">
+                    <button>Save</button>
+                    <button>Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">Display Properties</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <div class="field-row">
+                    <input id="r1" type="radio" name="scheme" checked />
+                    <label for="r1">Sed Vel Lectus</label>
+                </div>
+                <div class="field-row">
+                    <input id="r2" type="radio" name="scheme" />
+                    <label for="r2">In Odio Sagittis</label>
+                </div>
+                <div class="field-row">
+                    <input id="r3" type="radio" name="scheme" />
+                    <label for="r3">Pulvinar Nam</label>
+                </div>
+                <div class="field-row" style="justify-content: flex-end; margin-top: 10px;">
+                    <button>Apply</button>
+                    <button>OK</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <p class="status-bar-field">Curabitur non nulla</p>
+            <p class="status-bar-field">Sit amet nisl</p>
+            <p class="status-bar-field">100%</p>
+        </div>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

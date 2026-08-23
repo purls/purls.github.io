@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ipsum &amp; Amet</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@300&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #f4ece9;
+            --panel: #fffaf8;
+            --border: #e3c7c1;
+            --sage: #9caf88;
+            --text: #4a3f3c;
+            --muted: #8a7a75;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Jost', sans-serif;
+            font-weight: 300;
+        }
+
+        .card {
+            max-width: 560px;
+            margin: 50px auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 60px 50px;
+            text-align: center;
+        }
+
+        .card .eyebrow {
+            letter-spacing: 0.3em;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--sage);
+            margin-bottom: 16px;
+        }
+
+        .card h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 2.6rem;
+            margin: 0 0 6px;
+            font-weight: 500;
+        }
+
+        .card .and {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: var(--sage);
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: var(--border);
+            margin: 24px auto;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            max-width: 400px;
+            margin: 0 auto 18px;
+        }
+
+        .details {
+            margin-top: 26px;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .details .line {
+            margin-bottom: 6px;
+        }
+
+        .details .label {
+            color: var(--sage);
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            display: block;
+            margin-top: 18px;
+            margin-bottom: 4px;
+        }
+
+        .rsvp {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            border: 1px solid var(--sage);
+            color: var(--sage);
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .rsvp:hover {
+            background: var(--sage);
+            color: #fff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--sage);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="eyebrow">Together with their families</div>
+        <h1>Lorem</h1>
+        <div class="and">&amp;</div>
+        <h1>Ipsum</h1>
+
+        <div class="divider"></div>
+
+        <p>Quisque faucibus ex sapien vitae pellentesque sem placerat, request the pleasure of your company
+            as they celebrate in id cursus mi pretium tellus.</p>
+
+        <div class="details">
+            <span class="label">Date</span>
+            <div class="line">Saturday, the fourteenth of June</div>
+            <span class="label">Time</span>
+            <div class="line">Four o'clock in the afternoon</div>
+            <span class="label">Location</span>
+            <div class="line">The Convallis Garden, Placeholder City</div>
+        </div>
+
+        <a class="rsvp" href="#">RSVP</a>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

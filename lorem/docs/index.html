@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Placeholder Docs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #f7f8fa;
+            --panel: #ffffff;
+            --border: #e2e5ea;
+            --text: #24292f;
+            --muted: #6e7781;
+            --accent: #2f6feb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+        }
+
+        .sidebar .brand {
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-left: 6px;
+        }
+
+        .sidebar h4 {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin: 18px 0 6px;
+            padding-left: 6px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.88rem;
+            padding: 6px 8px;
+            border-radius: 4px;
+        }
+
+        .sidebar a:hover {
+            background: #eef1f5;
+        }
+
+        .sidebar a.active {
+            background: #e8effe;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        main {
+            flex: 1;
+            padding: 40px 50px;
+            max-width: 760px;
+        }
+
+        .breadcrumb {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            margin: 0 0 16px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin: 30px 0 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        p {
+            color: #3a4149;
+        }
+
+        code {
+            background: #eef0f3;
+            border: 1px solid var(--border);
+            padding: 1px 5px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+        }
+
+        pre {
+            background: #0d1117;
+            color: #d5d9e0;
+            padding: 16px 18px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+        }
+
+        .callout {
+            background: #eef4ff;
+            border-left: 3px solid var(--accent);
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            margin: 16px 0;
+        }
+
+        .page-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .page-nav a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="brand">Placeholder Docs</div>
+        <h4>Getting Started</h4>
+        <a href="#" class="active">Introduction</a>
+        <a href="#">Installation</a>
+        <a href="#">Quickstart</a>
+        <h4>Guides</h4>
+        <a href="#">Configuration</a>
+        <a href="#">Consectetur API</a>
+        <a href="#">Adipiscing Hooks</a>
+        <h4>Reference</h4>
+        <a href="#">CLI Commands</a>
+        <a href="#">Changelog</a>
+    </aside>
+
+    <main>
+        <div class="breadcrumb">Docs / Getting Started / Introduction</div>
+        <h1>Introduction</h1>
+        <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+            pellentesque sem placerat. In id cursus mi pretium tellus duis convallis, and can be installed
+            with the <code>placeholder</code> command line tool.</p>
+
+        <div class="callout">
+            Tempus leo eu aenean sed diam urna tempor. This callout highlights something worth noticing
+            before continuing.
+        </div>
+
+        <h2>Installation</h2>
+        <p>Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Run the following in your project
+            root:</p>
+        <pre>$ npm install placeholder-kit
+$ placeholder init --template=lorem</pre>
+
+        <h2>Basic Usage</h2>
+        <p>Iaculis massa nisl malesuada lacinia integer nunc posuere ut hendrerit semper vel class aptent
+            taciti sociosqu ad litora torquent per conubia nostra inceptos himenaeos.</p>
+        <pre>import { placeholder } from 'placeholder-kit';
+
+const result = placeholder.generate({
+  words: 200,
+  format: 'html'
+});</pre>
+
+        <h2>Configuration</h2>
+        <p>Sed vel lectus in odio sagittis pulvinar nam ultricies pellentesque massa vel tincidunt. Options
+            are set via <code>placeholder.config.js</code> in the project root.</p>
+
+        <div class="page-nav">
+            <a href="#">&larr; Overview</a>
+            <a href="#">Quickstart &rarr;</a>
+        </div>
+    </main>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sapien &amp; Vitae</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@300;400&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #16241d;
+            --panel: #1c2e24;
+            --border: #2c4436;
+            --text: #eee8dc;
+            --muted: #a6b3a9;
+            --gold: #c9a35c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Jost', sans-serif;
+            font-weight: 300;
+        }
+
+        header {
+            text-align: center;
+            padding: 46px 20px 30px;
+        }
+
+        header .sub {
+            color: var(--gold);
+            letter-spacing: 0.2em;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 3rem;
+            margin: 8px 0;
+            letter-spacing: 2px;
+        }
+
+        nav {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            text-align: center;
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin: 0 16px;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        nav a:hover {
+            color: var(--gold);
+        }
+
+        .menu {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 50px 24px 20px;
+        }
+
+        .menu h2 {
+            font-family: 'Cormorant Garamond', serif;
+            text-align: center;
+            font-size: 1.8rem;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px dotted var(--border);
+        }
+
+        .item .name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .item .desc {
+            color: var(--muted);
+            font-size: 0.85rem;
+            display: block;
+            font-weight: 300;
+        }
+
+        .item .price {
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
+        .item .left {
+            flex: 1;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        .img-placeholder {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            height: 140px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--gold);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="sub">Est. 2019 &middot; Placeholder District</div>
+        <h1>Sapien &amp; Vitae</h1>
+    </header>
+    <nav>
+        <a href="#">Menu</a>
+        <a href="#">Reservations</a>
+        <a href="#">Private Events</a>
+        <a href="#">Contact</a>
+    </nav>
+
+    <section class="menu">
+        <h2>Small Plates</h2>
+        <div class="item">
+            <div class="left">
+                <span class="name">Quisque Faucibus</span>
+                <span class="desc">Ex sapien, pellentesque sem, placerat, roasted in id cursus mi</span>
+            </div>
+            <span class="price">$18</span>
+        </div>
+        <div class="item">
+            <div class="left">
+                <span class="name">Pulvinar Vivamus</span>
+                <span class="desc">Fringilla lacus, nec metus, bibendum egestas, herb oil</span>
+            </div>
+            <span class="price">$14</span>
+        </div>
+        <div class="item">
+            <div class="left">
+                <span class="name">Iaculis Massa</span>
+                <span class="desc">Nisl malesuada, lacinia integer, charred lemon</span>
+            </div>
+            <span class="price">$16</span>
+        </div>
+    </section>
+
+    <section class="menu">
+        <h2>Mains</h2>
+        <div class="item">
+            <div class="left">
+                <span class="name">Sed Vel Lectus</span>
+                <span class="desc">In odio sagittis, pulvinar, nam ultricies, seasonal vegetables</span>
+            </div>
+            <span class="price">$32</span>
+        </div>
+        <div class="item">
+            <div class="left">
+                <span class="name">Curabitur Non Nulla</span>
+                <span class="desc">Sit amet nisl, tempus convallis, quis ac lectus, wild rice</span>
+            </div>
+            <span class="price">$28</span>
+        </div>
+    </section>
+
+    <div class="gallery">
+        <div class="img-placeholder">Interior</div>
+        <div class="img-placeholder">Plating</div>
+        <div class="img-placeholder">Bar</div>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

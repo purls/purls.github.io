@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WordPad - Document1</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/7.css@0.15.0/dist/7.css" />
+    <style>
+        body {
+            margin: 0;
+            background: #3a8fd6;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            padding: 30px 16px;
+        }
+
+        .wrap {
+            max-width: 740px;
+            margin: 0 auto;
+        }
+
+        .window {
+            margin-bottom: 16px;
+        }
+
+        .placeholder-img {
+            background: #fff;
+            border: 1px solid #a0a0a0;
+            color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 160px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 16px;
+            color: #eaf3fd;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="window glass active" style="width: 100%;">
+            <div class="title-bar">
+                <div class="title-bar-text">Document1 - WordPad</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body has-space">
+                <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                    pellentesque sem placerat. In id cursus mi pretium tellus duis convallis.</p>
+                <p>Tempus leo eu aenean sed diam urna tempor pulvinar vivamus fringilla lacus nec metus
+                    bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere.</p>
+                <div class="field-row" style="justify-content: flex-end;">
+                    <button>Save</button>
+                    <button>Print</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="window glass">
+            <div class="title-bar">
+                <div class="title-bar-text">Windows Photo Viewer</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body has-space">
+                <div class="placeholder-img">640 &times; 400 image placeholder</div>
+                <p>Sed vel lectus in odio sagittis pulvinar nam ultricies pellentesque massa vel tincidunt
+                    curabitur non nulla.</p>
+            </div>
+        </div>
+
+        <div class="window glass">
+            <div class="title-bar">
+                <div class="title-bar-text">Control Panel</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body has-space">
+                <fieldset>
+                    <legend>Placeholder Settings</legend>
+                    <div class="field-row">
+                        <input id="c1" type="checkbox" checked />
+                        <label for="c1">Enable Aero preview</label>
+                    </div>
+                    <div class="field-row">
+                        <input id="c2" type="checkbox" />
+                        <label for="c2">Show desktop gadgets</label>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="status-bar">
+                <span class="status-bar-field">Proin eget tortor risus</span>
+                <span class="status-bar-field">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

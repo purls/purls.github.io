@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Convallis &amp; Co.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --navy: #142640;
+            --bg: #ffffff;
+            --panel: #f4f6fa;
+            --border: #e2e7ef;
+            --text: #17233b;
+            --muted: #5b6b85;
+            --accent: #e8622c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.15rem;
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 26px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: var(--navy);
+        }
+
+        .cta {
+            background: var(--navy);
+            color: #fff !important;
+            padding: 8px 18px;
+        }
+
+        .hero {
+            background: var(--navy);
+            color: #fff;
+            padding: 70px 50px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .hero .copy {
+            flex: 1;
+        }
+
+        .hero .eyebrow {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            line-height: 1.2;
+            margin: 12px 0 16px;
+            max-width: 520px;
+        }
+
+        .hero p {
+            color: #c3cee0;
+            max-width: 440px;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 22px;
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 26px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .img-placeholder {
+            flex: 1;
+            background: #1e3457;
+            border: 1px solid #274268;
+            color: #8ea1c2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 260px;
+            font-size: 0.85rem;
+        }
+
+        .services {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 70px 30px;
+        }
+
+        .services h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .service {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 26px;
+        }
+
+        .service .num {
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .service h3 {
+            margin: 0 0 8px;
+            font-size: 1.05rem;
+        }
+
+        .service p {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        .stats {
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 40px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            text-align: center;
+        }
+
+        .stat .num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .stat .label {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        @media (max-width: 700px) {
+            .hero {
+                flex-direction: column;
+            }
+
+            .stats {
+                flex-wrap: wrap;
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Convallis &amp; Co.</div>
+        <nav>
+            <a href="#">Services</a>
+            <a href="#">Work</a>
+            <a href="#">About</a>
+            <a class="cta" href="#">Get in touch</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="copy">
+            <div class="eyebrow">Digital Agency</div>
+            <h1>Quisque faucibus ex sapien vitae pellentesque sem placerat</h1>
+            <p>In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor
+                pulvinar vivamus fringilla.</p>
+            <a class="btn" href="#">Start a project</a>
+        </div>
+        <div class="img-placeholder">960 &times; 540 image placeholder</div>
+    </section>
+
+    <section class="stats">
+        <div class="stat">
+            <div class="num">120+</div>
+            <div class="label">Projects Shipped</div>
+        </div>
+        <div class="stat">
+            <div class="num">98%</div>
+            <div class="label">Client Retention</div>
+        </div>
+        <div class="stat">
+            <div class="num">14</div>
+            <div class="label">Years Placeholder</div>
+        </div>
+    </section>
+
+    <section class="services">
+        <h2>What We Do</h2>
+        <div class="grid">
+            <div class="service">
+                <div class="num">01</div>
+                <h3>Brand Strategy</h3>
+                <p>Iaculis massa nisl malesuada lacinia integer nunc posuere ut hendrerit.</p>
+            </div>
+            <div class="service">
+                <div class="num">02</div>
+                <h3>Product Design</h3>
+                <p>Sed vel lectus in odio sagittis pulvinar nam ultricies pellentesque.</p>
+            </div>
+            <div class="service">
+                <div class="num">03</div>
+                <h3>Engineering</h3>
+                <p>Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.</p>
+            </div>
+            <div class="service">
+                <div class="num">04</div>
+                <h3>Growth &amp; Media</h3>
+                <p>Proin eget tortor risus vestibulum ac diam sit amet quam vehicula.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

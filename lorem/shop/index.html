@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ipsum Goods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --panel: #fafafa;
+            --border: #e4e4e4;
+            --text: #1e1e1e;
+            --muted: #767676;
+            --accent: #2e7d4f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .announce {
+            background: var(--accent);
+            color: #fff;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 8px;
+            letter-spacing: 0.03em;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        .cart {
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            margin-left: 20px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 50px 20px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            margin: 0 0 10px;
+        }
+
+        .hero p {
+            color: var(--muted);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .products {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 26px;
+        }
+
+        .product {
+            border: 1px solid var(--border);
+        }
+
+        .img-placeholder {
+            background: #f0f0f0;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            height: 190px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product .info {
+            padding: 14px 16px;
+        }
+
+        .product .tag {
+            font-size: 0.7rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .product h3 {
+            font-size: 0.98rem;
+            margin: 4px 0 8px;
+        }
+
+        .product .price {
+            font-weight: 600;
+        }
+
+        .product .price .old {
+            color: var(--muted);
+            font-weight: 400;
+            text-decoration: line-through;
+            margin-right: 6px;
+        }
+
+        .buy {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px 0;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .buy:hover {
+            background: #256a42;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="announce">Free shipping on orders over $50 &middot; placeholder inventory only</div>
+    <header>
+        <div class="logo">Ipsum Goods</div>
+        <nav>
+            <a href="#">Shop</a>
+            <a href="#">New</a>
+            <a href="#">Sale</a>
+            <a href="#">About</a>
+            <span class="cart">Cart (0)</span>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Quisque faucibus, ex sapien vitae</h1>
+        <p>Pellentesque sem placerat in id cursus mi pretium tellus duis convallis tempus leo eu aenean.</p>
+    </section>
+
+    <section class="products">
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">New</div>
+                <h3>Pulvinar Fringilla Set</h3>
+                <div class="price">$42.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">Sale</div>
+                <h3>Iaculis Massa Kit</h3>
+                <div class="price"><span class="old">$68.00</span>$49.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">Bestseller</div>
+                <h3>Malesuada Lacinia Mug</h3>
+                <div class="price">$18.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">New</div>
+                <h3>Posuere Blandit Lamp</h3>
+                <div class="price">$76.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">Restocked</div>
+                <h3>Convallis Tote</h3>
+                <div class="price">$29.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+        <div class="product">
+            <div class="img-placeholder">300 &times; 300</div>
+            <div class="info">
+                <div class="tag">Sale</div>
+                <h3>Vestibulum Candle</h3>
+                <div class="price"><span class="old">$24.00</span>$16.00</div>
+                <button class="buy">Add to cart</button>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

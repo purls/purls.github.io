@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jordan Casey &mdash; Resume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --navy: #1f3a5f;
+            --navy-light: #2c4f7c;
+            --bg: #f4f6f9;
+            --panel: #ffffff;
+            --border: #dde3ec;
+            --text: #26313f;
+            --muted: #6b7686;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.55;
+        }
+
+        .page {
+            max-width: 950px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            background: var(--panel);
+        }
+
+        .sidebar {
+            background: var(--navy);
+            color: #dde6f2;
+            padding: 34px 26px;
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            margin: 0 0 2px;
+            color: #fff;
+        }
+
+        .sidebar .role {
+            color: #9fb6d4;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .sidebar h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #9fb6d4;
+            border-bottom: 1px solid var(--navy-light);
+            padding-bottom: 6px;
+            margin: 26px 0 10px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .sidebar li {
+            margin-bottom: 8px;
+            color: #cddaea;
+        }
+
+        .content {
+            padding: 34px 40px;
+        }
+
+        .content section {
+            margin-bottom: 30px;
+        }
+
+        .content h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--navy);
+            border-bottom: 2px solid var(--navy);
+            display: inline-block;
+            padding-bottom: 4px;
+            margin-bottom: 14px;
+        }
+
+        .entry {
+            margin-bottom: 18px;
+        }
+
+        .entry .row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .entry .sub {
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .entry p {
+            margin: 0;
+            font-size: 0.92rem;
+            color: #3d4757;
+        }
+
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .skill {
+            background: #eef2f8;
+            border: 1px solid var(--border);
+            color: var(--navy);
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <aside class="sidebar">
+            <h1>Lorem Ipsum</h1>
+            <div class="role">Placeholder Systems Engineer</div>
+
+            <h2>Contact</h2>
+            <ul>
+                <li>lorem@example.com</li>
+                <li>(555) 010-2938</li>
+                <li>placeholdercity.example</li>
+            </ul>
+
+            <h2>Education</h2>
+            <ul>
+                <li>B.S. Computer Science<br />Ipsum State University</li>
+            </ul>
+
+            <h2>Skills</h2>
+            <ul>
+                <li>Consectetur Adipiscing</li>
+                <li>Pellentesque Systems</li>
+                <li>Vestibulum Pipelines</li>
+                <li>Team Convallis</li>
+            </ul>
+        </aside>
+
+        <div class="content">
+            <section>
+                <h2>Summary</h2>
+                <p>Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
+                    pellentesque sem placerat, with eight years of experience in id cursus mi pretium tellus
+                    duis convallis.</p>
+            </section>
+
+            <section>
+                <h2>Experience</h2>
+                <div class="entry">
+                    <div class="row"><span>Senior Placeholder Engineer, Tempus Leo Inc.</span><span>2022 &ndash;
+                            Present</span></div>
+                    <div class="sub">Placeholder City</div>
+                    <p>Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl
+                        malesuada lacinia integer nunc posuere ut hendrerit semper.</p>
+                </div>
+                <div class="entry">
+                    <div class="row"><span>Placeholder Engineer, Aenean Sed Co.</span><span>2019 &ndash; 2022</span>
+                    </div>
+                    <div class="sub">Diam Urna</div>
+                    <p>Sed vel lectus in odio sagittis pulvinar nam ultricies pellentesque massa vel
+                        tincidunt curabitur non nulla sit amet nisl.</p>
+                </div>
+                <div class="entry">
+                    <div class="row"><span>Junior Developer, Cras Ultricies LLC</span><span>2017 &ndash; 2019</span>
+                    </div>
+                    <div class="sub">Ligula</div>
+                    <p>Nulla porttitor accumsan tincidunt vivamus suscipit tortor eget felis porttitor
+                        volutpat proin eget tortor risus.</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>Skills</h2>
+                <div class="skills-grid">
+                    <span class="skill">Vestibulum</span>
+                    <span class="skill">Elementum</span>
+                    <span class="skill">Sollicitudin</span>
+                    <span class="skill">Molestie</span>
+                    <span class="skill">Aliquet</span>
+                    <span class="skill">Posuere Blandit</span>
+                </div>
+            </section>
+        </div>
+    </div>
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Convallis &mdash; Ship faster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --panel: #f7f6fc;
+            --border: #e5e2f3;
+            --text: #201c33;
+            --muted: #6c6684;
+            --accent: #6c4fd6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Sora', sans-serif;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-weight: 700;
+        }
+
+        nav a {
+            color: var(--muted);
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 0.9rem;
+        }
+
+        .cta-btn {
+            background: var(--accent);
+            color: #fff !important;
+            padding: 8px 18px;
+            border-radius: 4px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 20px 50px;
+        }
+
+        .hero .eyebrow {
+            display: inline-block;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 18px;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            max-width: 640px;
+            margin: 0 auto 18px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            color: var(--muted);
+            max-width: 480px;
+            margin: 0 auto 26px;
+        }
+
+        .hero-btns a {
+            text-decoration: none;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            margin: 0 6px;
+            display: inline-block;
+        }
+
+        .primary {
+            background: var(--accent);
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        .secondary {
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .img-placeholder {
+            max-width: 900px;
+            margin: 40px auto 0;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 320px;
+            font-size: 0.85rem;
+        }
+
+        .features {
+            max-width: 1000px;
+            margin: 70px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .feature {
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .feature .icon {
+            width: 34px;
+            height: 34px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            margin-bottom: 14px;
+        }
+
+        .feature h3 {
+            font-size: 1rem;
+            margin: 0 0 8px;
+        }
+
+        .feature p {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        .pricing {
+            background: var(--panel);
+            padding: 70px 30px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pricing h2 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .plans {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .plan {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 26px;
+            text-align: center;
+        }
+
+        .plan.featured {
+            border-color: var(--accent);
+            box-shadow: 0 2px 10px rgba(108, 79, 214, 0.15);
+        }
+
+        .plan .name {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .plan .price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .plan .price span {
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        .plan ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 18px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: left;
+        }
+
+        .plan li {
+            margin-bottom: 6px;
+        }
+
+        .plan a {
+            display: block;
+            padding: 8px;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .plan.featured a {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        @media (max-width: 700px) {
+            .plans {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Convallis</div>
+        <nav>
+            <a href="#">Product</a>
+            <a href="#">Pricing</a>
+            <a href="#">Docs</a>
+            <a class="cta-btn" href="#">Start free</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="eyebrow">Now with placeholder automations</div>
+        <h1>Quisque faucibus ex sapien vitae pellentesque, shipped in minutes</h1>
+        <p>In id cursus mi pretium tellus duis convallis tempus leo eu aenean sed diam urna tempor.</p>
+        <div class="hero-btns">
+            <a class="primary" href="#">Get started free</a>
+            <a class="secondary" href="#">Book a demo</a>
+        </div>
+        <div class="img-placeholder">1200 &times; 640 product screenshot placeholder</div>
+    </section>
+
+    <section class="features">
+        <div class="feature">
+            <div class="icon"></div>
+            <h3>Pulvinar Automations</h3>
+            <p>Vivamus fringilla lacus nec metus bibendum egestas iaculis massa nisl.</p>
+        </div>
+        <div class="feature">
+            <div class="icon"></div>
+            <h3>Malesuada Integrations</h3>
+            <p>Lacinia integer nunc posuere ut hendrerit semper vel class aptent.</p>
+        </div>
+        <div class="feature">
+            <div class="icon"></div>
+            <h3>Sociosqu Analytics</h3>
+            <p>Ad litora torquent per conubia nostra inceptos himenaeos sed vel.</p>
+        </div>
+    </section>
+
+    <section class="pricing">
+        <h2 style="text-align:center;">Simple pricing</h2>
+        <div class="plans">
+            <div class="plan">
+                <div class="name">Starter</div>
+                <div class="price">$0<span>/mo</span></div>
+                <ul>
+                    <li>Up to 3 projects</li>
+                    <li>Community support</li>
+                </ul>
+                <a href="#">Choose Starter</a>
+            </div>
+            <div class="plan featured">
+                <div class="name">Pro</div>
+                <div class="price">$24<span>/mo</span></div>
+                <ul>
+                    <li>Unlimited projects</li>
+                    <li>Priority support</li>
+                    <li>Advanced analytics</li>
+                </ul>
+                <a href="#">Choose Pro</a>
+            </div>
+            <div class="plan">
+                <div class="name">Team</div>
+                <div class="price">$59<span>/mo</span></div>
+                <ul>
+                    <li>Everything in Pro</li>
+                    <li>Team roles</li>
+                </ul>
+                <a href="#">Choose Team</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="../">&larr; Lorem Ipsum Gallery</a>
+    </footer>
+</body>
+
+</html>
