@@ -39,6 +39,43 @@
             </div>
         </div>
 
+        <!-- Total Length -->
+        <div class="filter-group">
+            <h3>Length (total chars including dot or dots)</h3>
+            <div class="filter-row">
+                <label>Min:</label>
+                <input type="number" id="minTotalLength" min="1" placeholder="—" />
+                <label>Max:</label>
+                <input type="number" id="maxTotalLength" min="1" placeholder="—" />
+            </div>
+        </div>
+
+        <!-- Price -->
+        <div class="filter-group">
+            <h3>Price</h3>
+            <div class="filter-row">
+                <label>Min $:</label>
+                <input type="number" id="minPrice" min="0" step="0.01" placeholder="—" />
+                <label>Max $:</label>
+                <input type="number" id="maxPrice" min="0" step="0.01" placeholder="—" />
+            </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>Max renew $:</label>
+                <input type="number" id="maxRenew" min="0" step="0.01" placeholder="—" />
+                <label>Max total $:</label>
+                <input type="number" id="maxTotal" min="0" step="0.01" placeholder="—" />
+            </div>
+            <div class="filter-row" style="margin-top:4px;">
+                <label>Renew known:</label>
+                <div class="tri-toggle" data-filter="renewKnown"
+                    title="Whether a renewal price is available for this row, from the file or the TLD table">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+        </div>
+
         <!-- TLD -->
         <div class="filter-group">
             <h3>TLD Filter</h3>
@@ -127,56 +164,21 @@
                     <button data-val="any" class="active-any">Any</button>
                 </div>
             </div>
-            <div class="repeat-grid" style="margin-top:8px;">
-                <div class="filter-row">
-                    <label>Dubs:</label>
-                    <div class="tri-toggle" data-filter="dubs">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
+            <div class="filter-row" style="margin-top:8px;">
+                <label>Repeats:</label>
+                <div class="tri-toggle" data-filter="repeats"
+                    title="Whether the name contains a run of the same character repeated">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
                 </div>
-                <div class="filter-row">
-                    <label>Trips:</label>
-                    <div class="tri-toggle" data-filter="trips">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
-                </div>
-                <div class="filter-row">
-                    <label>Quads:</label>
-                    <div class="tri-toggle" data-filter="quads">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
-                </div>
-                <div class="filter-row">
-                    <label>Quints:</label>
-                    <div class="tri-toggle" data-filter="quints">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
-                </div>
-                <div class="filter-row">
-                    <label>Sexts:</label>
-                    <div class="tri-toggle" data-filter="sexts">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
-                </div>
-                <div class="filter-row">
-                    <label>Septs:</label>
-                    <div class="tri-toggle" data-filter="septs">
-                        <button data-val="yes">Y</button>
-                        <button data-val="no">N</button>
-                        <button data-val="any" class="active-any">—</button>
-                    </div>
-                </div>
+                <label>Run of:</label>
+                <input type="number" id="repeatCount" min="2" max="20" placeholder="2" />
             </div>
+            <p class="hint">
+                <em>Run of</em> is how many identical characters in a row count as a repeat
+                (2 = dubs, 3 = trips, 4 = quads…).
+            </p>
         </div>
 
         <!-- Substrings -->
@@ -203,7 +205,7 @@
                 </select>
             </div>
             <p class="hint">
-                <em>Ignore TLD</em> matches only the part before the first dot; <em>Include TLD</em> matches the
+                <em>Ignore TLD</em> matches only the part before the first dot. <em>Include TLD</em> matches the
                 name with its dots removed, so <code>example</code> finds <code>exampl.e</code>.
                 A term containing a dot (<code>foo.co</code>) always matches against the full name, dots and all.
                 This matches both <code>foo.com</code> and <code>foo.co.com</code>.
@@ -233,15 +235,6 @@
                 Patterns match the whole name, so <code>CVV-CVCN</code> gives <code>foo-bar2</code> and
                 <code>LL*N</code> gives <code>de-4</code>. Add several to match any of them.
             </p>
-        </div>
-
-        <!-- Auction-only: Max Renew -->
-        <div class="filter-group" id="auctionFilters" style="display:none;">
-            <h3>Auction Filters</h3>
-            <div class="filter-row">
-                <label>Max Renew $:</label>
-                <input type="number" id="maxRenew" min="0" step="0.01" placeholder="—" />
-            </div>
         </div>
 
         <!-- Keyboard patterns -->
@@ -274,6 +267,10 @@
                 <option value="length-desc">Length (long→short)</option>
                 <option value="price">Price (low→high)</option>
                 <option value="price-desc">Price (high→low)</option>
+                <option value="renew">Renew $ (low→high)</option>
+                <option value="renew-desc">Renew $ (high→low)</option>
+                <option value="total">Price + Renew (low→high)</option>
+                <option value="total-desc">Price + Renew (high→low)</option>
                 <option value="bid" id="bidSortOpt" style="display:none;">Bids (high→low)</option>
                 <option value="keyboard">Keyboard Adj % (high→low)</option>
             </select>
@@ -290,6 +287,7 @@
     <div class="stats-bar" id="statsBar" style="display:none;">
         <div>Showing <span id="resultCount">0</span> of <span id="totalCount">0</span> domains</div>
         <div id="priceStat"></div>
+        <div id="renewStat"></div>
     </div>
 
     <!-- Results Table -->
@@ -329,11 +327,17 @@
         sorted by frequency. Pick one and hit <em>+ Inc</em> or <em>- Exc</em> to add it as a tag.
     </p>
     <p>
+        <strong>Renewal prices:</strong> auction exports carry a <code>renewPrice</code> per row and that always wins.
+        Buy-now exports don't, so the <em>Renew $</em> column falls back to Namecheap's published renewal price for the
+        TLD. Premium domains renew above their TLD's standard rate, so this isn't always gospel.
+    </p>
+    <p>
         <strong>Keyboard Patterns:</strong> Analyzes domain names against a US QWERTY layout.
         "Same Row" means every character sits on one keyboard row. "Adjacent %" measures how many
         consecutive key-pairs are physically next to each other.
     </p>
 
+    <script src="tld-renew.js"></script>
     <script src="parser.js"></script>
 </body>
 

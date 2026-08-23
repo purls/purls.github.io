@@ -8,6 +8,7 @@ let priceCol = "price"; // actual header holding the price for the loaded file
 let currentPage = 1;
 let triStates = {};
 let tldCounts = new Map();
+let learnedRenew = new Map();
 
 // QWERTY keyboard layout
 const KEYBOARD = {
@@ -317,6 +318,7 @@ function parseCSV(text) {
     }
   }
   renderTldList();
+  learnRenewPrices(rawRows);
 
   // Update UI
   const typeEl = document.getElementById("tableType");
@@ -324,8 +326,6 @@ function parseCSV(text) {
 
   document.getElementById("filtersSection").style.display = "";
   document.getElementById("actionsSection").style.display = "";
-  document.getElementById("auctionFilters").style.display =
-    tableMode === "auction" ? "" : "none";
   document.getElementById("bidSortOpt").style.display =
     tableMode === "auction" ? "" : "none";
 
@@ -342,6 +342,46 @@ function getPriceCol(row) {
   return parseFloat(row[priceCol]) || 0;
 }
 
+// Renewal price for a row. The file's own renewPrice is authoritative when it has
+// one, otherwise fall back to a per-TLD estimate (not always accurate).
+function getRenew(row) {
+  const own = parseFloat(row["renewPrice"]);
+  if (own > 0) return { value: own, exact: true };
+  const tld = extractParts(getNameCol(row))[1].toLowerCase();
+  if (!tld) return null;
+  const listed = (window.TLD_RENEW || {})[tld];
+  const est = listed > 0 ? listed : learnedRenew.get(tld);
+  return est > 0 ? { value: est, exact: false } : null;
+}
+
+// Rebuild the learned TLD -> renewal map from a file that carries renewPrice,
+// to cover TLDs missing from the bundled price list.
+function learnRenewPrices(rows) {
+  learnedRenew = new Map();
+  if (!headers.includes("renewPrice")) return;
+  const tally = new Map();
+  for (const row of rows) {
+    const price = parseFloat(row["renewPrice"]);
+    if (!(price > 0)) continue;
+    const tld = extractParts(row[domainCol] || "")[1].toLowerCase();
+    if (!tld) continue;
+    if (!tally.has(tld)) tally.set(tld, new Map());
+    const counts = tally.get(tld);
+    counts.set(price, (counts.get(price) || 0) + 1);
+  }
+  for (const [tld, counts] of tally) {
+    let best = 0;
+    let bestCount = 0;
+    for (const [price, n] of counts) {
+      if (n > bestCount) {
+        best = price;
+        bestCount = n;
+      }
+    }
+    learnedRenew.set(tld, best);
+  }
+}
+
 // Filtering
 function applyFilters() {
   const minLen = document.getElementById("minLength").value
@@ -350,15 +390,31 @@ function applyFilters() {
   const maxLen = document.getElementById("maxLength").value
     ? +document.getElementById("maxLength").value
     : null;
+  const minTotalLen = document.getElementById("minTotalLength").value
+    ? +document.getElementById("minTotalLength").value
+    : null;
+  const maxTotalLen = document.getElementById("maxTotalLength").value
+    ? +document.getElementById("maxTotalLength").value
+    : null;
   const minTldLen = document.getElementById("minTldLength").value
     ? +document.getElementById("minTldLength").value
     : null;
   const maxTldLen = document.getElementById("maxTldLength").value
     ? +document.getElementById("maxTldLength").value
     : null;
+  const minPrice = document.getElementById("minPrice").value
+    ? +document.getElementById("minPrice").value
+    : null;
+  const maxPrice = document.getElementById("maxPrice").value
+    ? +document.getElementById("maxPrice").value
+    : null;
   const maxRenew = document.getElementById("maxRenew").value
     ? +document.getElementById("maxRenew").value
     : null;
+  const maxTotal = document.getElementById("maxTotal").value
+    ? +document.getElementById("maxTotal").value
+    : null;
+  const repeatCount = +document.getElementById("repeatCount").value || 2;
   const minAdjPct = document.getElementById("minAdjacentPct").value
     ? +document.getElementById("minAdjacentPct").value
     : null;
@@ -396,6 +452,17 @@ function applyFilters() {
     if (minLen !== null && domain.length < minLen) return false;
     if (maxLen !== null && domain.length > maxLen) return false;
 
+    // Total length (domain + dot + TLD)
+    if (minTotalLen !== null && fullName.length < minTotalLen) return false;
+    if (maxTotalLen !== null && fullName.length > maxTotalLen) return false;
+
+    // Price
+    if (minPrice !== null || maxPrice !== null) {
+      const price = getPriceCol(row);
+      if (minPrice !== null && price < minPrice) return false;
+      if (maxPrice !== null && price > maxPrice) return false;
+    }
+
     // TLD include / exclude
     if (tldInc.length && !tldInc.includes(tldLower)) return false;
     if (tldExc.length && tldExc.includes(tldLower)) return false;
@@ -423,23 +490,14 @@ function applyFilters() {
     if (triStates.palindrome === "yes" && !isPalindrome(domLower)) return false;
     if (triStates.palindrome === "no" && isPalindrome(domLower)) return false;
 
-    // Repeats
-    const repeatMap = {
-      dubs: 2,
-      trips: 3,
-      quads: 4,
-      quints: 5,
-      sexts: 6,
-      septs: 7,
-    };
-    for (const [key, count] of Object.entries(repeatMap)) {
-      if (triStates[key] === "yes" && !hasConsecutive(domLower, count))
-        return false;
-      if (triStates[key] === "no" && hasConsecutive(domLower, count))
-        return false;
+    // Repeats: a run of `repeatCount` identical characters (2 = dubs, 3 = trips, ...)
+    if (triStates.repeats !== "any") {
+      const hit = hasConsecutive(domLower, repeatCount);
+      if (triStates.repeats === "yes" && !hit) return false;
+      if (triStates.repeats === "no" && hit) return false;
     }
 
-    // Substrings & structure — match targets built only for rows that got this far
+    // Substrings & structure
     const parts = { sld: domLower, full: "", joined: "" };
     if (needFull) parts.full = tldLower ? domLower + "." + tldLower : domLower;
     if (needJoined) parts.joined = domLower + tldLower.replace(/\./g, "");
@@ -465,10 +523,20 @@ function applyFilters() {
       if (!ok) return false;
     }
 
-    // Max renew (auction only)
-    if (maxRenew !== null && tableMode === "auction") {
-      const rp = parseFloat(row["renewPrice"]) || 0;
-      if (rp > maxRenew) return false;
+    // Renewal cost, from the row itself or the TLD table
+    if (
+      maxRenew !== null ||
+      maxTotal !== null ||
+      triStates.renewKnown !== "any"
+    ) {
+      const renew = getRenew(row);
+      if (triStates.renewKnown === "yes" && !renew) return false;
+      if (triStates.renewKnown === "no" && renew) return false;
+      if (renew) {
+        if (maxRenew !== null && renew.value > maxRenew) return false;
+        if (maxTotal !== null && getPriceCol(row) + renew.value > maxTotal)
+          return false;
+      }
     }
 
     // Keyboard: same row
@@ -509,6 +577,23 @@ function applyFilters() {
     filteredRows.sort((a, b) => getPriceCol(a) - getPriceCol(b));
   } else if (sortBy === "price-desc") {
     filteredRows.sort((a, b) => getPriceCol(b) - getPriceCol(a));
+  } else if (sortBy.startsWith("renew") || sortBy.startsWith("total")) {
+    // Unknown renewal prices sort last in both directions rather than reading as $0
+    const key = (r) => {
+      const renew = getRenew(r);
+      if (!renew) return null;
+      return sortBy.startsWith("total")
+        ? getPriceCol(r) + renew.value
+        : renew.value;
+    };
+    const dir = sortBy.endsWith("-desc") ? -1 : 1;
+    filteredRows.sort((a, b) => {
+      const x = key(a);
+      const y = key(b);
+      if (x === null) return y === null ? 0 : 1;
+      if (y === null) return -1;
+      return (x - y) * dir;
+    });
   } else if (sortBy === "bid" && tableMode === "auction") {
     filteredRows.sort((a, b) => (+b["bidCount"] || 0) - (+a["bidCount"] || 0));
   } else if (sortBy === "keyboard") {
@@ -530,7 +615,6 @@ function getDisplayCols() {
       "name",
       "price",
       "bidCount",
-      "renewPrice",
       "endDate",
       "ahrefsDomainRating",
       "estibotValue",
@@ -548,7 +632,6 @@ function friendlyHeader(col) {
     price: "Price",
     price_usd: "Price",
     bidCount: "Bids",
-    renewPrice: "Renew $",
     endDate: "Ends",
     ahrefsDomainRating: "Ahrefs DR",
     estibotValue: "Estibot $",
@@ -560,6 +643,29 @@ function friendlyHeader(col) {
   return map[col] || col;
 }
 
+function money(n) {
+  return (
+    "$" +
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+}
+
+// Renew + Total cells. An estimate pulled from the TLD table is greyed and marked
+// with ~, since a premium domain can renew well above its TLD's standard rate.
+function renewCells(row) {
+  const renew = getRenew(row);
+  if (!renew) return "<td></td><td></td>";
+  const total = getPriceCol(row) + renew.value;
+  if (renew.exact)
+    return `<td>${money(renew.value)}</td><td>${money(total)}</td>`;
+  const cell = (n) =>
+    `<td><span class="est" title="Estimated from the TLD renewal table, not from the file">~${money(n)}</span></td>`;
+  return cell(renew.value) + cell(total);
+}
+
 function renderTable() {
   const cols = getDisplayCols().filter((c) => headers.includes(c));
   const showCols = [...cols];
@@ -569,7 +675,7 @@ function renderTable() {
   thead.innerHTML =
     "<tr>" +
     showCols.map((c) => `<th>${friendlyHeader(c)}</th>`).join("") +
-    "<th>Len</th><th>KB</th></tr>";
+    "<th>Renew $</th><th>Total $</th><th>Len</th><th>KB</th></tr>";
 
   // Pagination
   const perPage =
@@ -606,7 +712,6 @@ function renderTable() {
             if (
               c === "price" ||
               c === "price_usd" ||
-              c === "renewPrice" ||
               c === "estibotValue" ||
               c === "goValue"
             ) {
@@ -623,6 +728,7 @@ function renderTable() {
             return `<td>${val}</td>`;
           })
           .join("") +
+        renewCells(row) +
         `<td>${domain.length}</td>` +
         `<td>${kbBadge}</td></tr>`
       );
@@ -652,6 +758,22 @@ function renderTable() {
   } else {
     pstat.textContent = "";
   }
+
+  // Renewal coverage: how much of the filtered set has a price at all, and where from
+  let exact = 0,
+    estimated = 0;
+  for (const r of filteredRows) {
+    const renew = getRenew(r);
+    if (!renew) continue;
+    if (renew.exact) exact++;
+    else estimated++;
+  }
+  const unknown = filteredRows.length - exact - estimated;
+  document.getElementById("renewStat").innerHTML = filteredRows.length
+    ? `Renew: <span>${exact.toLocaleString("en-US")}</span> from file, ` +
+      `<span>${estimated.toLocaleString("en-US")}</span> estimated, ` +
+      `<span>${unknown.toLocaleString("en-US")}</span> unknown`
+    : "";
 
   // Pagination controls
   document.getElementById("pageInfo").textContent =
@@ -693,7 +815,11 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("maxLength").value = "";
   document.getElementById("minTldLength").value = "";
   document.getElementById("maxTldLength").value = "";
+  document.getElementById("minPrice").value = "";
+  document.getElementById("maxPrice").value = "";
   document.getElementById("maxRenew").value = "";
+  document.getElementById("maxTotal").value = "";
+  document.getElementById("repeatCount").value = "";
   document.getElementById("minAdjacentPct").value = "";
   document.getElementById("sortBy").value = "none";
   document.getElementById("subIncScope").value = "sld";
@@ -716,18 +842,29 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 document.getElementById("exportBtn").addEventListener("click", () => {
   if (!filteredRows.length) return;
   const cols = headers;
-  const lines = [cols.join(",")];
+  // renew_usd / total_usd carry the looked-up numbers out with the rows, and
+  // renew_source says whether each came from the file or the TLD table.
+  const lines = [[...cols, "renew_usd", "total_usd", "renew_source"].join(",")];
   filteredRows.forEach((row) => {
+    const renew = getRenew(row);
+    const extra = renew
+      ? [
+          renew.value.toFixed(2),
+          (getPriceCol(row) + renew.value).toFixed(2),
+          renew.exact ? "file" : "tld_table",
+        ]
+      : ["", "", ""];
     lines.push(
-      cols
-        .map((c) => {
+      [
+        ...cols.map((c) => {
           let v = row[c] || "";
           if (v.includes(",") || v.includes('"') || v.includes("\n")) {
             v = '"' + v.replace(/"/g, '""') + '"';
           }
           return v;
-        })
-        .join(","),
+        }),
+        ...extra,
+      ].join(","),
     );
   });
   const blob = new Blob([lines.join("\n")], { type: "text/csv" });

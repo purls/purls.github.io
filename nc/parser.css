@@ -331,10 +331,8 @@ hr {
   margin: 20px 0;
 }
 
-.repeat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 6px;
+.est {
+  color: #808080;
 }
 
 .keyboard-badge {
