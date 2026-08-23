@@ -810,7 +810,7 @@
                     <tr>
                         <td>10</td>
                         <td>High Card</td>
-                        <td>No combination — highest card plays</td>
+                        <td>No combination. The highest card plays</td>
                     </tr>
                 </tbody>
             </table>
@@ -844,7 +844,7 @@
         function isRed(suit) { return suit === 'hearts' || suit === 'diamonds'; }
         function cardKey(v, s) { return v + '_' + s; }
 
-        // PASSWORD GENERATOR — State
+        // State
         let sequence = [];  // [{val, suit}, ...]
         let settings = { case: 0, cardSep: 0, wordSep: 0, includeOf: 0, abbreviate: 0 };
 

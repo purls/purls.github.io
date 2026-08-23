@@ -5,6 +5,8 @@ let headers = [];
 let tableMode = null; // 'auction' or 'buynow'
 let domainCol = "name"; // actual header holding the domain name for the loaded file
 let priceCol = "price"; // actual header holding the price for the loaded file
+let availableCol = ""; // bulk-search only: the Available / Premium flag columns
+let premiumCol = "";
 let currentPage = 1;
 let triStates = {};
 let tldCounts = new Map();
@@ -211,7 +213,7 @@ function renderTldList() {
     (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
   );
   sel.innerHTML =
-    `<option value="">— ${sorted.length} TLDs in file —</option>` +
+    `<option value="">. ${sorted.length} TLDs in file. </option>` +
     sorted
       .map(
         ([t, n]) =>
@@ -268,6 +270,25 @@ function handleFile(file) {
   reader.readAsText(file);
 }
 
+// Exports disagree on capitalisation. The Market files are lowercase, a bulk
+// search writes Domain/Available/Premium/Price. Resolving headers by name
+// without case and handing back the spelling the file actually used.
+function findHeader(...names) {
+  const lower = headers.map((h) => h.toLowerCase());
+  for (const name of names) {
+    const i = lower.indexOf(name.toLowerCase());
+    if (i > -1) return headers[i];
+  }
+  return null;
+}
+
+// Prices arrive as 18.48, $138.60 or $1,138.60 depending on the export.
+// Stripping the currency and separators first:
+// parseFloat("$138.60") is NaN, and worse, parseFloat("1,138.60") is 1.
+function toNumber(val) {
+  return parseFloat(String(val == null ? "" : val).replace(/[$,\s]/g, ""));
+}
+
 // CSV parsing
 function parseCSVLine(line, delim) {
   if (line.indexOf('"') === -1) return line.split(delim);
@@ -314,28 +335,33 @@ function parseCSV(text) {
   // - The full export (permalink,domain,price,extensions_taken)
   // - A pre-filtered one (name,price_usd,permalink) from filtered/selected results.
   //   price_usd is a buy-now-only column, so it's as strong a signal as permalink/domain.
-  if (headers.includes("bidCount") || headers.includes("startPrice")) {
+  // A bulk search is checked before buy-now: it also has a Domain and a Price
+  // column, so only the Available/Premium pair tells the two apart.
+  if (findHeader("bidCount") || findHeader("startPrice")) {
     tableMode = "auction";
+  } else if (findHeader("available") || findHeader("premium")) {
+    tableMode = "beast";
   } else if (
-    headers.includes("permalink") ||
-    headers.includes("domain") ||
-    headers.includes("price_usd")
+    findHeader("permalink") ||
+    findHeader("domain") ||
+    findHeader("price_usd")
   ) {
     tableMode = "buynow";
   } else {
-    tableMode = headers.includes("name") ? "auction" : "buynow";
+    tableMode = findHeader("name") ? "auction" : "buynow";
   }
 
   // Resolve the actual column names present in this file rather than assuming "domain"/"price"
   // Pre-filtered buy-now export uses "name"/"price_usd".
   if (tableMode === "auction") {
-    domainCol = "name";
-    priceCol = "price";
+    domainCol = findHeader("name") || "name";
+    priceCol = findHeader("price") || "price";
   } else {
-    domainCol = ["domain", "name"].find((c) => headers.includes(c)) || "domain";
-    priceCol =
-      ["price", "price_usd"].find((c) => headers.includes(c)) || "price";
+    domainCol = findHeader("domain", "name") || "domain";
+    priceCol = findHeader("price", "price_usd") || "price";
   }
+  availableCol = findHeader("available") || "";
+  premiumCol = findHeader("premium") || "";
 
   rawRows = [];
   tldCounts = new Map();
@@ -360,9 +386,12 @@ function parseCSV(text) {
 
   // Update UI
   const typeEl = document.getElementById("tableType");
-  typeEl.innerHTML = `<span class="detected-type ${tableMode}">${tableMode === "auction" ? "Auction" : "Buy-Now"}</span>`;
+  const typeLabel = { auction: "Auction", buynow: "Buy-Now", beast: "Bulk Search" };
+  typeEl.innerHTML = `<span class="detected-type ${tableMode}">${typeLabel[tableMode]}</span>`;
 
   document.getElementById("filtersSection").style.display = "";
+  document.getElementById("beastFilters").style.display =
+    tableMode === "beast" ? "" : "none";
   document.getElementById("actionsSection").style.display = "";
 
   showInfo(`Loaded ${rawRows.length} rows (${tableMode}).`);
@@ -375,19 +404,29 @@ function getNameCol(row) {
 }
 
 function getPriceCol(row) {
-  return parseFloat(row[priceCol]) || 0;
+  return toNumber(row[priceCol]) || 0;
+}
+
+// Whether a bulk-search row is flagged premium, which changes what its renewal price is worth as an estimate.
+function isPremium(row) {
+  return (
+    !!premiumCol && (row[premiumCol] || "").trim().toLowerCase() === "premium"
+  );
 }
 
 // Renewal price for a row. The file's own renewPrice is authoritative when it has
 // one, otherwise fall back to a per-TLD estimate (not always accurate).
 function getRenew(row) {
-  const own = parseFloat(row["renewPrice"]);
+  const own = toNumber(row["renewPrice"]);
   if (own > 0) return { value: own, exact: true };
   const tld = extractParts(getNameCol(row))[1].toLowerCase();
   if (!tld) return null;
   const listed = (window.TLD_RENEW || {})[tld];
   const est = listed > 0 ? listed : learnedRenew.get(tld);
-  return est > 0 ? { value: est, exact: false } : null;
+  if (!(est > 0)) return null;
+  // A premium name renews above its TLD's standard rate often enough that the
+  // number below is a floor rather than an estimate. Worth flagging.
+  return { value: est, exact: false, premium: isPremium(row) };
 }
 
 // Rebuild the learned TLD -> renewal map from a file that carries renewPrice,
@@ -397,7 +436,7 @@ function learnRenewPrices(rows) {
   if (!headers.includes("renewPrice")) return;
   const tally = new Map();
   for (const row of rows) {
-    const price = parseFloat(row["renewPrice"]);
+    const price = toNumber(row["renewPrice"]);
     if (!(price > 0)) continue;
     const tld = extractParts(row[domainCol] || "")[1].toLowerCase();
     if (!tld) continue;
@@ -747,6 +786,19 @@ function applyFilters() {
       }
     }
 
+    // Bulk search flags
+    if (availableCol && triStates.available !== "any") {
+      const avail =
+        (row[availableCol] || "").trim().toLowerCase() === "available";
+      if (triStates.available === "yes" && !avail) return false;
+      if (triStates.available === "no" && avail) return false;
+    }
+    if (premiumCol && triStates.premium !== "any") {
+      const prem = isPremium(row);
+      if (triStates.premium === "yes" && !prem) return false;
+      if (triStates.premium === "no" && prem) return false;
+    }
+
     // Keyboard: same row
     if (kbOn && triStates.sameRow !== "any") {
       const kb = keyboardReport(domain);
@@ -782,6 +834,9 @@ function getDisplayCols() {
       "goValue",
       "url",
     ];
+  }
+  if (tableMode === "beast") {
+    return [domainCol, priceCol, availableCol, premiumCol].filter(Boolean);
   }
   return [domainCol, priceCol, "extensions_taken", "permalink"];
 }
@@ -822,8 +877,13 @@ function renewCells(row) {
   const total = getPriceCol(row) + renew.value;
   if (renew.exact)
     return `<td>${money(renew.value)}</td><td>${money(total)}</td>`;
+  const cls = renew.premium ? "est premium-est" : "est";
+  const mark = renew.premium ? "?" : "~";
+  const title = renew.premium
+    ? "The TLD's standard renewal - a premium domain usually renews above this"
+    : "Estimated from the TLD renewal table, not from the file";
   const cell = (n) =>
-    `<td><span class="est" title="Estimated from the TLD renewal table, not from the file">~${money(n)}</span></td>`;
+    `<td><span class="${cls}" title="${title}">${mark}${money(n)}</span></td>`;
   return cell(renew.value) + cell(total);
 }
 
@@ -877,13 +937,8 @@ function renderTable() {
             if (c === "url" || c === "permalink") {
               return `<td><a href="${val}" target="_blank" rel="noopener">↗</a></td>`;
             }
-            if (
-              c === "price" ||
-              c === "price_usd" ||
-              c === "estibotValue" ||
-              c === "goValue"
-            ) {
-              const n = parseFloat(val);
+            if (c === priceCol || c === "estibotValue" || c === "goValue") {
+              const n = toNumber(val);
               return `<td>${isNaN(n) ? val : "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
             }
             if (c === "endDate") {
@@ -907,7 +962,7 @@ function renderTable() {
   // Stats
   document.getElementById("resultCount").textContent = filteredRows.length;
   document.getElementById("totalCount").textContent = rawRows.length;
-  // Accumulate in a loop — spreading a million-element array overflows the stack
+  // Accumulate in a loop, spreading a million-element array overflows the stack
   let count = 0,
     sum = 0,
     min = Infinity,

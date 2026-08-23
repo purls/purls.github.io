@@ -76,6 +76,44 @@
             </div>
         </div>
 
+
+        <!-- Character toggles -->
+        <div class="filter-group">
+            <h3>Character Filters</h3>
+            <div class="filter-row">
+                <label>Letters:</label>
+                <div class="tri-toggle" data-filter="letters">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Vowels:</label>
+                <div class="tri-toggle" data-filter="vowels">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Numbers:</label>
+                <div class="tri-toggle" data-filter="numbers">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Hyphens:</label>
+                <div class="tri-toggle" data-filter="hyphens">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+        </div>
+
         <!-- TLD -->
         <div class="filter-group">
             <h3>TLD Filter</h3>
@@ -109,43 +147,6 @@
             <div class="filter-row" style="margin-top:4px;">
                 <label>Compound TLD:</label>
                 <div class="tri-toggle" data-filter="compoundTld" title="Compound = multi-part TLD, e.g. co.uk, com.au">
-                    <button data-val="yes">Yes</button>
-                    <button data-val="no">No</button>
-                    <button data-val="any" class="active-any">Any</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Character toggles -->
-        <div class="filter-group">
-            <h3>Character Filters</h3>
-            <div class="filter-row">
-                <label>Letters:</label>
-                <div class="tri-toggle" data-filter="letters">
-                    <button data-val="yes">Yes</button>
-                    <button data-val="no">No</button>
-                    <button data-val="any" class="active-any">Any</button>
-                </div>
-            </div>
-            <div class="filter-row">
-                <label>Vowels:</label>
-                <div class="tri-toggle" data-filter="vowels">
-                    <button data-val="yes">Yes</button>
-                    <button data-val="no">No</button>
-                    <button data-val="any" class="active-any">Any</button>
-                </div>
-            </div>
-            <div class="filter-row">
-                <label>Numbers:</label>
-                <div class="tri-toggle" data-filter="numbers">
-                    <button data-val="yes">Yes</button>
-                    <button data-val="no">No</button>
-                    <button data-val="any" class="active-any">Any</button>
-                </div>
-            </div>
-            <div class="filter-row">
-                <label>Hyphens:</label>
-                <div class="tri-toggle" data-filter="hyphens">
                     <button data-val="yes">Yes</button>
                     <button data-val="no">No</button>
                     <button data-val="any" class="active-any">Any</button>
@@ -265,6 +266,39 @@
         </div>
     </div>
 
+    <!-- Beast Mode only: availability and premium flags -->
+    <div class="filter-group" id="beastFilters" style="display:none;">
+        <h3>Bulk Search (Beast Mode) Flags</h3>
+        <div class="filter-row">
+            <label>Available:</label>
+            <div class="tri-toggle" data-filter="available">
+                <button data-val="yes">Yes</button>
+                <button data-val="no">No</button>
+                <button data-val="any" class="active-any">Any</button>
+            </div>
+
+            <div class="spacer" style="width:32px;"></div>
+
+            <label>Premium:</label>
+            <div class="tri-toggle" data-filter="premium">
+                <button data-val="yes">Yes</button>
+                <button data-val="no">No</button>
+                <button data-val="any" class="active-any">Any</button>
+            </div>
+        </div>
+        <!--<div class="filter-row">
+            <label>Premium:</label>
+            <div class="tri-toggle" data-filter="premium">
+                <button data-val="yes">Yes</button>
+                <button data-val="no">No</button>
+                <button data-val="any" class="active-any">Any</button>
+            </div>
+        </div>-->
+    </div>
+
+    <hr />
+
+
     <!-- Sort & Actions -->
     <div class="controls" id="actionsSection" style="display:none;">
         <div class="sort-controls" id="sortControls">
@@ -312,8 +346,9 @@
 
     <hr>
     <p>
-        Upload a Namecheap Market CSV export (Auction or Buy-Now). The parser auto-detects the table type
-        from the column headers. Use the filters above to narrow results, then export the filtered set.
+        Upload a Namecheap CSV export (Market Auction, Market Buy-Now, or a bulk search "Beast Mode") result.
+        The parser auto-detects the table type from the column headers, case insensitively.
+        Use the filters above to narrow results, then export the filtered set.
     </p>
     <p>
         <strong>Tri-toggles:</strong> <em>Yes</em> = must have, <em>No</em> = must not have, <em>Any</em> = don't care.

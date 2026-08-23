@@ -410,6 +410,15 @@ hr {
   color: #60c8a0;
 }
 
+.detected-type.beast {
+  background-color: #2a1a3a;
+  color: #a080c8;
+}
+
+.est.premium-est {
+  color: #a08050;
+}
+
 /* Sort controls */
 
 .sort-controls {

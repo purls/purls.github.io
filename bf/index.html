@@ -526,9 +526,9 @@
             const PRINTABLE = [];
             for (let c = 32; c <= 126; c++) PRINTABLE.push(String.fromCharCode(c));
 
-            // Quick-fill sets for the disallowed-characters field. These target
-            // form/injection safety, not password strength — real providers ban
-            // little to nothing.
+            // Quick-fill sets for the disallowed-characters field.
+            // These target form/injection safety, not password strength.
+            // Real providers ban little to nothing.
             const DISALLOWED_PRESETS = {
                 html: `<>&"'`,
                 injection: `<>&"'\\/;|\``,
@@ -809,7 +809,7 @@
                 if (missing.length) {
                     return blankStats('The alphabet does not contain: ' +
                         missing.map(c => c === ' ' ? '(space)' : c).join(' ') +
-                        ' — an attacker enumerating it would never reach this password.');
+                        ': an attacker enumerating it would never reach this password.');
                 }
 
                 const msPer = parseFloat(timePer.value) * parseFloat(timeUnit.value);

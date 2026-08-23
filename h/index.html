@@ -1454,12 +1454,12 @@
                         let ni = 0;
                         lines.forEach((line, i) => {
                             if (skippedLines.has(i)) {
-                                // Protected by skip — keep it
+                                // Protected by skip, keep it
                                 newSkipped.add(ni);
                                 newLines.push(line);
                                 ni++;
                             } else if (checkMatch(line, op, i)) {
-                                // Matched for deletion — drop it
+                                // Matched for deletion, drop it
                             } else {
                                 newLines.push(line);
                                 ni++;
@@ -1513,7 +1513,7 @@
                             lines = newLines;
                             skippedLines = newSkipped;
                         } else {
-                            // No skipped lines — original behavior
+                            // No skipped lines, original behavior
                             if (op.condition?.type) {
                                 const processed = def.runBulk(
                                     lines.filter((l, i) => checkCondition(l, op.condition, i)),
