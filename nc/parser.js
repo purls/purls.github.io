@@ -270,6 +270,8 @@ function handleFile(file) {
 
 // CSV parsing
 function parseCSVLine(line, delim) {
+  if (line.indexOf('"') === -1) return line.split(delim);
+
   const result = [];
   let current = "";
   let inQuotes = false;
@@ -354,6 +356,7 @@ function parseCSV(text) {
   }
   renderTldList();
   learnRenewPrices(rawRows);
+  renderSortOptions();
 
   // Update UI
   const typeEl = document.getElementById("tableType");
@@ -361,8 +364,6 @@ function parseCSV(text) {
 
   document.getElementById("filtersSection").style.display = "";
   document.getElementById("actionsSection").style.display = "";
-  document.getElementById("bidSortOpt").style.display =
-    tableMode === "auction" ? "" : "none";
 
   showInfo(`Loaded ${rawRows.length} rows (${tableMode}).`);
   applyAndRender();
@@ -417,6 +418,177 @@ function learnRenewPrices(rows) {
   }
 }
 
+// Scoring every row is cheap, but the column and its filters are noise when not set
+function keyboardEnabled() {
+  return document.getElementById("keyboardEnabled").checked;
+}
+
+// Sort keys in menu order
+const SORT_KEYS = {
+  alpha: {
+    label: "Alphabetical",
+    asc: "A\u2192Z",
+    desc: "Z\u2192A",
+    key: (r) => getNameCol(r),
+  },
+  length: {
+    label: "Length",
+    asc: "short\u2192long",
+    desc: "long\u2192short",
+    key: (r) => extractParts(getNameCol(r))[0].length,
+  },
+  price: {
+    label: "Price",
+    asc: "low\u2192high",
+    desc: "high\u2192low",
+    key: (r) => getPriceCol(r),
+  },
+  renew: {
+    label: "Renew $",
+    asc: "low\u2192high",
+    desc: "high\u2192low",
+    key: (r) => {
+      const renew = getRenew(r);
+      return renew ? renew.value : null;
+    },
+  },
+  total: {
+    label: "Price + Renew",
+    asc: "low\u2192high",
+    desc: "high\u2192low",
+    key: (r) => {
+      const renew = getRenew(r);
+      return renew ? getPriceCol(r) + renew.value : null;
+    },
+  },
+  bid: {
+    label: "Bids",
+    asc: "low\u2192high",
+    desc: "high\u2192low",
+    auctionOnly: true,
+    key: (r) => +r["bidCount"] || 0,
+  },
+  keyboard: {
+    label: "Keyboard Adj %",
+    asc: "low\u2192high",
+    desc: "high\u2192low",
+    needsKeyboard: true,
+    key: (r) => keyboardReport(extractParts(getNameCol(r))[0]).adjacentPct,
+  },
+};
+
+// Every level the user has set, primary first
+function sortValues() {
+  return [...document.querySelectorAll(".sort-select")]
+    .map((sel) => sel.value)
+    .filter((v) => v && v !== "none");
+}
+
+// Sort by each level in turn, the next breaking the ties left by the last.
+function sortRows(rows, values) {
+  const specs = [];
+  for (const value of values) {
+    const desc = value.endsWith("-desc");
+    const spec = SORT_KEYS[desc ? value.slice(0, -5) : value];
+    if (spec) specs.push({ key: spec.key, dir: desc ? -1 : 1 });
+  }
+  if (!specs.length) return rows;
+
+  // Compute every row's keys once up front instead of inside the comparator,
+  // which would recompute them on each of the n log n comparisons
+  const decorated = rows.map((row) => ({
+    row,
+    keys: specs.map((s) => s.key(row)),
+  }));
+
+  decorated.sort((a, b) => {
+    for (let i = 0; i < specs.length; i++) {
+      const x = a.keys[i];
+      const y = b.keys[i];
+      if (x == null || y == null) {
+        if (x == null && y == null) continue;
+        return x == null ? 1 : -1;
+      }
+      const c = typeof x === "string" ? x.localeCompare(y) : x - y;
+      if (c) return c * specs[i].dir;
+    }
+    return 0; // still tied: Array#sort is stable, so file order wins
+  });
+
+  return decorated.map((d) => d.row);
+}
+
+// Build the option list for one select. Only the primary offers "Original Order"
+// A then-by level is removed with its own button instead.
+function sortOptionsHtml(includeNone) {
+  let html = includeNone ? '<option value="none">Original Order</option>' : "";
+  for (const [name, spec] of Object.entries(SORT_KEYS)) {
+    if (spec.auctionOnly && tableMode !== "auction") continue;
+    if (spec.needsKeyboard && !keyboardEnabled()) continue;
+    html +=
+      `<option value="${name}">${spec.label} (${spec.asc})</option>` +
+      `<option value="${name}-desc">${spec.label} (${spec.desc})</option>`;
+  }
+  return html;
+}
+
+// Rebuild every select, keeping each one's selection where it is still offered.
+// Called on load because which keys exist depends on the table type.
+function renderSortOptions() {
+  document.querySelectorAll(".sort-select").forEach((sel) => {
+    const prev = sel.value;
+    sel.innerHTML = sortOptionsHtml(sel.id === "sortBy");
+    const kept = [...sel.options].some((o) => o.value === prev);
+    sel.value = kept ? prev : sel.options[0].value;
+  });
+}
+
+// More levels than keys can never break another tie
+const MAX_SORT_LEVELS = Object.keys(SORT_KEYS).length;
+
+function updateAddSortState() {
+  document.getElementById("addSort").disabled =
+    document.querySelectorAll(".sort-select").length >= MAX_SORT_LEVELS;
+}
+
+function addSortLevel() {
+  if (document.querySelectorAll(".sort-select").length >= MAX_SORT_LEVELS)
+    return;
+  const wrap = document.createElement("span");
+  wrap.className = "sort-then";
+  wrap.innerHTML =
+    `<label>then by:</label><select class="sort-select">${sortOptionsHtml(false)}</select>` +
+    '<button type="button" class="mini-btn remove-sort" title="Remove this level">\u00d7</button>';
+  const controls = document.getElementById("sortControls");
+  controls.insertBefore(wrap, document.getElementById("addSort"));
+  updateAddSortState();
+}
+
+function clearSortLevels() {
+  document.querySelectorAll(".sort-then").forEach((el) => el.remove());
+  updateAddSortState();
+}
+
+// Switching scoring off greys its filters and drops its sort keys from the menus
+function syncKeyboardEnabled() {
+  document
+    .getElementById("keyboardOptions")
+    .classList.toggle("filters-off", !keyboardEnabled());
+  renderSortOptions();
+}
+
+document
+  .getElementById("keyboardEnabled")
+  .addEventListener("change", syncKeyboardEnabled);
+
+document.getElementById("addSort").addEventListener("click", addSortLevel);
+document.getElementById("sortControls").addEventListener("click", (e) => {
+  if (e.target.classList.contains("remove-sort")) {
+    e.target.closest(".sort-then").remove();
+    updateAddSortState();
+  }
+});
+
 // Filtering
 function applyFilters() {
   const minLen = document.getElementById("minLength").value
@@ -464,6 +636,7 @@ function applyFilters() {
     .getTags()
     .map(compileStructure)
     .filter(Boolean);
+  const kbOn = keyboardEnabled();
 
   // Only pay for the extra match targets when something actually asks for them
   const hasDotted = (t) => t.includes(".");
@@ -575,14 +748,14 @@ function applyFilters() {
     }
 
     // Keyboard: same row
-    if (triStates.sameRow !== "any") {
+    if (kbOn && triStates.sameRow !== "any") {
       const kb = keyboardReport(domain);
       if (triStates.sameRow === "yes" && !kb.sameRow) return false;
       if (triStates.sameRow === "no" && kb.sameRow) return false;
     }
 
     // Keyboard: min adjacent %
-    if (minAdjPct !== null) {
+    if (kbOn && minAdjPct !== null) {
       const kb = keyboardReport(domain);
       if (kb.adjacentPct < minAdjPct) return false;
     }
@@ -591,54 +764,7 @@ function applyFilters() {
   });
 
   // Sort
-  const sortBy = document.getElementById("sortBy").value;
-  if (sortBy === "alpha") {
-    filteredRows.sort((a, b) => getNameCol(a).localeCompare(getNameCol(b)));
-  } else if (sortBy === "alpha-desc") {
-    filteredRows.sort((a, b) => getNameCol(b).localeCompare(getNameCol(a)));
-  } else if (sortBy === "length") {
-    filteredRows.sort(
-      (a, b) =>
-        extractParts(getNameCol(a))[0].length -
-        extractParts(getNameCol(b))[0].length,
-    );
-  } else if (sortBy === "length-desc") {
-    filteredRows.sort(
-      (a, b) =>
-        extractParts(getNameCol(b))[0].length -
-        extractParts(getNameCol(a))[0].length,
-    );
-  } else if (sortBy === "price") {
-    filteredRows.sort((a, b) => getPriceCol(a) - getPriceCol(b));
-  } else if (sortBy === "price-desc") {
-    filteredRows.sort((a, b) => getPriceCol(b) - getPriceCol(a));
-  } else if (sortBy.startsWith("renew") || sortBy.startsWith("total")) {
-    // Unknown renewal prices sort last in both directions rather than reading as $0
-    const key = (r) => {
-      const renew = getRenew(r);
-      if (!renew) return null;
-      return sortBy.startsWith("total")
-        ? getPriceCol(r) + renew.value
-        : renew.value;
-    };
-    const dir = sortBy.endsWith("-desc") ? -1 : 1;
-    filteredRows.sort((a, b) => {
-      const x = key(a);
-      const y = key(b);
-      if (x === null) return y === null ? 0 : 1;
-      if (y === null) return -1;
-      return (x - y) * dir;
-    });
-  } else if (sortBy === "bid" && tableMode === "auction") {
-    filteredRows.sort((a, b) => (+b["bidCount"] || 0) - (+a["bidCount"] || 0));
-  } else if (sortBy === "keyboard") {
-    filteredRows.sort((a, b) => {
-      return (
-        keyboardReport(extractParts(getNameCol(b))[0]).adjacentPct -
-        keyboardReport(extractParts(getNameCol(a))[0]).adjacentPct
-      );
-    });
-  }
+  filteredRows = sortRows(filteredRows, sortValues());
 
   currentPage = 1;
 }
@@ -707,10 +833,13 @@ function renderTable() {
   const thead = document.getElementById("tableHead");
   const tbody = document.getElementById("tableBody");
 
+  const kbOn = keyboardEnabled();
   thead.innerHTML =
     "<tr>" +
     showCols.map((c) => `<th>${friendlyHeader(c)}</th>`).join("") +
-    "<th>Renew $</th><th>Total $</th><th>Len</th><th>KB</th></tr>";
+    "<th>Renew $</th><th>Total $</th><th>Len</th>" +
+    (kbOn ? "<th>KB</th>" : "") +
+    "</tr>";
 
   // Pagination
   const perPage =
@@ -728,13 +857,17 @@ function renderTable() {
     .map((row) => {
       const fullName = getNameCol(row);
       const [domain] = extractParts(fullName);
-      const kb = keyboardReport(domain);
-      let kbBadge = "";
-      if (kb.sameRow)
-        kbBadge = '<span class="keyboard-badge same-row">row</span> ';
-      if (kb.adjacentPct >= 75)
-        kbBadge += `<span class="keyboard-badge adjacent">${kb.adjacentPct.toFixed(0)}%</span>`;
-      else if (kb.adjacentPct > 0) kbBadge += `${kb.adjacentPct.toFixed(0)}%`;
+      let kbCell = "";
+      if (kbOn) {
+        const kb = keyboardReport(domain);
+        let kbBadge = "";
+        if (kb.sameRow)
+          kbBadge = '<span class="keyboard-badge same-row">row</span> ';
+        if (kb.adjacentPct >= 75)
+          kbBadge += `<span class="keyboard-badge adjacent">${kb.adjacentPct.toFixed(0)}%</span>`;
+        else if (kb.adjacentPct > 0) kbBadge += `${kb.adjacentPct.toFixed(0)}%`;
+        kbCell = `<td>${kbBadge}</td>`;
+      }
 
       return (
         "<tr>" +
@@ -765,7 +898,8 @@ function renderTable() {
           .join("") +
         renewCells(row) +
         `<td>${domain.length}</td>` +
-        `<td>${kbBadge}</td></tr>`
+        kbCell +
+        "</tr>"
       );
     })
     .join("");
@@ -856,6 +990,9 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("maxTotal").value = "";
   document.getElementById("repeatCount").value = "";
   document.getElementById("minAdjacentPct").value = "";
+  document.getElementById("keyboardEnabled").checked = true;
+  syncKeyboardEnabled();
+  clearSortLevels();
   document.getElementById("sortBy").value = "none";
   document.getElementById("subIncScope").value = "sld";
   document.getElementById("subExcScope").value = "sld";
@@ -911,6 +1048,9 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   URL.revokeObjectURL(url);
   showInfo(`Exported ${filteredRows.length} rows.`);
 });
+
+syncKeyboardEnabled();
+updateAddSortState();
 
 // Messages
 function showError(msg) {

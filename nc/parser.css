@@ -136,6 +136,23 @@ select {
   font-size: 12px;
 }
 
+input[type="checkbox"] {
+  accent-color: #60c8c5;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.check-label {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.filters-off {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* Tri-toggle buttons */
 
 .tri-toggle {
@@ -405,4 +422,16 @@ hr {
 .sort-controls label {
   color: #b0b0b0;
   font-size: 13px;
+}
+
+.sort-then {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-then .remove-sort {
+  padding: 2px 7px;
+  font-size: 12px;
+  line-height: 1.2;
 }

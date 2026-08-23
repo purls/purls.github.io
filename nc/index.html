@@ -241,39 +241,36 @@
         <div class="filter-group">
             <h3>Keyboard Patterns (QWERTY)</h3>
             <div class="filter-row">
-                <label>Same Row:</label>
-                <div class="tri-toggle" data-filter="sameRow">
-                    <button data-val="yes">Yes</button>
-                    <button data-val="no">No</button>
-                    <button data-val="any" class="active-any">Any</button>
+                <label>Scoring:</label>
+                <input type="checkbox" id="keyboardEnabled" checked />
+                <label class="check-label" for="keyboardEnabled">Score keyboard patterns</label>
+            </div>
+            <div id="keyboardOptions">
+                <div class="filter-row">
+                    <label>Same Row:</label>
+                    <div class="tri-toggle" data-filter="sameRow">
+                        <button data-val="yes">Yes</button>
+                        <button data-val="no">No</button>
+                        <button data-val="any" class="active-any">Any</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <label>Min Adj %:</label>
+                    <input type="number" id="minAdjacentPct" min="0" max="100" placeholder="—" />
                 </div>
             </div>
-            <div class="filter-row">
-                <label>Min Adj %:</label>
-                <input type="number" id="minAdjacentPct" min="0" max="100" placeholder="—" />
-            </div>
+            <p class="hint">
+                Turning scoring off drops the <em>KB</em> column to reduce processing.
+            </p>
         </div>
     </div>
 
     <!-- Sort & Actions -->
     <div class="controls" id="actionsSection" style="display:none;">
-        <div class="sort-controls">
+        <div class="sort-controls" id="sortControls">
             <label for="sortBy">Sort:</label>
-            <select id="sortBy">
-                <option value="none">Original Order</option>
-                <option value="alpha">Alphabetical</option>
-                <option value="alpha-desc">Alphabetical (Z-A)</option>
-                <option value="length">Length (short→long)</option>
-                <option value="length-desc">Length (long→short)</option>
-                <option value="price">Price (low→high)</option>
-                <option value="price-desc">Price (high→low)</option>
-                <option value="renew">Renew $ (low→high)</option>
-                <option value="renew-desc">Renew $ (high→low)</option>
-                <option value="total">Price + Renew (low→high)</option>
-                <option value="total-desc">Price + Renew (high→low)</option>
-                <option value="bid" id="bidSortOpt" style="display:none;">Bids (high→low)</option>
-                <option value="keyboard">Keyboard Adj % (high→low)</option>
-            </select>
+            <select class="sort-select" id="sortBy"></select>
+            <button type="button" class="mini-btn" id="addSort">+ then by</button>
         </div>
         <button id="applyBtn">Apply Filters</button>
         <button id="exportBtn" disabled>Export CSV</button>
