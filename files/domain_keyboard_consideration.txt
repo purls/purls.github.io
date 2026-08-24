@@ -1,0 +1,43 @@
+1 2 3 4 5 6 7 8 9 0 -
+ q w e r t y u i o p
+  a s d f g h j k l
+   z x c v b n m   .
+
+1:2q
+2:1qw3
+3:2we4
+4:3er5
+5:4rt6
+6:5ty7
+7:6yu8
+8:7ui9
+9:8io0
+0:9op-
+-:0p
+q:12wa
+w:23qeas
+e:34wrsd
+r:45etdf
+t:56ryfg
+y:67tugh
+u:78yihj
+i:89uojk
+o:90ipkl
+p:0ol-
+a:qwsz
+s:weadzx
+d:ersfxc
+f:rtdgcv
+g:tyfhvb
+h:yugjbn
+j:uihknm
+k:iojlm
+l:opk.
+z:asx
+x:zsdc
+c:xdfv
+v:cfgb
+b:vghn
+n:bhjm
+m:njk
+.:l
