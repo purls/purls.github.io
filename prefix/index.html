@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metric Prefixes</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th,
+        td {
+            padding: 5px 12px 5px 0;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        th {
+            color: #888;
+            font-weight: normal;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        td.sym {
+            color: #4cafac;
+        }
+
+        td.value {
+            color: #888;
+        }
+
+        /* Unity row splits multiplying prefixes from dividing ones */
+        tr.unity td {
+            color: #555;
+            border-bottom: 1px solid #3d3d3d;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        ul {
+            color: #b0b0b0;
+            font-size: 13px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        code {
+            color: #80cccc;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #2a2a2a;
+            margin: 24px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Metric Prefixes</h1>
+        <a href="https://localhost.beer" class="home-link">
+            &larr; home
+        </a>
+    </div>
+    <p style="margin: 0;">The 24 SI prefixes, plus the IEC binary prefixes.</p>
+    <br />
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Prefix</th>
+                    <th>Short scale</th>
+                    <th>Factor</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="sym">Q</td>
+                    <td>quetta</td>
+                    <td>nonillion</td>
+                    <td>10<sup>30</sup></td>
+                    <td class="value">1,000,000,000,000,000,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">R</td>
+                    <td>ronna</td>
+                    <td>octillion</td>
+                    <td>10<sup>27</sup></td>
+                    <td class="value">1,000,000,000,000,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">Y</td>
+                    <td>yotta</td>
+                    <td>septillion</td>
+                    <td>10<sup>24</sup></td>
+                    <td class="value">1,000,000,000,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">Z</td>
+                    <td>zetta</td>
+                    <td>sextillion</td>
+                    <td>10<sup>21</sup></td>
+                    <td class="value">1,000,000,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">E</td>
+                    <td>exa</td>
+                    <td>quintillion</td>
+                    <td>10<sup>18</sup></td>
+                    <td class="value">1,000,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">P</td>
+                    <td>peta</td>
+                    <td>quadrillion</td>
+                    <td>10<sup>15</sup></td>
+                    <td class="value">1,000,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">T</td>
+                    <td>tera</td>
+                    <td>trillion</td>
+                    <td>10<sup>12</sup></td>
+                    <td class="value">1,000,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">G</td>
+                    <td>giga</td>
+                    <td>billion</td>
+                    <td>10<sup>9</sup></td>
+                    <td class="value">1,000,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">M</td>
+                    <td>mega</td>
+                    <td>million</td>
+                    <td>10<sup>6</sup></td>
+                    <td class="value">1,000,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">k</td>
+                    <td>kilo</td>
+                    <td>thousand</td>
+                    <td>10<sup>3</sup></td>
+                    <td class="value">1,000</td>
+                </tr>
+                <tr>
+                    <td class="sym">h</td>
+                    <td>hecto</td>
+                    <td>hundred</td>
+                    <td>10<sup>2</sup></td>
+                    <td class="value">100</td>
+                </tr>
+                <tr>
+                    <td class="sym">da</td>
+                    <td>deca</td>
+                    <td>ten</td>
+                    <td>10<sup>1</sup></td>
+                    <td class="value">10</td>
+                </tr>
+                <tr class="unity">
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>one</td>
+                    <td>10<sup>0</sup></td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td class="sym">d</td>
+                    <td>deci</td>
+                    <td>tenth</td>
+                    <td>10<sup>&minus;1</sup></td>
+                    <td class="value">0.1</td>
+                </tr>
+                <tr>
+                    <td class="sym">c</td>
+                    <td>centi</td>
+                    <td>hundredth</td>
+                    <td>10<sup>&minus;2</sup></td>
+                    <td class="value">0.01</td>
+                </tr>
+                <tr>
+                    <td class="sym">m</td>
+                    <td>milli</td>
+                    <td>thousandth</td>
+                    <td>10<sup>&minus;3</sup></td>
+                    <td class="value">0.001</td>
+                </tr>
+                <tr>
+                    <td class="sym">&#181;</td>
+                    <td>micro</td>
+                    <td>millionth</td>
+                    <td>10<sup>&minus;6</sup></td>
+                    <td class="value">0.000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">n</td>
+                    <td>nano</td>
+                    <td>billionth</td>
+                    <td>10<sup>&minus;9</sup></td>
+                    <td class="value">0.000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">p</td>
+                    <td>pico</td>
+                    <td>trillionth</td>
+                    <td>10<sup>&minus;12</sup></td>
+                    <td class="value">0.000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">f</td>
+                    <td>femto</td>
+                    <td>quadrillionth</td>
+                    <td>10<sup>&minus;15</sup></td>
+                    <td class="value">0.000000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">a</td>
+                    <td>atto</td>
+                    <td>quintillionth</td>
+                    <td>10<sup>&minus;18</sup></td>
+                    <td class="value">0.000000000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">z</td>
+                    <td>zepto</td>
+                    <td>sextillionth</td>
+                    <td>10<sup>&minus;21</sup></td>
+                    <td class="value">0.000000000000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">y</td>
+                    <td>yocto</td>
+                    <td>septillionth</td>
+                    <td>10<sup>&minus;24</sup></td>
+                    <td class="value">0.000000000000000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">r</td>
+                    <td>ronto</td>
+                    <td>octillionth</td>
+                    <td>10<sup>&minus;27</sup></td>
+                    <td class="value">0.000000000000000000000000001</td>
+                </tr>
+                <tr>
+                    <td class="sym">q</td>
+                    <td>quecto</td>
+                    <td>nonillionth</td>
+                    <td>10<sup>&minus;30</sup></td>
+                    <td class="value">0.000000000000000000000000000001</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Binary prefixes (IEC 80000-13)</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Prefix</th>
+                    <th>Nearest SI</th>
+                    <th>Factor</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="sym">Ki</td>
+                    <td>kibi</td>
+                    <td>kilo</td>
+                    <td>2<sup>10</sup></td>
+                    <td class="value">1,024</td>
+                </tr>
+                <tr>
+                    <td class="sym">Mi</td>
+                    <td>mebi</td>
+                    <td>mega</td>
+                    <td>2<sup>20</sup></td>
+                    <td class="value">1,048,576</td>
+                </tr>
+                <tr>
+                    <td class="sym">Gi</td>
+                    <td>gibi</td>
+                    <td>giga</td>
+                    <td>2<sup>30</sup></td>
+                    <td class="value">1,073,741,824</td>
+                </tr>
+                <tr>
+                    <td class="sym">Ti</td>
+                    <td>tebi</td>
+                    <td>tera</td>
+                    <td>2<sup>40</sup></td>
+                    <td class="value">1,099,511,627,776</td>
+                </tr>
+                <tr>
+                    <td class="sym">Pi</td>
+                    <td>pebi</td>
+                    <td>peta</td>
+                    <td>2<sup>50</sup></td>
+                    <td class="value">1,125,899,906,842,624</td>
+                </tr>
+                <tr>
+                    <td class="sym">Ei</td>
+                    <td>exbi</td>
+                    <td>exa</td>
+                    <td>2<sup>60</sup></td>
+                    <td class="value">1,152,921,504,606,846,976</td>
+                </tr>
+                <tr>
+                    <td class="sym">Zi</td>
+                    <td>zebi</td>
+                    <td>zetta</td>
+                    <td>2<sup>70</sup></td>
+                    <td class="value">1,180,591,620,717,411,303,424</td>
+                </tr>
+                <tr>
+                    <td class="sym">Yi</td>
+                    <td>yobi</td>
+                    <td>yotta</td>
+                    <td>2<sup>80</sup></td>
+                    <td class="value">1,208,925,819,614,629,174,706,176</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
+
+    <h2>Rules</h2>
+    <ul>
+        <li>Symbols are case sensitive. <code>M</code> is mega, <code>m</code> is milli.</li>
+        <li>Symbols above <code>k</code> are uppercase, those at or below <code>k</code> are lowercase. <code>da</code>
+            is
+            the only two-letter SI symbol.</li>
+        <li>No compound prefixes. Write <code>nm</code>, not <code>m&#181;m</code>.</li>
+        <li>Prefix and unit form one symbol, so an exponent covers both. <code>km&#178;</code> means
+            <code>(km)&#178;</code>, which is 10<sup>6</sup> m&#178;.
+        </li>
+        <li>The kilogram is the only base unit with a built-in prefix. Prefixes attach to the gram, so <code>mg</code>,
+            not
+            <code>&#181;kg</code>.
+        </li>
+        <li>Micro is the micro sign <code>&#181;</code> (U+00B5), not the Greek mu <code>&#956;</code> (U+03BC). They
+            look
+            alike and compare unequal.</li>
+        <li>A space separates value and unit. <code>5 kg</code>, not <code>5kg</code>.</li>
+        <li>A prefix never stands alone and never attaches to a bare number.</li>
+        <li>US spelling of <code>da</code> is deka, elsewhere deca. Same symbol either way.</li>
+    </ul>
+</body>
+
+</html>
