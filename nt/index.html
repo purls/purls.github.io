@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Number Tower Optimizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-field label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        input,
+        select {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .form-field input {
+            width: 140px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        .btn-secondary {
+            background-color: #2a2a2a;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3a3a3a;
+        }
+
+        .btn-danger {
+            background-color: #442424;
+        }
+
+        .btn-danger:hover {
+            background-color: #553030;
+        }
+
+        .btn-accent {
+            background-color: #1a4444;
+        }
+
+        .btn-accent:hover {
+            background-color: #226666;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            min-height: 18px;
+            margin-bottom: 10px;
+        }
+
+        /* Towers */
+        .tower-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .tower {
+            flex: 0 0 auto;
+            width: 250px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tower-head {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4cafac;
+        }
+
+        .tower-head button,
+        .floor button {
+            padding: 4px 8px;
+            font-size: 12px;
+            background-color: #2a2a2a;
+            border-radius: 3px;
+        }
+
+        .tower-head button:hover,
+        .floor button:hover {
+            background-color: #3a3a3a;
+        }
+
+        .tower-head .btn-del-tower,
+        .floor .btn-del-floor {
+            background-color: #3a2222;
+        }
+
+        .tower-head .btn-del-tower:hover,
+        .floor .btn-del-floor:hover {
+            background-color: #4a2828;
+        }
+
+        /* Floor 1 sits at the bottom like a real tower */
+        .floors {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 4px;
+        }
+
+        .floor {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            border-left: 3px solid #3d3d3d;
+            padding-left: 4px;
+        }
+
+        .floor select,
+        .floor input {
+            padding: 4px 6px;
+            font-size: 13px;
+            min-width: 0;
+        }
+
+        .floor select {
+            width: 90px;
+        }
+
+        .floor input {
+            flex: 1;
+            width: 60px;
+        }
+
+        .floor.enemy {
+            border-left-color: #cc5555;
+        }
+
+        .floor.potion {
+            border-left-color: #55aa66;
+        }
+
+        .floor.mul,
+        .floor.up {
+            border-left-color: #4cafac;
+        }
+
+        .floor.div,
+        .floor.down {
+            border-left-color: #cc9944;
+        }
+
+        .step-badge {
+            min-width: 24px;
+            font-size: 11px;
+            text-align: center;
+            color: #121212;
+            background-color: #4cafac;
+            border-radius: 3px;
+        }
+
+        .step-badge:empty {
+            background-color: transparent;
+        }
+
+        .quick-add {
+            display: flex;
+            gap: 4px;
+        }
+
+        .quick-add input {
+            flex: 1;
+            min-width: 0;
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            color: #555;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        /* Results */
+        .summary-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .summary-bar span {
+            color: #4cafac;
+        }
+
+        .summary-bar span.bad {
+            color: #ff6b6b;
+        }
+
+        .route {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .route th {
+            text-align: left;
+            color: #555;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: normal;
+            padding: 4px 8px;
+        }
+
+        .route td {
+            padding: 6px 8px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .route td.num {
+            text-align: right;
+        }
+
+        .route tr.tower-start td {
+            border-top: 1px solid #4cafac;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        /* Import/Export modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 6px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal h3 {
+            margin: 0 0 12px 0;
+        }
+
+        .modal textarea {
+            flex: 1;
+            min-height: 200px;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        code {
+            color: #80cccc;
+        }
+
+        @media (max-width: 640px) {
+            .form-field {
+                flex: 1;
+            }
+
+            .form-field input {
+                width: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Number Tower Optimizer</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0;">Lay out the towers and find the clearing order that ends with the most points.</p>
+    <br />
+
+    <!-- Player -->
+    <div class="panel">
+        <div class="form-row">
+            <div class="form-field">
+                <label for="fieldStart">Starting points *</label>
+                <input type="number" id="fieldStart" placeholder="10" step="1" min="1" />
+            </div>
+            <div class="form-field">
+                <label for="fieldMin">Minimum to finish</label>
+                <input type="number" id="fieldMin" placeholder="1" step="1" min="1" />
+            </div>
+            <div class="spacer"></div>
+            <button id="btnAddTower" class="btn-secondary">+ Tower</button>
+            <button id="btnSolve" class="btn-accent">Solve</button>
+        </div>
+    </div>
+
+    <div class="info-message" id="infoMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- Towers, left to right -->
+    <div class="tower-row" id="towerRow"></div>
+
+    <div class="form-row" style="margin-bottom: 20px;">
+        <button id="btnExample" class="btn-secondary">Load Example</button>
+        <div class="spacer"></div>
+        <button id="btnImport" class="btn-secondary">Import</button>
+        <button id="btnExport" class="btn-secondary">Export</button>
+        <button id="btnClearAll" class="btn-danger">Clear All</button>
+    </div>
+
+    <!-- Results -->
+    <div id="resultContainer"></div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3>Import Layout (JSON)</h3>
+            <textarea id="importTextarea"
+                placeholder='{"start":10,"min":1,"towers":[[{"type":"enemy","value":5}]]}'></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btnImportCancel">Cancel</button>
+                <button id="btnImportConfirm">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <h3>Export Layout (JSON)</h3>
+            <textarea id="exportTextarea" readonly></textarea>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="btnExportClose">Close</button>
+                <button id="btnExportCopy">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <p>
+        The player clears every floor of the leftmost tower in any order, then moves to the next tower.
+        An enemy can only be beaten with strictly more points, and its points are absorbed.
+        Dropping to 0 or below at any point is a loss. Division and percentages round down.
+    </p>
+    <p>
+        Quick add accepts space separated tokens. Floor 1 is the bottom of the tower.
+    </p>
+    <p>
+        <code>12</code> or <code>e12</code> enemy &nbsp;·&nbsp;
+        <code>+5</code> <code>-5</code> <code>p-5</code> potion &nbsp;·&nbsp;
+        <code>x2</code> multiply &nbsp;·&nbsp;
+        <code>/2</code> divide &nbsp;·&nbsp;
+        <code>+30%</code> increase &nbsp;·&nbsp;
+        <code>-3%</code> decrease
+    </p>
+    <p>
+        The solver tracks the best score for every set of cleared floors in a tower. Since more points never
+        hurts under these rules, that best score is enough to guarantee the true optimum without trying every
+        order. Up to 20 floors per tower.
+    </p>
+
+    <script>
+        // Floor types
+        const TYPES = {
+            enemy: { label: 'Enemy', placeholder: '12' },
+            potion: { label: 'Potion', placeholder: '-5' },
+            mul: { label: '×', placeholder: '2' },
+            div: { label: '÷', placeholder: '2' },
+            up: { label: '+%', placeholder: '30' },
+            down: { label: '−%', placeholder: '3' },
+        };
+
+        const MAX_FLOORS = 20;
+        const STORAGE_KEY = 'nt-layout';
+
+        // Percentages are stored in hundredths of a percent so 2.5% stays exact
+        const PCT_SCALE = 10000n;
+        const PCT_UNIT = 100;
+
+        const EXAMPLE = {
+            start: 10,
+            min: 1,
+            towers: [
+                [
+                    { type: 'enemy', value: 12 },
+                    { type: 'enemy', value: 8 },
+                    { type: 'mul', value: 2 },
+                ],
+                [
+                    { type: 'enemy', value: 60 },
+                    { type: 'div', value: 2 },
+                    { type: 'potion', value: -15 },
+                    { type: 'up', value: 30 },
+                    { type: 'enemy', value: 35 },
+                ],
+                [
+                    { type: 'enemy', value: 150 },
+                    { type: 'down', value: 10 },
+                    { type: 'mul', value: 3 },
+                    { type: 'enemy', value: 90 },
+                ],
+            ],
+        };
+
+        // Solver
+
+        // Converts a UI floor into BigInt form. Returns an error string when invalid.
+        function compileFloor(f) {
+            const v = Number(f.value);
+            if (f.value === '' || !Number.isFinite(v)) return 'missing value';
+
+            switch (f.type) {
+                case 'enemy':
+                    if (!Number.isInteger(v) || v < 1) return 'enemy must be a whole number ≥ 1';
+                    return { type: f.type, n: BigInt(v) };
+                case 'potion':
+                    if (!Number.isInteger(v) || v === 0) return 'potion must be a nonzero whole number';
+                    return { type: f.type, n: BigInt(v) };
+                case 'mul':
+                case 'div':
+                    if (!Number.isInteger(v) || v < 1) return 'factor must be a whole number ≥ 1';
+                    return { type: f.type, n: BigInt(v) };
+                case 'up':
+                case 'down': {
+                    const bp = Math.round(v * PCT_UNIT);
+                    if (bp <= 0) return 'percent must be above 0';
+                    if (f.type === 'down' && BigInt(bp) > PCT_SCALE) return 'decrease cannot exceed 100%';
+                    return { type: f.type, n: BigInt(bp) };
+                }
+                default:
+                    return 'unknown type';
+            }
+        }
+
+        // Applies one floor. Returns the new points, or null when the move is illegal or a loss.
+        function applyFloor(p, f) {
+            let r;
+            switch (f.type) {
+                case 'enemy':
+                    if (p <= f.n) return null;
+                    return p + f.n;
+                case 'potion':
+                    r = p + f.n;
+                    break;
+                case 'mul':
+                    return p * f.n;
+                case 'div':
+                    r = p / f.n;
+                    break;
+                case 'up':
+                    return p * (PCT_SCALE + f.n) / PCT_SCALE;
+                case 'down':
+                    r = p * (PCT_SCALE - f.n) / PCT_SCALE;
+                    break;
+            }
+            return r > 0n ? r : null;
+        }
+
+        function popcount(m) {
+            let c = 0;
+            for (; m; m &= m - 1) c++;
+            return c;
+        }
+
+        // Rebuilds the floor order that produced best[mask] by walking the last-floor links backwards
+        function tracePath(mask, last) {
+            const order = [];
+            while (mask) {
+                const i = last[mask];
+                order.unshift(i);
+                mask ^= 1 << i;
+            }
+            return order;
+        }
+
+        // Best points for every subset of cleared floors. Every floor effect is monotone in points,
+        // so keeping only the max per subset is exact.
+        function solveTower(start, floors) {
+            const n = floors.length;
+            const size = 1 << n;
+            const full = size - 1;
+            const best = new Array(size).fill(null);
+            const last = new Int8Array(size).fill(-1);
+            best[0] = start;
+
+            for (let mask = 0; mask < size; mask++) {
+                const p = best[mask];
+                if (p === null) continue;
+
+                for (let i = 0; i < n; i++) {
+                    const bit = 1 << i;
+                    if (mask & bit) continue;
+
+                    const r = applyFloor(p, floors[i]);
+                    if (r === null) continue;
+
+                    const next = mask | bit;
+                    if (best[next] !== null && best[next] >= r) continue;
+                    best[next] = r;
+                    last[next] = i;
+                }
+            }
+
+            if (best[full] !== null) return { ok: true, order: tracePath(full, last) };
+
+            // Stuck. Report the furthest reachable progress, most points as tiebreak.
+            let deep = 0;
+            for (let mask = 1; mask < size; mask++) {
+                if (best[mask] === null) continue;
+                const dc = popcount(mask) - popcount(deep);
+                if (dc > 0 || (dc === 0 && best[mask] > best[deep])) deep = mask;
+            }
+            return { ok: false, order: tracePath(deep, last) };
+        }
+
+        // Runs each tower in sequence. The max at the end of one tower is always the best start for the next.
+        function solve(start, towers) {
+            const steps = [];
+            let p = start;
+
+            for (let t = 0; t < towers.length; t++) {
+                const res = solveTower(p, towers[t]);
+
+                for (const i of res.order) {
+                    const after = applyFloor(p, towers[t][i]);
+                    steps.push({ tower: t, floor: i, before: p, after });
+                    p = after;
+                }
+
+                if (!res.ok) return { ok: false, steps, points: p, failTower: t };
+            }
+
+            return { ok: true, steps, points: p };
+        }
+
+        // State
+        let layout = { start: '', min: '', towers: [[]] };
+        let stepMap = null;
+
+        // DOM
+        const fieldStart = document.getElementById('fieldStart');
+        const fieldMin = document.getElementById('fieldMin');
+        const towerRow = document.getElementById('towerRow');
+        const resultContainer = document.getElementById('resultContainer');
+        const infoMessage = document.getElementById('infoMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const btnSolve = document.getElementById('btnSolve');
+        const importModal = document.getElementById('importModal');
+        const exportModal = document.getElementById('exportModal');
+        const importTextarea = document.getElementById('importTextarea');
+        const exportTextarea = document.getElementById('exportTextarea');
+
+        // Helpers
+        function showInfo(msg) {
+            infoMessage.textContent = msg;
+            errorMessage.textContent = '';
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            infoMessage.textContent = '';
+        }
+
+        function clearMessages() {
+            infoMessage.textContent = '';
+            errorMessage.textContent = '';
+        }
+
+        function fmt(n) {
+            return n.toLocaleString();
+        }
+
+        function describe(f) {
+            switch (f.type) {
+                case 'enemy': return `Enemy ${f.value}`;
+                case 'potion': return `Potion ${f.value > 0 ? '+' : ''}${f.value}`;
+                case 'mul': return `× ${f.value}`;
+                case 'div': return `÷ ${f.value}`;
+                case 'up': return `+${f.value}%`;
+                case 'down': return `−${f.value}%`;
+            }
+            return '?';
+        }
+
+        function save() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+            } catch { }
+        }
+
+        // Any edit invalidates the shown route
+        function invalidate() {
+            stepMap = null;
+            resultContainer.innerHTML = '';
+            towerRow.querySelectorAll('.step-badge').forEach(b => b.textContent = '');
+            save();
+        }
+
+        // Quick add parser
+        const TOKEN_RULES = [
+            { re: /^\+(\d+(?:\.\d+)?)%$/, type: 'up' },
+            { re: /^[-−](\d+(?:\.\d+)?)%$/, type: 'down' },
+            { re: /^[x*×](\d+)$/i, type: 'mul' },
+            { re: /^[/÷](\d+)$/, type: 'div' },
+            { re: /^e?(\d+)$/i, type: 'enemy' },
+            { re: /^p?([+-]?\d+)$/i, type: 'potion' },
+        ];
+
+        // Turns "12 +5 x2 -3%" into floor objects. Returns null with the bad token on failure.
+        function parseTokens(text) {
+            const floors = [];
+            for (const tok of text.trim().split(/[\s,]+/).filter(Boolean)) {
+                const rule = TOKEN_RULES.find(r => r.re.test(tok));
+                if (!rule) return { bad: tok };
+                floors.push({ type: rule.type, value: Number(tok.match(rule.re)[1]) });
+            }
+            return { floors };
+        }
+
+        // Rendering
+        function render() {
+            fieldStart.value = layout.start;
+            fieldMin.value = layout.min;
+            towerRow.innerHTML = '';
+
+            if (layout.towers.length === 0) {
+                towerRow.innerHTML = '<div class="empty-state">No towers. Add one to get started, or load the example.</div>';
+                return;
+            }
+
+            layout.towers.forEach((floors, t) => towerRow.appendChild(renderTower(floors, t)));
+        }
+
+        function renderTower(floors, t) {
+            const el = document.createElement('div');
+            el.className = 'tower';
+
+            const opts = Object.entries(TYPES)
+                .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
+                .join('');
+
+            el.innerHTML = `
+                <div class="tower-head">
+                    <span>Tower ${t + 1}</span>
+                    <div class="spacer"></div>
+                    <button class="btn-move" data-t="${t}" data-dir="-1" title="Move left">◀</button>
+                    <button class="btn-move" data-t="${t}" data-dir="1" title="Move right">▶</button>
+                    <button class="btn-del-tower" data-t="${t}" title="Delete tower">✕</button>
+                </div>
+                <div class="quick-add">
+                    <input type="text" class="quick-input" data-t="${t}" placeholder="12 +5 x2 -3%" />
+                    <button class="btn-quick btn-secondary" data-t="${t}">Add</button>
+                </div>
+                <div class="floors"></div>
+            `;
+
+            const list = el.querySelector('.floors');
+            floors.forEach((f, i) => {
+                const row = document.createElement('div');
+                row.className = `floor ${f.type}`;
+                row.innerHTML = `
+                    <span class="step-badge">${stepMap?.get(`${t}:${i}`) ?? ''}</span>
+                    <select data-t="${t}" data-f="${i}">${opts}</select>
+                    <input type="number" data-t="${t}" data-f="${i}" placeholder="${TYPES[f.type].placeholder}" />
+                    <button class="btn-del-floor" data-t="${t}" data-f="${i}" title="Delete floor">✕</button>
+                `;
+                row.querySelector('select').value = f.type;
+                row.querySelector('input').value = f.value;
+                list.appendChild(row);
+            });
+
+            return el;
+        }
+
+        function renderResult(res, min) {
+            const t = res.ok ? null : res.failTower;
+            const short = res.ok && res.points < min;
+
+            let status;
+            if (!res.ok) status = `<span class="bad">Loss. Stuck in Tower ${t + 1}</span>`;
+            else if (short) status = `<span class="bad">Below minimum of ${fmt(min)}</span>`;
+            else status = '<span>Cleared</span>';
+
+            let html = `
+                <div class="summary-bar">
+                    <div>Result: ${status}</div>
+                    <div>${res.ok ? 'Final' : 'Best reached'}: <span>${fmt(res.points)}</span></div>
+                    <div>Steps: <span>${res.steps.length}</span></div>
+                </div>
+            `;
+
+            if (!res.ok) {
+                const left = layout.towers[t].length - res.steps.filter(s => s.tower === t).length;
+                html += `<p>No order clears Tower ${t + 1}. The furthest progress below leaves ${left} floor(s) unbeatable.</p>`;
+            }
+
+            if (res.steps.length === 0) {
+                resultContainer.innerHTML = html;
+                return;
+            }
+
+            html += `
+                <div class="table-wrap"><table class="route">
+                    <tr><th>#</th><th>Tower</th><th>Floor</th><th>Effect</th><th class="num">Before</th><th class="num">After</th></tr>
+            `;
+
+            res.steps.forEach((s, i) => {
+                const first = i === 0 || res.steps[i - 1].tower !== s.tower;
+                html += `
+                    <tr class="${first ? 'tower-start' : ''}">
+                        <td>${i + 1}</td>
+                        <td>${s.tower + 1}</td>
+                        <td>${s.floor + 1}</td>
+                        <td>${describe(layout.towers[s.tower][s.floor])}</td>
+                        <td class="num">${fmt(s.before)}</td>
+                        <td class="num">${fmt(s.after)}</td>
+                    </tr>
+                `;
+            });
+
+            resultContainer.innerHTML = html + '</table></div>';
+        }
+
+        // Tower and floor editing
+        document.getElementById('btnAddTower').addEventListener('click', () => {
+            layout.towers.push([]);
+            invalidate();
+            render();
+            towerRow.scrollLeft = towerRow.scrollWidth;
+        });
+
+        function quickAdd(t) {
+            const input = towerRow.querySelector(`.quick-input[data-t="${t}"]`);
+            const { floors, bad } = parseTokens(input.value);
+            if (bad) return showError(`Unrecognized token "${bad}".`);
+            if (floors.length === 0) return;
+
+            if (layout.towers[t].length + floors.length > MAX_FLOORS) {
+                return showError(`A tower can hold at most ${MAX_FLOORS} floors.`);
+            }
+
+            layout.towers[t].push(...floors);
+            clearMessages();
+            invalidate();
+            render();
+            towerRow.querySelector(`.quick-input[data-t="${t}"]`).focus();
+        }
+
+        towerRow.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+
+            const t = parseInt(btn.dataset.t);
+
+            if (btn.classList.contains('btn-quick')) return quickAdd(t);
+
+            if (btn.classList.contains('btn-del-floor')) {
+                layout.towers[t].splice(parseInt(btn.dataset.f), 1);
+            } else if (btn.classList.contains('btn-del-tower')) {
+                if (layout.towers[t].length > 0 && !confirm(`Delete Tower ${t + 1}?`)) return;
+                layout.towers.splice(t, 1);
+            } else if (btn.classList.contains('btn-move')) {
+                const to = t + parseInt(btn.dataset.dir);
+                if (to < 0 || to >= layout.towers.length) return;
+                [layout.towers[t], layout.towers[to]] = [layout.towers[to], layout.towers[t]];
+            } else {
+                return;
+            }
+
+            invalidate();
+            render();
+        });
+
+        towerRow.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' || !e.target.classList.contains('quick-input')) return;
+            quickAdd(parseInt(e.target.dataset.t));
+        });
+
+        // Value edits update state in place so the input keeps focus
+        towerRow.addEventListener('input', (e) => {
+            const { t, f } = e.target.dataset;
+            if (f === undefined) return;
+
+            const floor = layout.towers[t][f];
+            if (e.target.tagName === 'SELECT') {
+                floor.type = e.target.value;
+                const row = e.target.closest('.floor');
+                row.className = `floor ${floor.type}`;
+                row.querySelector('input').placeholder = TYPES[floor.type].placeholder;
+            } else {
+                floor.value = e.target.value === '' ? '' : Number(e.target.value);
+            }
+
+            invalidate();
+        });
+
+        [fieldStart, fieldMin].forEach(field => field.addEventListener('input', () => {
+            layout.start = fieldStart.value === '' ? '' : Number(fieldStart.value);
+            layout.min = fieldMin.value === '' ? '' : Number(fieldMin.value);
+            invalidate();
+        }));
+
+        // Solve
+        function validate() {
+            const start = Number(layout.start);
+            if (layout.start === '' || !Number.isInteger(start) || start < 1) return { error: 'Starting points must be a whole number ≥ 1.' };
+
+            const min = layout.min === '' ? 1 : Number(layout.min);
+            if (!Number.isInteger(min) || min < 1) return { error: 'Minimum must be a whole number ≥ 1.' };
+
+            if (layout.towers.length === 0) return { error: 'Add at least one tower.' };
+
+            const towers = [];
+            for (let t = 0; t < layout.towers.length; t++) {
+                const floors = layout.towers[t];
+                if (floors.length === 0) return { error: `Tower ${t + 1} has no floors.` };
+                if (floors.length > MAX_FLOORS) return { error: `Tower ${t + 1} exceeds ${MAX_FLOORS} floors.` };
+
+                const compiled = [];
+                for (let i = 0; i < floors.length; i++) {
+                    const c = compileFloor(floors[i]);
+                    if (typeof c === 'string') return { error: `Tower ${t + 1}, floor ${i + 1}: ${c}.` };
+                    compiled.push(c);
+                }
+                towers.push(compiled);
+            }
+
+            return { start: BigInt(start), min: BigInt(min), towers };
+        }
+
+        btnSolve.addEventListener('click', () => {
+            const input = validate();
+            if (input.error) return showError(input.error);
+
+            btnSolve.disabled = true;
+            showInfo('Solving...');
+
+            // Yield a frame so the message paints before large towers block the thread
+            setTimeout(() => {
+                const t0 = performance.now();
+                const res = solve(input.start, input.towers);
+                const ms = Math.round(performance.now() - t0);
+
+                stepMap = new Map(res.steps.map((s, i) => [`${s.tower}:${s.floor}`, i + 1]));
+                render();
+                renderResult(res, input.min);
+                showInfo(`Solved in ${ms} ms.`);
+                btnSolve.disabled = false;
+            }, 20);
+        });
+
+        // Import / Export
+        function loadLayout(data) {
+            if (!data || !Array.isArray(data.towers)) return showError('Expected an object with a "towers" array.');
+
+            const towers = data.towers.map(floors => (Array.isArray(floors) ? floors : [])
+                .filter(f => f && TYPES[f.type])
+                .map(f => ({ type: f.type, value: f.value === '' ? '' : Number(f.value) })));
+
+            layout = { start: data.start ?? '', min: data.min ?? '', towers };
+            clearMessages();
+            invalidate();
+            render();
+        }
+
+        document.getElementById('btnImport').addEventListener('click', () => {
+            importTextarea.value = '';
+            importModal.classList.add('active');
+            importTextarea.focus();
+        });
+
+        document.getElementById('btnImportCancel').addEventListener('click', () => {
+            importModal.classList.remove('active');
+        });
+
+        document.getElementById('btnImportConfirm').addEventListener('click', () => {
+            importModal.classList.remove('active');
+            try {
+                loadLayout(JSON.parse(importTextarea.value));
+            } catch (err) {
+                showError('Invalid JSON: ' + err.message);
+            }
+        });
+
+        document.getElementById('btnExport').addEventListener('click', () => {
+            exportTextarea.value = JSON.stringify(layout, null, 2);
+            exportModal.classList.add('active');
+        });
+
+        document.getElementById('btnExportClose').addEventListener('click', () => {
+            exportModal.classList.remove('active');
+        });
+
+        document.getElementById('btnExportCopy').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(exportTextarea.value);
+                showInfo('Copied to clipboard!');
+                exportModal.classList.remove('active');
+            } catch {
+                showError('Failed to copy.');
+            }
+        });
+
+        // Close modals on overlay click
+        [importModal, exportModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+        });
+
+        // Example / Clear
+        document.getElementById('btnExample').addEventListener('click', () => {
+            loadLayout(structuredClone(EXAMPLE));
+            showInfo('Loaded example.');
+        });
+
+        document.getElementById('btnClearAll').addEventListener('click', () => {
+            if (!confirm('Clear all towers?')) return;
+            layout = { start: '', min: '', towers: [[]] };
+            clearMessages();
+            invalidate();
+            render();
+        });
+
+        // Init
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (saved) loadLayout(saved);
+        } catch { }
+        render();
+    </script>
+</body>
+
+</html>
