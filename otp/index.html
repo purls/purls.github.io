@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>One-Time Passcode Hero</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+        }
+
+        .card {
+            max-width: 420px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 8px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            padding: 8px;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        .digits {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .digits input {
+            width: 44px;
+            height: 54px;
+            text-align: center;
+            font-size: 1.6rem;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 6px;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .digits input:focus,
+        input[type="email"]:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .digits.wrong input {
+            border-color: #ff6b6b;
+        }
+
+        .digits.shake {
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            25% {
+                transform: translateX(-6px);
+            }
+
+            50% {
+                transform: translateX(6px);
+            }
+
+            75% {
+                transform: translateX(-3px);
+            }
+        }
+
+        .row-links {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .row-links a {
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 14px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 14px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2px 15px;
+            font-size: 14px;
+            color: #b0b0b0;
+            margin-top: 15px;
+            border-top: 1px solid #3d3d3d;
+            padding-top: 10px;
+        }
+
+        .stats span:nth-child(even) {
+            text-align: right;
+            color: #e0e0e0;
+        }
+
+        .success {
+            text-align: center;
+        }
+
+        .success .big {
+            font-size: 3rem;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 480px) {
+            .digits input {
+                width: 36px;
+                height: 46px;
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">One-Time Passcode Hero</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">A 6-digit code is generated. Guess it.</p>
+
+    <!-- Step 1 -->
+    <div class="card" id="emailStep">
+        <h2>Sign in</h2>
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="off" />
+        <button id="sendBtn">Send code</button>
+        <div class="error-message" id="emailError"></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="card hidden" id="codeStep">
+        <h2>Check your email</h2>
+        <p>We sent a 6-digit code to <strong id="maskedEmail"></strong>. It expires in <strong id="timer"></strong>.</p>
+
+        <div class="digits" id="digits"></div>
+
+        <div class="error-message" id="codeError"></div>
+        <div class="info-message" id="codeInfo"></div>
+
+        <div class="row-links">
+            <a id="resendLink">Resend code</a>
+            <a id="giveUpLink">Give up</a>
+        </div>
+
+        <div class="stats">
+            <span>Attempts</span><span id="statAttempts">0</span>
+            <span>Unique guesses</span><span id="statUnique">0</span>
+            <span>Codes burned</span><span id="statBurned">0</span>
+            <span>Odds this code</span><span id="statOdds">0%</span>
+            <span>Pace</span><span id="statPace">-</span>
+            <span>Expected time to win</span><span id="statEta">-</span>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="card hidden success" id="doneStep">
+        <div class="big" id="doneIcon"></div>
+        <h2 id="doneTitle"></h2>
+        <p id="doneText"></p>
+        <button id="againBtn">Play again</button>
+    </div>
+
+    <hr>
+    <p>
+        <strong>Note:</strong> This is a playable demonstration of one-time passcode systems. No emails are sent, and
+        any email addresses input are not stored or used.
+    </p>
+    <p>
+        <strong>The math:</strong> A 6-digit code has 1,000,000 possibilities. Without repeats, each guess has a
+        1 in (1,000,000 minus prior guesses) chance, so one code takes 500,000 guesses on average. Nobody gets
+        there before it expires, so in practice every guess is a fresh 1 in 1,000,000.
+    </p>
+    <p>
+        <strong>Why it works:</strong> Real services expire codes after a few minutes and lock you out after a
+        handful of wrong tries. Five guesses gives 0.0005% odds. This page is generous and never locks you out, yet
+        the code still expires in 10 minutes and a fresh one wipes your progress.
+    </p>
+    <p>
+        <strong>Is it real?</strong> Yes. The code comes from <code>crypto.getRandomValues</code> with rejection
+        sampling, so every code is equally likely.
+    </p>
+
+    <script>
+        const CODE_LENGTH = 6;
+        const CODE_SPACE = 10 ** CODE_LENGTH;
+        const EXPIRY_MS = 10 * 60 * 1000;
+        const TICK_MS = 1000;
+        const UINT32_RANGE = 2 ** 32;
+        const SHAKE_MS = 300;
+        const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const emailStep = document.getElementById('emailStep');
+        const codeStep = document.getElementById('codeStep');
+        const doneStep = document.getElementById('doneStep');
+        const emailInput = document.getElementById('email');
+        const sendBtn = document.getElementById('sendBtn');
+        const emailError = document.getElementById('emailError');
+        const maskedEmail = document.getElementById('maskedEmail');
+        const timerEl = document.getElementById('timer');
+        const digitsEl = document.getElementById('digits');
+        const codeError = document.getElementById('codeError');
+        const codeInfo = document.getElementById('codeInfo');
+        const resendLink = document.getElementById('resendLink');
+        const giveUpLink = document.getElementById('giveUpLink');
+        const againBtn = document.getElementById('againBtn');
+
+        // Secret state kept in closure scope, never rendered
+        const game = (() => {
+            let code = null;
+            let expiresAt = 0;
+            let guesses = new Set();
+
+            // Uniform code, rejecting values that would bias the modulo
+            function generate() {
+                const limit = Math.floor(UINT32_RANGE / CODE_SPACE) * CODE_SPACE;
+                const buf = new Uint32Array(1);
+
+                do {
+                    crypto.getRandomValues(buf);
+                } while (buf[0] >= limit);
+
+                return String(buf[0] % CODE_SPACE).padStart(CODE_LENGTH, '0');
+            }
+
+            return {
+                issue() {
+                    code = generate();
+                    expiresAt = Date.now() + EXPIRY_MS;
+                    guesses = new Set();
+                },
+                check(guess) {
+                    const repeat = guesses.has(guess);
+                    guesses.add(guess);
+                    return { ok: guess === code, repeat };
+                },
+                reveal: () => code, // cheat: `game.reveal()` in dev tools console
+                remainingMs: () => Math.max(0, expiresAt - Date.now()),
+                uniqueCount: () => guesses.size,
+            };
+        })();
+
+        const stats = { attempts: 0, burned: 0, startedAt: 0 };
+        let timerId = null;
+        let digitInputs = [];
+
+        // Build the six single-digit boxes
+        function buildDigits() {
+            digitsEl.innerHTML = '';
+            digitInputs = [];
+
+            for (let i = 0; i < CODE_LENGTH; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.inputMode = 'numeric';
+                input.autocomplete = i === 0 ? 'one-time-code' : 'off';
+                input.setAttribute('aria-label', `Digit ${i + 1}`);
+                input.addEventListener('input', () => onDigitInput(i));
+                input.addEventListener('keydown', (e) => onDigitKey(e, i));
+                input.addEventListener('focus', () => input.select());
+                digitsEl.appendChild(input);
+                digitInputs.push(input);
+            }
+        }
+
+        // Spread typed or pasted digits forward, e.g. pasting "123456" into box 1 fills all
+        function onDigitInput(index) {
+            const chars = digitInputs[index].value.replace(/\D/g, '').split('');
+            digitInputs[index].value = '';
+            digitsEl.classList.remove('wrong');
+
+            let i = index;
+            for (const ch of chars) {
+                if (i >= CODE_LENGTH) break;
+                digitInputs[i].value = ch;
+                i++;
+            }
+
+            if (i < CODE_LENGTH) {
+                digitInputs[i].focus();
+                return;
+            }
+
+            submitGuess();
+        }
+
+        // Backspace and arrow navigation between boxes
+        function onDigitKey(e, index) {
+            if (e.key === 'Backspace' && !digitInputs[index].value && index > 0) {
+                digitInputs[index - 1].value = '';
+                digitInputs[index - 1].focus();
+                e.preventDefault();
+                return;
+            }
+
+            if (e.key === 'ArrowLeft' && index > 0) digitInputs[index - 1].focus();
+            if (e.key === 'ArrowRight' && index < CODE_LENGTH - 1) digitInputs[index + 1].focus();
+        }
+
+        function currentGuess() {
+            return digitInputs.map(input => input.value).join('');
+        }
+
+        function clearDigits() {
+            digitInputs.forEach(input => input.value = '');
+            digitInputs[0].focus();
+        }
+
+        function submitGuess() {
+            const guess = currentGuess();
+            if (guess.length !== CODE_LENGTH) return;
+
+            if (!game.remainingMs()) {
+                expire();
+                return;
+            }
+
+            stats.attempts++;
+            const { ok, repeat } = game.check(guess);
+
+            if (ok) {
+                finish(true);
+                return;
+            }
+
+            codeInfo.textContent = '';
+            codeError.textContent = repeat ? `You already tried ${guess}.` : 'Incorrect code. Try again.';
+            shake();
+            clearDigits();
+            renderStats();
+        }
+
+        function shake() {
+            digitsEl.classList.add('wrong', 'shake');
+            setTimeout(() => digitsEl.classList.remove('shake'), SHAKE_MS);
+        }
+
+        // New secret code, progress on the old one is lost
+        function sendCode(message) {
+            game.issue();
+            codeError.textContent = '';
+            codeInfo.textContent = message;
+            clearDigits();
+            renderStats();
+            tick();
+        }
+
+        function expire() {
+            stats.burned++;
+            sendCode('Code expired. A new code has been sent.');
+        }
+
+        function tick() {
+            const ms = game.remainingMs();
+            const totalSec = Math.ceil(ms / 1000);
+            const min = Math.floor(totalSec / 60);
+            const sec = String(totalSec % 60).padStart(2, '0');
+            timerEl.textContent = `${min}:${sec}`;
+
+            if (!ms) expire();
+        }
+
+        function renderStats() {
+            const unique = game.uniqueCount();
+            const elapsedMin = (Date.now() - stats.startedAt) / 60000;
+            const pace = elapsedMin > 0 ? stats.attempts / elapsedMin : 0;
+
+            document.getElementById('statAttempts').textContent = stats.attempts.toLocaleString();
+            document.getElementById('statUnique').textContent = unique.toLocaleString();
+            document.getElementById('statBurned').textContent = stats.burned.toLocaleString();
+            document.getElementById('statOdds').textContent = `${(unique / CODE_SPACE * 100).toFixed(4)}%`;
+
+            if (!stats.attempts) {
+                document.getElementById('statPace').textContent = '-';
+                document.getElementById('statEta').textContent = '-';
+                return;
+            }
+
+            // Expiry resets progress, so each guess is roughly 1 in CODE_SPACE
+            const etaMin = CODE_SPACE / pace;
+            document.getElementById('statPace').textContent = `${pace.toFixed(1)}/min`;
+            document.getElementById('statEta').textContent = formatDuration(etaMin);
+        }
+
+        // Minutes to the largest sensible unit, e.g. 4200 becomes "2.9 days"
+        function formatDuration(minutes) {
+            const units = [
+                ['years', 525600],
+                ['days', 1440],
+                ['hours', 60],
+                ['minutes', 1],
+            ];
+
+            for (const [name, size] of units) {
+                if (minutes >= size) return `${(minutes / size).toFixed(1)} ${name}`;
+            }
+
+            return `${(minutes * 60).toFixed(0)} seconds`;
+        }
+
+        // y***@example.com
+        function maskEmail(email) {
+            const [user, domain] = email.split('@');
+            return `${user[0]}${'*'.repeat(Math.max(1, user.length - 1))}@${domain}`;
+        }
+
+        function showStep(step) {
+            [emailStep, codeStep, doneStep].forEach(el => el.classList.add('hidden'));
+            step.classList.remove('hidden');
+        }
+
+        function start() {
+            const email = emailInput.value.trim();
+            if (!EMAIL_PATTERN.test(email)) {
+                emailError.textContent = 'Enter a valid email address.';
+                return;
+            }
+
+            emailError.textContent = '';
+            maskedEmail.textContent = maskEmail(email);
+            stats.attempts = 0;
+            stats.burned = 0;
+            stats.startedAt = Date.now();
+
+            showStep(codeStep);
+            buildDigits();
+            sendCode('');
+            timerId = setInterval(tick, TICK_MS);
+        }
+
+        function finish(won) {
+            clearInterval(timerId);
+            const code = game.reveal();
+
+            document.getElementById('doneIcon').textContent = won ? '🏆' : '🔒';
+            document.getElementById('doneTitle').textContent = won ? 'Access granted' : 'Access denied';
+            document.getElementById('doneText').textContent = won
+                ? `You guessed ${code} in ${stats.attempts.toLocaleString()} attempts. Despite this statistical improbability, you succeeded (or cheated).`
+                : `The code was ${code}. You made ${stats.attempts.toLocaleString()} attempts and burned ${stats.burned} codes. The system works.`;
+
+            showStep(doneStep);
+        }
+
+        sendBtn.addEventListener('click', start);
+        emailInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') start();
+        });
+        resendLink.addEventListener('click', () => {
+            stats.burned++;
+            sendCode('A new code has been sent.');
+        });
+        giveUpLink.addEventListener('click', () => finish(false));
+        againBtn.addEventListener('click', () => {
+            showStep(emailStep);
+            emailInput.focus();
+        });
+    </script>
+</body>
+
+</html>
