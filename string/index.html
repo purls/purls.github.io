@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>String Inspector</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1000px;
+        }
+
+        textarea {
+            border-radius: 4px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #input {
+            min-height: 180px;
+            max-height: 60vh;
+            overflow: auto;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 5px;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        input[type="number"] {
+            width: 60px;
+        }
+
+        label {
+            font-size: 13px;
+            color: #b0b0b0;
+        }
+
+        .button-group,
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cursor-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #80cccc;
+            background: #1a1a1a;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+        }
+
+        #cursorInfo {
+            white-space: pre-wrap;
+        }
+
+        details.section {
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            margin: 12px 0;
+            background: #161616;
+        }
+
+        details.section>summary {
+            cursor: pointer;
+            padding: 8px 12px;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .section-body {
+            padding: 0 12px 12px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 8px;
+        }
+
+        .stat {
+            background: #1e1e1e;
+            border: 1px solid #2d2d2d;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .stat:hover {
+            border-color: #4cafac;
+        }
+
+        .stat .label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .stat .value {
+            font-size: 16px;
+            overflow-wrap: anywhere;
+        }
+
+        .stat .sub {
+            font-size: 11px;
+            color: #6a9a98;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .chip {
+            padding: 2px 9px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: #242424;
+            color: #666;
+        }
+
+        .chip.yes {
+            background: #1d3d3a;
+            color: #8fe0d8;
+        }
+
+        .chip.warn {
+            background: #4a3418;
+            color: #ffc27a;
+        }
+
+        .table-wrap {
+            max-height: 420px;
+            overflow: auto;
+            border: 1px solid #2d2d2d;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 3px 8px;
+            border-bottom: 1px solid #242424;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #aaa;
+            position: sticky;
+            top: 0;
+            background: #161616;
+        }
+
+        td.num {
+            text-align: right;
+        }
+
+        td.wrap {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .char {
+            color: #ffd479;
+        }
+
+        .ctrl {
+            color: #ff9f6b;
+            font-size: 11px;
+        }
+
+        .bar {
+            display: inline-block;
+            height: 6px;
+            background: #2a6b68;
+            border-radius: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .muted {
+            color: #777;
+            font-size: 12px;
+            margin: 6px 0;
+        }
+
+        .hash-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 8px;
+            font-size: 13px;
+            padding: 3px 0;
+            cursor: pointer;
+            overflow-wrap: anywhere;
+        }
+
+        .hash-row:hover {
+            color: #80cccc;
+        }
+
+        .pattern>summary {
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #244444;
+            padding: 8px 14px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">String Inspector</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">Paste text below. Everything updates live. Click any value to copy it.</p>
+    <br />
+
+    <textarea id="input" rows="10" placeholder="Paste or type text here..." spellcheck="false"></textarea>
+
+    <div class="cursor-bar">
+        <span id="cursorInfo">Ln 1, Col 1 · Index 0</span>
+        <span>
+            <input type="text" id="gotoInput" placeholder="index or line:col" size="16" />
+            <button id="gotoBtn">Go</button>
+        </span>
+    </div>
+
+    <div class="button-group">
+        <button id="pasteBtn">Paste</button>
+        <button id="fileBtn">Open File</button>
+        <button id="copyBtn">Copy</button>
+        <button id="clearBtn">Clear</button>
+        <input type="file" id="fileInput" hidden />
+    </div>
+
+    <details class="section" open>
+        <summary>Counts</summary>
+        <div class="section-body">
+            <div class="stats" id="countStats"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Character Classes</summary>
+        <div class="section-body">
+            <div class="stats" id="classStats"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Checks</summary>
+        <div class="section-body">
+            <div class="chips" id="checkChips" style="margin-top: 0;"></div>
+            <p class="muted">Format checks test the whole text with surrounding whitespace trimmed. Orange marks
+                something worth a look.</p>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Lines &amp; Whitespace</summary>
+        <div class="section-body">
+            <div class="stats" id="lineStats"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Words &amp; Readability</summary>
+        <div class="section-body">
+            <div class="stats" id="wordStats"></div>
+            <p class="muted">Readability scores use an English syllable heuristic.</p>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Encoding &amp; Unicode</summary>
+        <div class="section-body">
+            <div class="stats" id="encodingStats"></div>
+            <div class="chips" id="scriptChips"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary id="suspiciousSummary">Invisible &amp; Unusual Characters</summary>
+        <div class="section-body" id="suspiciousBody"></div>
+    </details>
+
+    <details class="section" open>
+        <summary>Character Frequency</summary>
+        <div class="section-body">
+            <div class="controls">
+                <label>Sort
+                    <select id="charSort">
+                        <option value="cp">Code point</option>
+                        <option value="count">Count</option>
+                        <option value="first">First seen</option>
+                    </select>
+                </label>
+                <label><input type="checkbox" id="charFold" /> Ignore case</label>
+                <label><input type="checkbox" id="charHideWs" /> Hide whitespace</label>
+                <button id="charTsvBtn">Copy as TSV</button>
+            </div>
+            <div class="table-wrap" id="charTable"></div>
+            <p class="muted">Unique characters (in table order)</p>
+            <textarea id="uniqueChars" rows="2" readonly></textarea>
+            <button id="uniqueCopyBtn">Copy Unique Characters</button>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Word Frequency</summary>
+        <div class="section-body">
+            <div class="controls">
+                <label>Unit
+                    <select id="wordGram">
+                        <option value="1">Words</option>
+                        <option value="2">Bigrams</option>
+                        <option value="3">Trigrams</option>
+                    </select>
+                </label>
+                <label>Sort
+                    <select id="wordSort">
+                        <option value="count">Count</option>
+                        <option value="alpha">A to Z</option>
+                        <option value="length">Length</option>
+                        <option value="first">First seen</option>
+                    </select>
+                </label>
+                <label>Show
+                    <select id="wordLimit">
+                        <option value="25">25</option>
+                        <option value="100" selected>100</option>
+                        <option value="500">500</option>
+                        <option value="0">All</option>
+                    </select>
+                </label>
+                <label>Min length <input type="number" id="wordMin" value="1" min="1" /></label>
+                <label><input type="checkbox" id="wordFold" checked /> Ignore case</label>
+                <button id="wordTsvBtn">Copy as TSV</button>
+            </div>
+            <div class="table-wrap" id="wordTable"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Search</summary>
+        <div class="section-body">
+            <div class="controls">
+                <input type="text" id="searchInput" placeholder="Find..." style="flex: 1; min-width: 200px;" />
+                <label><input type="checkbox" id="searchRegex" /> Regex</label>
+                <label><input type="checkbox" id="searchCase" /> Match case</label>
+                <label><input type="checkbox" id="searchWord" /> Whole word</label>
+            </div>
+            <div id="searchResult"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Extracted Patterns</summary>
+        <div class="section-body">
+            <div class="stats" id="numberStats"></div>
+            <div id="patternList" style="margin-top: 10px;"></div>
+        </div>
+    </details>
+
+    <details class="section" open>
+        <summary>Hashes</summary>
+        <div class="section-body">
+            <div id="hashList"></div>
+            <p class="muted">Computed over the UTF-8 bytes of the text.</p>
+        </div>
+    </details>
+
+    <hr>
+    <p>
+        Character counts differ by definition. <strong>Characters</strong> is the JavaScript string length in
+        UTF-16 code units, which is what most editors and APIs report. <strong>Code points</strong> counts
+        Unicode scalar values. <strong>Graphemes</strong> counts what a person sees as one character, so a flag
+        emoji or an accented letter built from combining marks counts once.
+    </p>
+    <p>
+        Positions are 1-based lines and columns, with columns in UTF-16 code units. Click a position to select it
+        in the editor. For transforming text, use <a href="/h">Advanced Replace</a>.
+    </p>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Tuning
+        const DEBOUNCE_MS = 150;
+        const LARGE_DEBOUNCE_MS = 600;
+        const LARGE_TEXT = 200000;
+        const READ_WPM = 238;
+        const SPEAK_WPM = 150;
+        const MAX_ROWS = 2000;
+        const MAX_MATCHES = 500;
+        const MAX_POSITIONS = 5;
+        const CONTEXT_CHARS = 20;
+        const TOAST_MS = 1200;
+
+        // Code points
+        const TAB = 0x09;
+        const LF = 0x0A;
+        const CR = 0x0D;
+        const SPACE = 0x20;
+        const ASCII_MAX = 0x7F;
+        const LATIN1_MAX = 0xFF;
+        const BOM = 0xFEFF;
+        const REPLACEMENT = 0xFFFD;
+        const BITS_PER_BYTE = 8;
+        const BASE64_GROUP = 3;
+        const BASE64_CHARS = 4;
+
+        const C0_NAMES = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL', 'BS', 'TAB', 'LF', 'VT', 'FF', 'CR',
+            'SO', 'SI', 'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB', 'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS',
+            'RS', 'US'];
+
+        const CHAR_NAMES = {
+            0x20: 'SPACE', 0x7F: 'DEL', 0xA0: 'NBSP', 0xAD: 'SHY', 0x034F: 'CGJ', 0x061C: 'ALM', 0x180E: 'MVS',
+            0x2000: 'EN QUAD', 0x2001: 'EM QUAD', 0x2002: 'EN SP', 0x2003: 'EM SP', 0x2004: '3/EM SP',
+            0x2005: '4/EM SP', 0x2006: '6/EM SP', 0x2007: 'FIGURE SP', 0x2008: 'PUNCT SP', 0x2009: 'THIN SP',
+            0x200A: 'HAIR SP', 0x200B: 'ZWSP', 0x200C: 'ZWNJ', 0x200D: 'ZWJ', 0x200E: 'LRM', 0x200F: 'RLM',
+            0x2028: 'LSEP', 0x2029: 'PSEP', 0x202A: 'LRE', 0x202B: 'RLE', 0x202C: 'PDF', 0x202D: 'LRO',
+            0x202E: 'RLO', 0x202F: 'NNBSP', 0x205F: 'MMSP', 0x2060: 'WJ', 0x2061: 'FUNC APP', 0x2062: 'INV TIMES',
+            0x2063: 'INV SEP', 0x2064: 'INV PLUS', 0x2066: 'LRI', 0x2067: 'RLI', 0x2068: 'FSI', 0x2069: 'PDI',
+            0x3000: 'IDEO SP', 0xFEFF: 'BOM', 0xFFFC: 'OBJ', 0xFFFD: 'REPLACEMENT',
+        };
+
+        const CATEGORIES = [
+            ['Lu', 'Uppercase letter'], ['Ll', 'Lowercase letter'], ['Lt', 'Titlecase letter'],
+            ['Lm', 'Modifier letter'], ['Lo', 'Other letter'], ['Mn', 'Nonspacing mark'], ['Mc', 'Spacing mark'],
+            ['Me', 'Enclosing mark'], ['Nd', 'Decimal digit'], ['Nl', 'Letter number'], ['No', 'Other number'],
+            ['Pc', 'Connector punctuation'], ['Pd', 'Dash punctuation'], ['Ps', 'Open punctuation'],
+            ['Pe', 'Close punctuation'], ['Pi', 'Initial quote'], ['Pf', 'Final quote'], ['Po', 'Other punctuation'],
+            ['Sm', 'Math symbol'], ['Sc', 'Currency symbol'], ['Sk', 'Modifier symbol'], ['So', 'Other symbol'],
+            ['Zs', 'Space separator'], ['Zl', 'Line separator'], ['Zp', 'Paragraph separator'], ['Cc', 'Control'],
+            ['Cf', 'Format'], ['Cs', 'Surrogate'], ['Co', 'Private use'], ['Cn', 'Unassigned'],
+        ].map(([code, name]) => ({ code, name, re: new RegExp(`^\\p{${code}}$`, 'u') }));
+
+        // Categories that are invisible or rarely intended in plain text
+        const SUSPICIOUS_CATEGORIES = new Set(['Cc', 'Cf', 'Cs', 'Co', 'Cn', 'Zs', 'Zl', 'Zp']);
+
+        const SCRIPTS = ['Latin', 'Greek', 'Cyrillic', 'Armenian', 'Hebrew', 'Arabic', 'Syriac', 'Thaana',
+            'Devanagari', 'Bengali', 'Gurmukhi', 'Gujarati', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Sinhala',
+            'Thai', 'Lao', 'Tibetan', 'Myanmar', 'Georgian', 'Hangul', 'Ethiopic', 'Cherokee', 'Khmer', 'Mongolian',
+            'Hiragana', 'Katakana', 'Bopomofo', 'Han', 'Runic', 'Ogham', 'Braille']
+            .map(name => ({ name, re: new RegExp(`^\\p{Script=${name}}$`, 'u') }));
+
+        const FLESCH_LEVELS = [[90, 'Very easy'], [80, 'Easy'], [70, 'Fairly easy'], [60, 'Standard'],
+        [50, 'Fairly difficult'], [30, 'Difficult'], [-Infinity, 'Very confusing']];
+
+        const PATTERNS = [
+            ['URLs', /\b(?:https?|ftp):\/\/[^\s<>"'`]+/gi],
+            ['Emails', /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g],
+            ['IPv4 addresses', /\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g],
+            ['UUIDs', /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi],
+            ['ISO dates', /\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?/g],
+            ['Hex colors', /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})\b/gi],
+            ['Hashtags', /(?<![\w#&])#[\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*/gu],
+            ['Mentions', /(?<![\w@])@[\w.]*\w/g],
+            ['Numbers', /(?<![\w.])[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[-+]?\d+)?(?!\w|\.\d)/gi],
+        ];
+
+        // Trailing punctuation that is usually sentence text, not part of a URL
+        const URL_TAIL = /[.,;:!?)\]}'"]+$/;
+
+        const $ = id => document.getElementById(id);
+        const input = $('input');
+        const encoder = new TextEncoder();
+        const segmenters = 'Segmenter' in Intl ? {
+            grapheme: new Intl.Segmenter(undefined, { granularity: 'grapheme' }),
+            word: new Intl.Segmenter(undefined, { granularity: 'word' }),
+            sentence: new Intl.Segmenter(undefined, { granularity: 'sentence' }),
+        } : null;
+
+        let state = { text: '', freq: new Map(), words: [], cpCount: 0 };
+        let startsCache = { text: null, starts: [0] };
+        let charRows = [];
+        let wordRowsCache = [];
+        let hashSeq = 0;
+        let timer = 0;
+
+        // Formatting helpers
+
+        const esc = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fmt = n => Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—';
+        const hex = (n, width) => n.toString(16).toUpperCase().padStart(width, '0');
+        const uplus = cp => `U+${hex(cp, 4)}`;
+        const pct = (n, total) => total ? `${(n / total * 100).toFixed(2)}%` : '—';
+        const toHex = bytes => Array.from(bytes, b => hex(b, 2)).join('').toLowerCase();
+
+        function fmtBytes(n) {
+            const units = ['B', 'KiB', 'MiB', 'GiB'];
+            let value = n;
+            let unit = 0;
+            while (value >= 1024 && unit < units.length - 1) {
+                value /= 1024;
+                unit++;
+            }
+            return unit ? `${value.toFixed(2)} ${units[unit]}` : `${n} B`;
+        }
+
+        function fmtDuration(minutes) {
+            const totalSec = Math.round(minutes * 60);
+            if (totalSec < 60) return `${totalSec} s`;
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor(totalSec % 3600 / 60);
+            const s = totalSec % 60;
+            return h ? `${h} h ${m} min` : `${m} min ${s} s`;
+        }
+
+        // Unicode helpers
+
+        const categoryCache = new Map();
+
+        function category(ch) {
+            let cat = categoryCache.get(ch);
+            if (cat) return cat;
+
+            cat = CATEGORIES.find(c => c.re.test(ch)) ?? { code: '??', name: 'Unknown' };
+            categoryCache.set(ch, cat);
+            return cat;
+        }
+
+        function scriptOf(ch) {
+            return SCRIPTS.find(s => s.re.test(ch))?.name ?? null;
+        }
+
+        // Short label for characters that do not render visibly, e.g. U+200B becomes ZWSP
+        function specialName(ch) {
+            const cp = ch.codePointAt(0);
+            if (cp < C0_NAMES.length) return C0_NAMES[cp];
+            if (CHAR_NAMES[cp]) return CHAR_NAMES[cp];
+            if (cp >= 0x80 && cp <= 0x9F) return `C1 ${hex(cp, 2)}`;
+            if (cp >= 0xFE00 && cp <= 0xFE0F) return `VS${cp - 0xFE00 + 1}`;
+            if (cp >= 0xE0000 && cp <= 0xE007F) return 'TAG';
+
+            const code = category(ch).code;
+            if (SUSPICIOUS_CATEGORIES.has(code)) return code;
+            return null;
+        }
+
+        function charLabel(ch) {
+            const name = specialName(ch);
+            if (name) return `<span class="ctrl">${esc(name)}</span>`;
+            if (category(ch).code[0] === 'M') return `<span class="char">◌${esc(ch)}</span>`;
+            return `<span class="char">${esc(ch)}</span>`;
+        }
+
+        function isSuspicious(ch) {
+            const cp = ch.codePointAt(0);
+            if (cp === TAB || cp === LF || cp === CR || cp === SPACE) return false;
+            return cp === REPLACEMENT || SUSPICIOUS_CATEGORIES.has(category(ch).code);
+        }
+
+        function isWellFormed(text) {
+            if (typeof text.isWellFormed === 'function') return text.isWellFormed();
+            return !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(text);
+        }
+
+        // Position helpers
+
+        // Offsets where each line begins, so an index maps to line and column by binary search
+        function lineStarts(text) {
+            const starts = [0];
+            for (let i = 0; i < text.length; i++) {
+                const c = text.charCodeAt(i);
+                if (c === CR && text.charCodeAt(i + 1) === LF) i++;
+                if (c === CR || c === LF) starts.push(i + 1);
+            }
+            return starts;
+        }
+
+        function locate(text, index) {
+            if (startsCache.text !== text) startsCache = { text, starts: lineStarts(text) };
+            const starts = startsCache.starts;
+
+            let lo = 0;
+            let hi = starts.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi + 1) >> 1;
+                if (starts[mid] <= index) lo = mid;
+                else hi = mid - 1;
+            }
+            return { line: lo + 1, col: index - starts[lo] + 1 };
+        }
+
+        function posLink(index, len) {
+            const { line, col } = locate(state.text, index);
+            return `<a href="#" data-goto="${index}" data-len="${len}">${line}:${col}</a>`;
+        }
+
+        function selectRange(start, len) {
+            input.setSelectionRange(start, start + len);
+            input.blur();
+            input.focus();
+            input.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            updateCursor();
+        }
+
+        // Text segmentation
+
+        function scan(text) {
+            const freq = new Map();
+            let index = 0;
+            for (const ch of text) {
+                const entry = freq.get(ch);
+                if (!entry) freq.set(ch, { count: 1, first: index, pos: [index] });
+                else {
+                    entry.count++;
+                    if (entry.pos.length < MAX_POSITIONS) entry.pos.push(index);
+                }
+                index += ch.length;
+            }
+            return freq;
+        }
+
+        function wordList(text) {
+            if (!segmenters) return text.match(/[\p{L}\p{N}_'’]+/gu) ?? [];
+
+            const words = [];
+            for (const s of segmenters.word.segment(text)) {
+                if (s.isWordLike) words.push(s.segment);
+            }
+            return words;
+        }
+
+        function sentenceCount(text) {
+            const hasContent = s => /[\p{L}\p{N}]/u.test(s);
+            if (!segmenters) return text.split(/[.!?]+\s/).filter(hasContent).length;
+
+            let count = 0;
+            for (const s of segmenters.sentence.segment(text)) {
+                if (hasContent(s.segment)) count++;
+            }
+            return count;
+        }
+
+        // Counts graphemes and emoji in one pass since both need grapheme segmentation
+        function graphemeStats(text) {
+            const emojiRe = /\p{Extended_Pictographic}/u;
+            let graphemes = 0;
+            let emoji = 0;
+            const parts = segmenters ? Array.from(segmenters.grapheme.segment(text), s => s.segment) : Array.from(text);
+            for (const g of parts) {
+                graphemes++;
+                if (emojiRe.test(g)) emoji++;
+            }
+            return { graphemes, emoji };
+        }
+
+        // Rough English syllable count, e.g. "readable" gives 3
+        function syllables(word) {
+            const w = word.toLowerCase().replace(/[^a-z]/g, '');
+            if (!w) return 0;
+            if (w.length <= 3) return 1;
+
+            const trimmed = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+            return Math.max(1, (trimmed.match(/[aeiouy]{1,2}/g) ?? []).length);
+        }
+
+        // Rendering helpers
+
+        function renderStats(el, items) {
+            el.innerHTML = items.map(([label, value, sub]) => {
+                const v = esc(String(value));
+                const subHtml = sub ? `<div class="sub">${esc(String(sub))}</div>` : '';
+                return `<div class="stat" data-copy="${v}"><div class="label">${esc(label)}</div><div class="value">${v}</div>${subHtml}</div>`;
+            }).join('');
+        }
+
+        function renderChips(el, items) {
+            el.innerHTML = items.map(({ label, on, warn }) => {
+                const cls = on ? (warn ? 'warn' : 'yes') : '';
+                return `<span class="chip ${cls}">${on ? '✓' : '✗'} ${esc(label)}</span>`;
+            }).join('');
+        }
+
+        function renderTable(el, headers, rows, total) {
+            const note = total > rows.length ? `<p class="muted">Showing ${fmt(rows.length)} of ${fmt(total)} rows.</p>` : '';
+            const head = headers.map(h => `<th>${h}</th>`).join('');
+            el.innerHTML = rows.length
+                ? `<table><thead><tr>${head}</tr></thead><tbody>${rows.join('')}</tbody></table>${note}`
+                : '<p class="muted" style="padding: 0 8px;">Nothing to show.</p>';
+        }
+
+        function bar(n, max) {
+            const BAR_WIDTH = 80;
+            return `<span class="bar" style="width: ${max ? Math.max(1, n / max * BAR_WIDTH) : 0}px"></span>`;
+        }
+
+        // Sections
+
+        function renderCounts(text, words, lines, gs, sentences, paragraphs) {
+            const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
+            renderStats($('countStats'), [
+                ['Characters', fmt(text.length), 'UTF-16 code units'],
+                ['Code points', fmt(state.cpCount), 'Unicode scalars'],
+                ['Graphemes', fmt(gs.graphemes), 'user-perceived'],
+                ['Words', fmt(words.length), 'Unicode word rules'],
+                ['Tokens', fmt(text.split(/\s+/).filter(Boolean).length), 'whitespace split, like wc -w'],
+                ['Unique words', fmt(uniqueWords), 'ignoring case'],
+                ['Lines', fmt(lines.length)],
+                ['Sentences', fmt(sentences)],
+                ['Paragraphs', fmt(paragraphs)],
+                ['Unique characters', fmt(state.freq.size)],
+            ]);
+        }
+
+        function renderClasses(gs) {
+            const c = {
+                letters: 0, upper: 0, lower: 0, digits: 0, numbers: 0, punct: 0, symbols: 0, marks: 0,
+                whitespace: 0, spaces: 0, tabs: 0, controls: 0, format: 0, nonAscii: 0
+            };
+            for (const [ch, { count }] of state.freq) {
+                const cp = ch.codePointAt(0);
+                const code = category(ch).code;
+                const major = code[0];
+                if (major === 'L') c.letters += count;
+                if (code === 'Lu') c.upper += count;
+                if (code === 'Ll') c.lower += count;
+                if (code === 'Nd') c.digits += count;
+                if (major === 'N') c.numbers += count;
+                if (major === 'P') c.punct += count;
+                if (major === 'S') c.symbols += count;
+                if (major === 'M') c.marks += count;
+                if (/^\s$/u.test(ch)) c.whitespace += count;
+                if (cp === SPACE) c.spaces += count;
+                if (cp === TAB) c.tabs += count;
+                if (code === 'Cc') c.controls += count;
+                if (code === 'Cf') c.format += count;
+                if (cp > ASCII_MAX) c.nonAscii += count;
+            }
+
+            const n = state.cpCount;
+            const row = (label, value) => [label, fmt(value), pct(value, n)];
+            renderStats($('classStats'), [
+                row('Letters', c.letters),
+                row('Uppercase', c.upper),
+                row('Lowercase', c.lower),
+                row('Digits 0-9', c.digits),
+                row('All numerals', c.numbers),
+                row('Punctuation', c.punct),
+                row('Symbols', c.symbols),
+                row('Combining marks', c.marks),
+                row('Whitespace', c.whitespace),
+                row('Spaces', c.spaces),
+                row('Tabs', c.tabs),
+                row('Control chars', c.controls),
+                row('Format chars', c.format),
+                row('Non-ASCII', c.nonAscii),
+                ['Emoji', fmt(gs.emoji), 'graphemes'],
+            ]);
+        }
+
+        function renderLines(text, lines) {
+            const crlf = (text.match(/\r\n/g) ?? []).length;
+            const lf = (text.match(/\n/g) ?? []).length - crlf;
+            const cr = (text.match(/\r/g) ?? []).length - crlf;
+
+            let nonEmpty = 0;
+            let longest = { len: -1, line: 0 };
+            let shortest = { len: Infinity, line: 0 };
+            let totalLen = 0;
+            let trailingWs = 0;
+            let tabIndent = 0;
+            let spaceIndent = 0;
+            const seen = new Map();
+
+            lines.forEach((line, i) => {
+                const len = [...line].length;
+                totalLen += len;
+                seen.set(line, (seen.get(line) ?? 0) + 1);
+                if (len > longest.len) longest = { len, line: i + 1 };
+                if (/[^\S\r\n]$/.test(line)) trailingWs++;
+                if (line[0] === '\t') tabIndent++;
+                if (line[0] === ' ') spaceIndent++;
+                if (!line.trim()) return;
+
+                nonEmpty++;
+                if (len < shortest.len) shortest = { len, line: i + 1 };
+            });
+
+            const duplicates = [...seen.values()].reduce((sum, n) => sum + (n > 1 ? n - 1 : 0), 0);
+            const leadWs = text.length - text.trimStart().length;
+            const trailWs = text.length - text.trimEnd().length;
+
+            renderStats($('lineStats'), [
+                ['Lines', fmt(lines.length)],
+                ['Non-blank lines', fmt(nonEmpty)],
+                ['Blank lines', fmt(lines.length - nonEmpty), 'empty or whitespace'],
+                ['Unique lines', fmt(seen.size)],
+                ['Duplicate lines', fmt(duplicates), 'repeats beyond first'],
+                ['Longest line', lines.length ? fmt(longest.len) : '—', lines.length ? `Ln ${longest.line}` : ''],
+                ['Shortest line', nonEmpty ? fmt(shortest.len) : '—', nonEmpty ? `Ln ${shortest.line}, non-blank` : ''],
+                ['Avg line length', lines.length ? fmt(totalLen / lines.length) : '—', 'code points'],
+                ['LF endings', fmt(lf), '\\n'],
+                ['CRLF endings', fmt(crlf), '\\r\\n'],
+                ['CR endings', fmt(cr), '\\r'],
+                ['Trailing whitespace', fmt(trailingWs), 'lines'],
+                ['Tab-indented', fmt(tabIndent), 'lines'],
+                ['Space-indented', fmt(spaceIndent), 'lines'],
+                ['Leading whitespace', fmt(leadWs), 'chars at start'],
+                ['Trailing whitespace', fmt(trailWs), 'chars at end'],
+            ]);
+
+            return { mixedEndings: [lf, crlf, cr].filter(Boolean).length > 1, mixedIndent: tabIndent && spaceIndent };
+        }
+
+        function renderWords(words, sentences) {
+            const totalLen = words.reduce((sum, w) => sum + [...w].length, 0);
+            const longest = words.reduce((best, w) => ([...w].length > [...best].length ? w : best), '');
+            const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
+            const syl = words.reduce((sum, w) => sum + syllables(w), 0);
+
+            const wps = sentences ? words.length / sentences : NaN;
+            const spw = words.length ? syl / words.length : NaN;
+            const ease = 206.835 - 1.015 * wps - 84.6 * spw;
+            const grade = 0.39 * wps + 11.8 * spw - 15.59;
+            const level = Number.isFinite(ease) ? FLESCH_LEVELS.find(([min]) => ease >= min)[1] : '';
+
+            renderStats($('wordStats'), [
+                ['Avg word length', words.length ? fmt(totalLen / words.length) : '—', 'code points'],
+                ['Longest word', longest || '—', longest ? `${[...longest].length} chars` : ''],
+                ['Lexical diversity', pct(uniqueWords, words.length), 'unique / total words'],
+                ['Words per sentence', fmt(wps)],
+                ['Reading time', fmtDuration(words.length / READ_WPM), `${READ_WPM} wpm`],
+                ['Speaking time', fmtDuration(words.length / SPEAK_WPM), `${SPEAK_WPM} wpm`],
+                ['Syllables', fmt(syl), 'estimated'],
+                ['Flesch reading ease', fmt(ease), level],
+                ['Flesch-Kincaid grade', fmt(grade)],
+            ]);
+        }
+
+        function renderEncoding(text) {
+            const utf8 = encoder.encode(text).length;
+            let urlLen = '—';
+            try {
+                urlLen = fmt(encodeURIComponent(text).length);
+            } catch {
+                // Lone surrogates cannot be URL-encoded
+            }
+
+            let entropy = 0;
+            let minCp = Infinity;
+            let maxCp = -1;
+            for (const [ch, { count }] of state.freq) {
+                const p = count / state.cpCount;
+                entropy -= p * Math.log2(p);
+                const cp = ch.codePointAt(0);
+                minCp = Math.min(minCp, cp);
+                maxCp = Math.max(maxCp, cp);
+            }
+
+            renderStats($('encodingStats'), [
+                ['UTF-8 size', fmtBytes(utf8), `${fmt(utf8)} bytes`],
+                ['UTF-16 size', fmtBytes(text.length * 2), `${fmt(text.length * 2)} bytes`],
+                ['UTF-32 size', fmtBytes(state.cpCount * 4), `${fmt(state.cpCount * 4)} bytes`],
+                ['Base64 length', fmt(Math.ceil(utf8 / BASE64_GROUP) * BASE64_CHARS), 'of UTF-8 bytes'],
+                ['URL-encoded length', urlLen, 'encodeURIComponent'],
+                ['Entropy', `${entropy.toFixed(3)} bits`, 'per code point'],
+                ['Total entropy', fmt(Math.round(entropy * state.cpCount)), 'bits'],
+                ['Lowest code point', maxCp < 0 ? '—' : uplus(minCp)],
+                ['Highest code point', maxCp < 0 ? '—' : uplus(maxCp)],
+                ['UTF-8 overhead', utf8 ? pct(utf8 - state.cpCount, state.cpCount) : '—', 'bytes beyond 1 per char'],
+            ]);
+
+            // Letter count per script, highest first
+            const scripts = new Map();
+            for (const [ch, { count }] of state.freq) {
+                if (category(ch).code[0] !== 'L') continue;
+                const name = scriptOf(ch) ?? 'Other';
+                scripts.set(name, (scripts.get(name) ?? 0) + count);
+            }
+            $('scriptChips').innerHTML = [...scripts]
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, count]) => `<span class="chip yes">${esc(name)} ${fmt(count)}</span>`)
+                .join('');
+
+            return { scriptCount: scripts.size };
+        }
+
+        function renderChecks(text, lineInfo, encInfo, suspiciousCount) {
+            const t = text.trim();
+            const has = t.length > 0;
+            const letters = /\p{L}/u.test(t);
+            const test = re => has && re.test(t);
+            const tryParse = fn => {
+                try {
+                    return fn();
+                } catch {
+                    return false;
+                }
+            };
+            const b64 = t.replace(/\s+/g, '');
+            const alnum = t.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+            const firstCp = text.codePointAt(0);
+
+            const checks = [
+                { label: 'Empty', on: !text.length },
+                { label: 'Whitespace only', on: text.length > 0 && !has, warn: true },
+                { label: 'ASCII only', on: text.length > 0 && [...state.freq.keys()].every(ch => ch.codePointAt(0) <= ASCII_MAX) },
+                { label: 'Latin-1 only', on: text.length > 0 && [...state.freq.keys()].every(ch => ch.codePointAt(0) <= LATIN1_MAX) },
+                { label: 'Printable ASCII', on: test(/^[\x20-\x7E\t\r\n]+$/) },
+                { label: 'Integer', on: test(/^[+-]?\d+$/) },
+                { label: 'Decimal number', on: test(/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i) },
+                { label: 'Hex', on: test(/^(?:0x)?[0-9a-f]+$/i) },
+                { label: 'Binary', on: test(/^(?:0b)?[01]+$/i) },
+                { label: 'Base64', on: has && b64.length % BASE64_CHARS === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(b64) },
+                { label: 'Base64url', on: has && /^[A-Za-z0-9_-]+={0,2}$/.test(b64) },
+                { label: 'JSON', on: has && tryParse(() => (JSON.parse(t), true)) },
+                { label: 'URL', on: test(/^[a-z][a-z\d+.-]*:\/\/\S+$/i) && tryParse(() => !!new URL(t)) },
+                { label: 'Email', on: test(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) },
+                { label: 'IPv4', on: test(/^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/) },
+                { label: 'IPv6', on: test(/^[0-9a-f:.]+$/i) && t.includes(':') && tryParse(() => !!new URL(`http://[${t}]`)) },
+                { label: 'UUID', on: test(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i) },
+                { label: 'Hex color', on: test(/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i) },
+                { label: 'ISO date', on: test(/^\d{4}-\d{2}-\d{2}/) && !isNaN(Date.parse(t)) },
+                { label: 'Palindrome', on: alnum.length > 1 && alnum === [...alnum].reverse().join('') },
+                { label: 'All uppercase', on: letters && t === t.toUpperCase() },
+                { label: 'All lowercase', on: letters && t === t.toLowerCase() },
+                { label: 'NFC normalized', on: text.length > 0 && tryParse(() => text === text.normalize('NFC')) },
+                { label: 'NFKC normalized', on: text.length > 0 && tryParse(() => text === text.normalize('NFKC')) },
+                { label: 'Leading whitespace', on: /^\s/.test(text), warn: true },
+                { label: 'Trailing whitespace', on: /[^\S\r\n]$/.test(text), warn: true },
+                { label: 'Ends with newline', on: /[\r\n]$/.test(text) },
+                { label: 'BOM at start', on: firstCp === BOM, warn: true },
+                { label: 'Mixed line endings', on: lineInfo.mixedEndings, warn: true },
+                { label: 'Mixed indentation', on: !!lineInfo.mixedIndent, warn: true },
+                { label: 'Mixed scripts', on: encInfo.scriptCount > 1, warn: true },
+                { label: 'Invisible chars', on: suspiciousCount > 0, warn: true },
+                { label: 'Lone surrogates', on: !isWellFormed(text), warn: true },
+                { label: 'Replacement char', on: state.freq.has('�'), warn: true },
+            ];
+            renderChips($('checkChips'), checks);
+        }
+
+        function renderSuspicious() {
+            const found = [...state.freq].filter(([ch]) => isSuspicious(ch)).sort((a, b) => a[1].first - b[1].first);
+            const total = found.reduce((sum, [, e]) => sum + e.count, 0);
+            $('suspiciousSummary').textContent = `Invisible & Unusual Characters (${fmt(total)})`;
+
+            const rows = found.map(([ch, e]) => {
+                const cp = ch.codePointAt(0);
+                const cat = category(ch);
+                const more = e.count > e.pos.length ? ' …' : '';
+                const positions = e.pos.map(i => posLink(i, ch.length)).join(' ') + more;
+                return `<tr><td>${charLabel(ch)}</td><td>${uplus(cp)}</td><td title="${esc(cat.name)}">${cat.code}</td><td class="num">${fmt(e.count)}</td><td>${positions}</td></tr>`;
+            });
+            renderTable($('suspiciousBody'), ['Char', 'Code point', 'Cat', 'Count', 'Positions (Ln:Col)'], rows, rows.length);
+            return total;
+        }
+
+        // Builds character rows from the frequency map using the current table options
+        function buildCharRows() {
+            const fold = $('charFold').checked;
+            const hideWs = $('charHideWs').checked;
+            const merged = new Map();
+
+            for (const [ch, e] of state.freq) {
+                if (hideWs && /^\s$/u.test(ch)) continue;
+
+                const lower = fold ? ch.toLowerCase() : ch;
+                const key = [...lower].length === 1 ? lower : ch;
+                const prev = merged.get(key);
+                if (!prev) {
+                    merged.set(key, { ch: key, count: e.count, first: e.first, len: ch.length });
+                    continue;
+                }
+                prev.count += e.count;
+                if (e.first < prev.first) {
+                    prev.first = e.first;
+                    prev.len = ch.length;
+                }
+            }
+
+            const sorters = {
+                cp: (a, b) => a.ch.codePointAt(0) - b.ch.codePointAt(0),
+                count: (a, b) => b.count - a.count || a.ch.codePointAt(0) - b.ch.codePointAt(0),
+                first: (a, b) => a.first - b.first,
+            };
+            return [...merged.values()].sort(sorters[$('charSort').value]);
+        }
+
+        function renderCharTable() {
+            charRows = buildCharRows();
+            const total = charRows.reduce((sum, r) => sum + r.count, 0);
+            const max = charRows.reduce((m, r) => Math.max(m, r.count), 0);
+
+            const rows = charRows.slice(0, MAX_ROWS).map(r => {
+                const cp = r.ch.codePointAt(0);
+                const cat = category(r.ch);
+                const utf8 = Array.from(encoder.encode(r.ch), b => hex(b, 2)).join(' ');
+                return `<tr><td>${charLabel(r.ch)}</td><td>${uplus(cp)}</td><td class="num">${cp}</td><td>${utf8}</td>`
+                    + `<td title="${esc(cat.name)}">${cat.code}</td><td class="num">${fmt(r.count)}</td>`
+                    + `<td>${pct(r.count, total)}${bar(r.count, max)}</td><td>${posLink(r.first, r.len)}</td></tr>`;
+            });
+            renderTable($('charTable'), ['Char', 'Code point', 'Dec', 'UTF-8', 'Cat', 'Count', 'Share', 'First'], rows, charRows.length);
+            $('uniqueChars').value = charRows.map(r => r.ch).join('');
+        }
+
+        // Counts words or n-grams, e.g. bigrams of "a b c" are "a b" and "b c"
+        function buildWordRows() {
+            const fold = $('wordFold').checked;
+            const n = Number($('wordGram').value);
+            const minLen = Number($('wordMin').value) || 1;
+            const words = fold ? state.words.map(w => w.toLowerCase()) : state.words;
+            const counts = new Map();
+            let order = 0;
+
+            for (let i = 0; i + n <= words.length; i++) {
+                const gram = words.slice(i, i + n);
+                if (gram.some(w => [...w].length < minLen)) continue;
+
+                const key = gram.join(' ');
+                const entry = counts.get(key);
+                if (entry) entry.count++;
+                else counts.set(key, { word: key, count: 1, first: order++ });
+            }
+
+            const sorters = {
+                count: (a, b) => b.count - a.count || a.first - b.first,
+                alpha: (a, b) => a.word.localeCompare(b.word),
+                length: (a, b) => [...b.word].length - [...a.word].length || b.count - a.count,
+                first: (a, b) => a.first - b.first,
+            };
+            return [...counts.values()].sort(sorters[$('wordSort').value]);
+        }
+
+        function renderWordTable() {
+            wordRowsCache = buildWordRows();
+            const total = wordRowsCache.reduce((sum, r) => sum + r.count, 0);
+            const max = wordRowsCache.reduce((m, r) => Math.max(m, r.count), 0);
+            const limit = Number($('wordLimit').value) || wordRowsCache.length;
+
+            const rows = wordRowsCache.slice(0, limit).map((r, i) =>
+                `<tr><td class="num">${i + 1}</td><td class="wrap">${esc(r.word)}</td><td class="num">${fmt(r.count)}</td>`
+                + `<td>${pct(r.count, total)}${bar(r.count, max)}</td><td class="num">${[...r.word].length}</td></tr>`);
+            renderTable($('wordTable'), ['#', 'Word', 'Count', 'Share', 'Len'], rows, wordRowsCache.length);
+        }
+
+        function searchRegex() {
+            const term = $('searchInput').value;
+            if (!term) return null;
+
+            const source = $('searchRegex').checked ? term : term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const bounded = $('searchWord').checked ? `(?<![\\p{L}\\p{N}_])(?:${source})(?![\\p{L}\\p{N}_])` : source;
+            return new RegExp(bounded, `gu${$('searchCase').checked ? '' : 'i'}`);
+        }
+
+        function renderSearch() {
+            const out = $('searchResult');
+            let re;
+            try {
+                re = searchRegex();
+            } catch (err) {
+                out.innerHTML = `<p class="muted" style="color: #ff6b6b;">${esc(err.message)}</p>`;
+                return;
+            }
+            if (!re) {
+                out.innerHTML = '';
+                return;
+            }
+
+            const text = state.text;
+            const matches = [];
+            let count = 0;
+            for (const m of text.matchAll(re)) {
+                count++;
+                if (matches.length < MAX_MATCHES) matches.push(m);
+            }
+
+            const rows = matches.map(m => {
+                const start = m.index;
+                const end = start + m[0].length;
+                const before = text.slice(Math.max(0, start - CONTEXT_CHARS), start);
+                const after = text.slice(end, end + CONTEXT_CHARS);
+                const clean = s => esc(s.replace(/\r\n|\r|\n/g, '⏎').replace(/\t/g, '⇥'));
+                const context = `${clean(before)}<span class="char">${clean(m[0])}</span>${clean(after)}`;
+                return `<tr><td>${posLink(start, m[0].length)}</td><td class="num">${start}</td><td class="wrap">${context}</td></tr>`;
+            });
+
+            out.innerHTML = `<p class="muted">${fmt(count)} match${count === 1 ? '' : 'es'}</p><div class="table-wrap" id="searchTable"></div>`;
+            renderTable($('searchTable'), ['Ln:Col', 'Index', 'Context'], rows, count);
+        }
+
+        function renderPatterns(text) {
+            const html = PATTERNS.map(([label, re]) => {
+                let found = text.match(re) ?? [];
+                if (label === 'URLs') found = found.map(u => u.replace(URL_TAIL, ''));
+                const unique = [...new Set(found)];
+                const list = esc(unique.join('\n'));
+                return `<details class="pattern"><summary>${esc(label)} <span class="muted">${fmt(found.length)} found, ${fmt(unique.length)} unique</span></summary>`
+                    + (unique.length ? `<textarea rows="4" readonly>${list}</textarea><button data-copy="${list}">Copy ${esc(label)}</button>` : '')
+                    + '</details>';
+            });
+            $('patternList').innerHTML = html.join('');
+
+            // Numeric summary over every number found in the text
+            const numbers = (text.match(PATTERNS.at(-1)[1]) ?? []).map(s => Number(s.replace(/,/g, ''))).filter(Number.isFinite);
+            const sorted = [...numbers].sort((a, b) => a - b);
+            const sum = numbers.reduce((s, n) => s + n, 0);
+            const mid = sorted.length >> 1;
+            const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+            const has = numbers.length > 0;
+
+            renderStats($('numberStats'), [
+                ['Numbers found', fmt(numbers.length)],
+                ['Sum', has ? fmt(sum) : '—'],
+                ['Min', has ? fmt(sorted[0]) : '—'],
+                ['Max', has ? fmt(sorted.at(-1)) : '—'],
+                ['Mean', has ? fmt(sum / numbers.length) : '—'],
+                ['Median', has ? fmt(median) : '—'],
+            ]);
+        }
+
+        // Hashing
+
+        const CRC_TABLE = (() => {
+            const CRC32_POLY = 0xEDB88320;
+            const table = new Uint32Array(256);
+            for (let n = 0; n < 256; n++) {
+                let c = n;
+                for (let k = 0; k < 8; k++) c = c & 1 ? CRC32_POLY ^ (c >>> 1) : c >>> 1;
+                table[n] = c;
+            }
+            return table;
+        })();
+
+        function crc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (const b of bytes) crc = CRC_TABLE[(crc ^ b) & 0xFF] ^ (crc >>> 8);
+            return hex((crc ^ 0xFFFFFFFF) >>> 0, 8).toLowerCase();
+        }
+
+        // RFC 1321, not available in Web Crypto
+        function md5(bytes) {
+            const SHIFTS = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+            const K = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 2 ** 32));
+
+            // Pad to a multiple of 64 bytes with 0x80, zeros, then the 64-bit bit length
+            const len = bytes.length;
+            const padded = new Uint8Array((((len + 8) >>> 6) + 1) << 6);
+            padded.set(bytes);
+            padded[len] = 0x80;
+            const view = new DataView(padded.buffer);
+            view.setUint32(padded.length - 8, (len * BITS_PER_BYTE) >>> 0, true);
+            view.setUint32(padded.length - 4, Math.floor(len * BITS_PER_BYTE / 2 ** 32), true);
+
+            const h = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476];
+            for (let off = 0; off < padded.length; off += 64) {
+                let [a, b, c, d] = h;
+                for (let i = 0; i < 64; i++) {
+                    const round = i >> 4;
+                    let f;
+                    let g;
+                    if (round === 0) [f, g] = [(b & c) | (~b & d), i];
+                    else if (round === 1) [f, g] = [(d & b) | (~d & c), (5 * i + 1) % 16];
+                    else if (round === 2) [f, g] = [b ^ c ^ d, (3 * i + 5) % 16];
+                    else[f, g] = [c ^ (b | ~d), (7 * i) % 16];
+
+                    const x = (a + f + K[i] + view.getUint32(off + g * 4, true)) | 0;
+                    const s = SHIFTS[round * 4 + (i % 4)];
+                    [a, d, c] = [d, c, b];
+                    b = (b + ((x << s) | (x >>> (32 - s)))) | 0;
+                }
+                h[0] = (h[0] + a) | 0;
+                h[1] = (h[1] + b) | 0;
+                h[2] = (h[2] + c) | 0;
+                h[3] = (h[3] + d) | 0;
+            }
+
+            const out = new DataView(new ArrayBuffer(16));
+            h.forEach((v, i) => out.setUint32(i * 4, v, true));
+            return toHex(new Uint8Array(out.buffer));
+        }
+
+        async function renderHashes(text) {
+            const seq = ++hashSeq;
+            const bytes = encoder.encode(text);
+            const hashes = [['CRC32', crc32(bytes)], ['MD5', md5(bytes)]];
+
+            if (crypto.subtle) {
+                for (const algo of ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512']) {
+                    const digest = await crypto.subtle.digest(algo, bytes);
+                    hashes.push([algo, toHex(new Uint8Array(digest))]);
+                }
+            }
+
+            // A newer edit started hashing while this one awaited
+            if (seq !== hashSeq) return;
+
+            $('hashList').innerHTML = hashes
+                .map(([name, value]) => `<div class="hash-row" data-copy="${value}"><span class="muted" style="margin: 0;">${name}</span><span>${value}</span></div>`)
+                .join('');
+        }
+
+        // Cursor
+
+        function updateCursor() {
+            const text = input.value;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const { line, col } = locate(text, start);
+            const parts = [`Ln ${line}, Col ${col}`, `Index ${start}`];
+
+            const cp = text.codePointAt(start);
+            if (cp !== undefined) {
+                const ch = String.fromCodePoint(cp);
+                const shown = specialName(ch) ?? ch;
+                parts.push(`Next ${shown} ${uplus(cp)} ${category(ch).code}`);
+            }
+
+            if (end > start) {
+                const sel = text.slice(start, end);
+                parts.push(`Selected ${fmt(sel.length)} chars, ${fmt(wordList(sel).length)} words, ${fmt(encoder.encode(sel).length)} bytes`);
+            }
+            $('cursorInfo').textContent = parts.join(' · ');
+        }
+
+        // Accepts an index like 120 or a position like 5:3
+        function gotoPosition() {
+            const value = $('gotoInput').value.trim();
+            const text = input.value;
+            const pos = value.match(/^(\d+)\s*[:,]\s*(\d+)$/);
+
+            let index = Number(value);
+            if (pos) {
+                locate(text, 0);
+                const starts = startsCache.starts;
+                const line = Math.min(Math.max(1, Number(pos[1])), starts.length);
+                index = starts[line - 1] + Number(pos[2]) - 1;
+            }
+            if (!Number.isFinite(index)) return toast('Enter an index or line:col');
+
+            selectRange(Math.min(Math.max(0, index), text.length), 0);
+        }
+
+        // Main
+
+        function analyze() {
+            const text = input.value;
+            const freq = scan(text);
+            let cpCount = 0;
+            for (const e of freq.values()) cpCount += e.count;
+
+            state = { text, freq, words: wordList(text), cpCount };
+            const lines = text ? text.split(/\r\n|\r|\n/) : [];
+            const gs = graphemeStats(text);
+            const sentences = sentenceCount(text);
+            const paragraphs = text.replace(/\r\n?/g, '\n').split(/\n[^\S\n]*\n/).filter(p => p.trim()).length;
+
+            renderCounts(text, state.words, lines, gs, sentences, paragraphs);
+            renderClasses(gs);
+            const lineInfo = renderLines(text, lines);
+            renderWords(state.words, sentences);
+            const encInfo = renderEncoding(text);
+            const suspiciousCount = renderSuspicious();
+            renderChecks(text, lineInfo, encInfo, suspiciousCount);
+            renderCharTable();
+            renderWordTable();
+            renderSearch();
+            renderPatterns(text);
+            renderHashes(text);
+            updateCursor();
+        }
+
+        function schedule() {
+            clearTimeout(timer);
+            timer = setTimeout(analyze, input.value.length > LARGE_TEXT ? LARGE_DEBOUNCE_MS : DEBOUNCE_MS);
+        }
+
+        function toast(message) {
+            const el = $('toast');
+            el.textContent = message;
+            el.classList.add('show');
+            clearTimeout(toast.timer);
+            toast.timer = setTimeout(() => el.classList.remove('show'), TOAST_MS);
+        }
+
+        async function copy(value, label = 'Copied') {
+            try {
+                await navigator.clipboard.writeText(value);
+                toast(label);
+            } catch {
+                toast('Copy failed');
+            }
+        }
+
+        function setInput(value) {
+            input.value = value;
+            analyze();
+        }
+
+        // Events
+
+        input.addEventListener('input', schedule);
+        for (const type of ['keyup', 'mouseup', 'select', 'focus']) input.addEventListener(type, updateCursor);
+
+        $('pasteBtn').addEventListener('click', async () => {
+            try {
+                setInput(await navigator.clipboard.readText());
+            } catch {
+                toast('Clipboard read blocked');
+            }
+        });
+        $('fileBtn').addEventListener('click', () => $('fileInput').click());
+        $('fileInput').addEventListener('change', async e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            setInput(await file.text());
+            e.target.value = '';
+        });
+        $('copyBtn').addEventListener('click', () => copy(input.value));
+        $('clearBtn').addEventListener('click', () => setInput(''));
+
+        $('gotoBtn').addEventListener('click', gotoPosition);
+        $('gotoInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') gotoPosition();
+        });
+
+        for (const id of ['charSort', 'charFold', 'charHideWs']) $(id).addEventListener('change', renderCharTable);
+        for (const id of ['wordGram', 'wordSort', 'wordLimit', 'wordMin', 'wordFold']) $(id).addEventListener('input', renderWordTable);
+        for (const id of ['searchInput', 'searchRegex', 'searchCase', 'searchWord']) $(id).addEventListener('input', renderSearch);
+
+        $('uniqueCopyBtn').addEventListener('click', () => copy($('uniqueChars').value));
+        $('charTsvBtn').addEventListener('click', () => {
+            const rows = charRows.map(r => [specialName(r.ch) ?? r.ch, uplus(r.ch.codePointAt(0)), r.count].join('\t'));
+            copy(['Char\tCode point\tCount', ...rows].join('\n'), 'Copied TSV');
+        });
+        $('wordTsvBtn').addEventListener('click', () => {
+            const rows = wordRowsCache.map(r => `${r.word}\t${r.count}`);
+            copy(['Word\tCount', ...rows].join('\n'), 'Copied TSV');
+        });
+
+        // Click to copy for stats and hashes, click to select for positions
+        document.addEventListener('click', e => {
+            const link = e.target.closest('[data-goto]');
+            if (link) {
+                e.preventDefault();
+                selectRange(Number(link.dataset.goto), Number(link.dataset.len));
+                return;
+            }
+
+            const target = e.target.closest('[data-copy]');
+            if (target) copy(target.dataset.copy);
+        });
+
+        analyze();
+    </script>
+</body>
+
+</html>
