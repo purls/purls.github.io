@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Pattern Scenes</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            overflow: hidden;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        #panel {
+            width: 300px;
+            flex: none;
+            overflow-y: auto;
+            padding: 14px 16px 24px;
+            box-sizing: border-box;
+            background: #181818;
+            border-right: 1px solid #2a2a2a;
+        }
+
+        #panel h1 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        #panel h2 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #80cccc;
+            margin: 18px 0 8px;
+        }
+
+        .field {
+            margin-bottom: 8px;
+        }
+
+        .field label {
+            display: flex;
+            justify-content: space-between;
+            color: #b0b0b0;
+            margin-bottom: 2px;
+        }
+
+        .field output {
+            color: #e0e0e0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 0;
+            accent-color: #4cafac;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            background: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font: inherit;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 28px;
+            padding: 0 2px;
+            background: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .row>.field {
+            flex: 1;
+        }
+
+        .btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: wait;
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #b0b0b0;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #777;
+            margin: 16px 0 0;
+        }
+
+        #status {
+            font-size: 12px;
+            color: #60c8c5;
+            min-height: 18px;
+        }
+
+        #status.error {
+            color: #ff6b6b;
+        }
+
+        #panel:not([data-mode="color"]) .color-only,
+        #panel[data-mode="silhouette"] .line-only,
+        #panel:not([data-palette="custom"]) .custom-only {
+            display: none;
+        }
+
+        #view {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0c0c0c;
+        }
+
+        #frame {
+            box-shadow: 0 0 0 1px #2a2a2a;
+        }
+
+        #frame.checker {
+            background: repeating-conic-gradient(#2a2a2a 0 25%, #1c1c1c 0 50%) 0 0 / 20px 20px;
+        }
+
+        #frame canvas {
+            display: block;
+        }
+
+        #stats {
+            position: absolute;
+            left: 12px;
+            bottom: 6px;
+            font-size: 11px;
+            color: #666;
+            pointer-events: none;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                flex-direction: column-reverse;
+                overflow: auto;
+            }
+
+            #panel {
+                width: 100%;
+                border-right: none;
+            }
+
+            #view {
+                flex: none;
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside id="panel" data-mode="outline" data-palette="distinct">
+        <div class="header-top">
+            <h1>3D Scenes</h1>
+            <a href="https://localhost.beer" class="home-link">← home</a>
+        </div>
+
+        <h2>Scene</h2>
+        <div class="field">
+            <label for="preset">Preset</label>
+            <select id="preset"></select>
+        </div>
+        <div class="field">
+            <label for="seed">Seed</label>
+            <div class="row">
+                <input id="seed" type="number" min="0" step="1" />
+                <button id="roll">Roll</button>
+            </div>
+        </div>
+        <div class="btns">
+            <button id="shuffle">Shuffle params</button>
+            <button id="randomScene">Random scene</button>
+        </div>
+        <div id="params"></div>
+
+        <h2>Modifiers</h2>
+        <div id="mods"></div>
+
+        <h2>Style</h2>
+        <div class="field">
+            <label for="mode">Render</label>
+            <select id="mode">
+                <option value="outline">Outline</option>
+                <option value="color">Flat colors</option>
+                <option value="silhouette">Silhouette</option>
+            </select>
+        </div>
+        <div class="field color-only">
+            <label for="colorBy">Color per</label>
+            <select id="colorBy">
+                <option value="object">Object</option>
+                <option value="face">Face</option>
+            </select>
+        </div>
+        <div class="field color-only">
+            <label for="palette">Palette</label>
+            <select id="palette">
+                <option value="distinct">Distinct</option>
+                <option value="random">Random RGB</option>
+                <option value="vivid">Vivid</option>
+                <option value="pastel">Pastel</option>
+                <option value="gray">Grayscale</option>
+                <option value="white">White</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+        <div class="field color-only custom-only">
+            <label for="custom">Hex list</label>
+            <input id="custom" type="text" placeholder="#ff0044, #00c2ff, #ffd000" />
+        </div>
+        <div class="btns color-only">
+            <button id="reroll">Reroll colors</button>
+        </div>
+        <label class="check color-only"><input type="checkbox" id="outline" /> Outline overlay</label>
+        <label class="check line-only"><input type="checkbox" id="xray" /> Show hidden edges</label>
+        <div id="lineField" class="line-only"></div>
+        <div class="row">
+            <div class="field">
+                <label for="ink">Ink</label>
+                <input id="ink" type="color" />
+            </div>
+            <div class="field">
+                <label for="bg">Background</label>
+                <input id="bg" type="color" />
+            </div>
+        </div>
+
+        <h2>Camera</h2>
+        <div class="field">
+            <label for="proj">Projection</label>
+            <select id="proj">
+                <option value="persp">Perspective</option>
+                <option value="ortho">Orthographic</option>
+            </select>
+        </div>
+        <div id="fovField"></div>
+        <div class="btns">
+            <button id="resetView">Reset view</button>
+        </div>
+
+        <h2>Export</h2>
+        <div class="row">
+            <div class="field">
+                <label for="aspect">Aspect</label>
+                <select id="aspect">
+                    <option value="view">Fill view</option>
+                    <option value="1:1">1:1</option>
+                    <option value="4:3">4:3</option>
+                    <option value="3:2">3:2</option>
+                    <option value="16:9">16:9</option>
+                    <option value="4:5">4:5</option>
+                    <option value="3:4">3:4</option>
+                    <option value="2:3">2:3</option>
+                    <option value="9:16">9:16</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="size">Long edge</label>
+                <select id="size">
+                    <option value="1024">1024</option>
+                    <option value="2048">2048</option>
+                    <option value="3000">3000</option>
+                    <option value="4096">4096</option>
+                    <option value="6000">6000</option>
+                    <option value="8192">8192</option>
+                </select>
+            </div>
+        </div>
+        <label class="check"><input type="checkbox" id="transparent" /> Transparent background</label>
+        <label class="check"><input type="checkbox" id="aa" /> Anti-alias (off gives exact colors)</label>
+        <div class="btns">
+            <button id="save">Save PNG</button>
+            <button id="copy">Copy PNG</button>
+            <button id="saveSet">Save outline + colors</button>
+        </div>
+        <div id="status"></div>
+
+        <p class="hint">
+            Drag to orbit, right-drag to pan, scroll to zoom.
+            Double-click a slider to reset it.
+        </p>
+    </aside>
+
+    <main id="view">
+        <div id="frame"></div>
+        <div id="stats"></div>
+    </main>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+        import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+
+        // Hex values pass through untouched so exported colors match the palette exactly
+        THREE.ColorManagement.enabled = false;
+
+        // ===== Math helpers =====
+
+        const DEG = Math.PI / 180;
+        const TAU = Math.PI * 2;
+        const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+        const GOLDEN_RATIO = 0.618033988749895;
+        const PARALLEL = 0.999;
+        const ORIGIN = new THREE.Vector3();
+        const AX = {
+            x: new THREE.Vector3(1, 0, 0),
+            y: new THREE.Vector3(0, 1, 0),
+            z: new THREE.Vector3(0, 0, 1),
+        };
+
+        const v3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+        const onXY = a => v3(Math.cos(a), Math.sin(a), 0);
+        const onXZ = a => v3(Math.cos(a), 0, Math.sin(a));
+        const signed = r => r * 2 - 1;
+        const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+        // Seeded PRNG (mulberry32) so a seed always rebuilds the same scene
+        function mulberry(seed) {
+            let a = seed >>> 0;
+            return () => {
+                a = (a + 0x6D2B79F5) >>> 0;
+                let t = a;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        // Uniform point inside a unit ball
+        function inBall(rand) {
+            const u = signed(rand()), phi = rand() * TAU, r = Math.cbrt(rand());
+            const s = Math.sqrt(1 - u * u);
+            return v3(s * Math.cos(phi), u, s * Math.sin(phi)).multiplyScalar(r);
+        }
+
+        // Uniform random rotation (Shoemake)
+        function randomQuat(rand) {
+            const u1 = rand(), u2 = rand() * TAU, u3 = rand() * TAU;
+            const a = Math.sqrt(1 - u1), b = Math.sqrt(u1);
+            return new THREE.Quaternion(a * Math.sin(u2), a * Math.cos(u2), b * Math.sin(u3), b * Math.cos(u3));
+        }
+
+        // Matrix with local +z along n and local +y toward up, then a local euler tweak
+        function orient(pos, n, up = AX.y, rx = 0, ry = 0, rz = 0) {
+            const z = n.clone().normalize();
+            const parallel = Math.abs(z.dot(up)) > PARALLEL;
+            const hint = parallel ? (Math.abs(z.x) < PARALLEL ? AX.x : AX.z) : up;
+            const m = new THREE.Matrix4().lookAt(z, ORIGIN, hint);
+
+            if (rx || ry || rz) m.multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rx, ry, rz)));
+            return m.setPosition(pos);
+        }
+
+        // Matrix from position, euler [x, y, z, order?] in radians and scale
+        function pose(pos, rot = [0, 0, 0], scl = [1, 1, 1]) {
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot));
+            return new THREE.Matrix4().compose(pos, q, v3(...scl));
+        }
+
+        // Spin around y so local +x points along angle a, after tilting around local x
+        function radial(pos, a, tilt) {
+            return new THREE.Matrix4()
+                .makeRotationY(-a)
+                .multiply(new THREE.Matrix4().makeRotationX(tilt))
+                .setPosition(pos);
+        }
+
+        // ===== Geometry helpers =====
+
+        const FACE_KEY_PRECISION = 1000;
+        const EDGE_ANGLE = 1;
+
+        const card = (w = 1, h = 1) => new THREE.PlaneGeometry(w, h);
+        const box = (w = 1, h = 1, d = 1) => new THREE.BoxGeometry(w, h, d);
+
+        function flatPositions(geo) {
+            return (geo.index ? geo.toNonIndexed() : geo).attributes.position.array;
+        }
+
+        // Group triangles into planar faces, e.g. the 2 triangles of a box side become one face
+        function planarFaces(pos) {
+            const tris = pos.length / 9;
+            const faceOf = new Int32Array(tris);
+            const ids = new Map();
+            const a = v3(), b = v3(), c = v3();
+            const q = v => Math.round(v * FACE_KEY_PRECISION);
+
+            for (let t = 0; t < tris; t++) {
+                a.fromArray(pos, t * 9);
+                b.fromArray(pos, t * 9 + 3).sub(a);
+                c.fromArray(pos, t * 9 + 6).sub(a);
+                const n = b.cross(c).normalize();
+                const key = [n.x, n.y, n.z, n.dot(a)].map(q).join();
+
+                if (!ids.has(key)) ids.set(key, ids.size);
+                faceOf[t] = ids.get(key);
+            }
+
+            return { faceOf, count: ids.size };
+        }
+
+        // Split a solid into one centered geometry per planar face, with the face centroid
+        function splitFaces(geo) {
+            const pos = flatPositions(geo);
+            const { faceOf, count } = planarFaces(pos);
+            const faces = Array.from({ length: count }, () => ({ tris: [], center: v3(), area: 0 }));
+            const tri = new THREE.Triangle(), mid = v3();
+
+            for (let t = 0; t < faceOf.length; t++) {
+                const f = faces[faceOf[t]];
+                const slice = pos.subarray(t * 9, t * 9 + 9);
+                tri.setFromAttributeAndIndices(new THREE.BufferAttribute(slice, 3), 0, 1, 2);
+                const area = tri.getArea();
+                f.center.addScaledVector(tri.getMidpoint(mid), area);
+                f.area += area;
+                f.tris.push(...slice);
+            }
+
+            return faces.map(f => {
+                const center = f.center.divideScalar(f.area || 1);
+                const g = new THREE.BufferGeometry()
+                    .setAttribute('position', new THREE.Float32BufferAttribute(f.tris, 3))
+                    .translate(-center.x, -center.y, -center.z);
+                return { g, center };
+            });
+        }
+
+        // ===== Presets =====
+        // Each build returns items { g: geometry, m: world matrix }. Shared geometries are analyzed once.
+
+        const num = (key, label, min, max, step, value) => ({ key, label, min, max, step, value });
+        const pick = (key, label, options, value = options[0]) => ({ key, label, options, value });
+
+        const SLAB_DEPTH = 0.12;
+        const POLY_RADIUS = 0.7;
+        const RING_SPACING = 1.1;
+        const MIN_STEP = 0.1;
+        const BLOCK_BASE = 0.2;
+        const DIFF_EPS = 0.001;
+
+        const SOLIDS = {
+            'Icosa': r => new THREE.IcosahedronGeometry(r),
+            'Dodeca': r => new THREE.DodecahedronGeometry(r),
+            'Octa': r => new THREE.OctahedronGeometry(r),
+            'Cube': r => box(2 * r / Math.sqrt(3), 2 * r / Math.sqrt(3), 2 * r / Math.sqrt(3)),
+            'Tetra': r => new THREE.TetrahedronGeometry(r),
+            'Geo 1': r => new THREE.IcosahedronGeometry(r, 1),
+            'Geo 2': r => new THREE.IcosahedronGeometry(r, 2),
+        };
+
+        const SURFACES = {
+            'Ripple': (u, v, f) => Math.cos(f * TAU * Math.hypot(u, v)),
+            'Waves': (u, v, f) => Math.sin(f * Math.PI * (u + v)),
+            'Egg crate': (u, v, f) => Math.sin(f * Math.PI * u) * Math.sin(f * Math.PI * v),
+            'Saddle': (u, v) => u * u - v * v,
+        };
+
+        const PRESETS = {
+            barrel: {
+                name: 'Card Barrel',
+                cam: { dir: [0, 0.12, -1], dist: 0.95 },
+                params: [
+                    num('rings', 'Rings', 1, 40, 1, 8),
+                    num('per', 'Cards per ring', 3, 72, 1, 18),
+                    num('radius', 'Radius', 1, 20, 0.1, 5),
+                    num('fill', 'Card width', 0.05, 1, 0.01, 0.85),
+                    num('height', 'Card height', 0.1, 5, 0.05, 1.2),
+                    num('gap', 'Row gap', 0, 2, 0.01, 0.15),
+                    num('twist', 'Row twist°', -45, 45, 0.5, 0),
+                    num('spin', 'Card spin°', -90, 90, 0.5, 0),
+                ],
+                // Cards on the inner wall of a polygonal cylinder along z
+                build(p) {
+                    const chord = 2 * p.radius * Math.sin(Math.PI / p.per);
+                    const apothem = p.radius * Math.cos(Math.PI / p.per);
+                    const g = card(chord * p.fill, p.height);
+                    const pitch = p.height + p.gap;
+                    const z0 = -(p.rings - 1) * pitch / 2;
+                    const out = [];
+
+                    for (let i = 0; i < p.rings; i++) {
+                        for (let j = 0; j < p.per; j++) {
+                            const a = TAU * j / p.per + i * p.twist * DEG;
+                            const pos = onXY(a).multiplyScalar(apothem).setZ(z0 + i * pitch);
+                            out.push({ g, m: orient(pos, onXY(a).negate(), AX.z, 0, 0, p.spin * DEG) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            floor: {
+                name: 'Floor Grid',
+                cam: p => {
+                    const depth = p.rows * p.tile;
+                    return { pos: [0, depth * 0.08, depth * 0.55], target: [0, 0, -depth * 0.1] };
+                },
+                params: [
+                    num('cols', 'Columns', 1, 150, 1, 40),
+                    num('rows', 'Rows', 1, 150, 1, 40),
+                    num('tile', 'Tile size', 0.1, 5, 0.05, 1),
+                    num('gap', 'Gap', 0, 0.9, 0.01, 0.08),
+                    pick('pattern', 'Pattern', ['Full', 'Checker', 'Stripes']),
+                ],
+                // Flat squares on y = 0. Gap 0 reads as one continuous line grid.
+                build(p) {
+                    const side = p.tile * (1 - p.gap);
+                    const g = card(side, side);
+                    const offX = (p.cols - 1) * p.tile / 2, offZ = (p.rows - 1) * p.tile / 2;
+                    const keep = {
+                        Full: () => true,
+                        Checker: (i, j) => (i + j) % 2 === 0,
+                        Stripes: i => i % 2 === 0,
+                    }[p.pattern];
+                    const out = [];
+
+                    for (let i = 0; i < p.cols; i++) {
+                        for (let j = 0; j < p.rows; j++) {
+                            if (!keep(i, j)) continue;
+                            out.push({ g, m: pose(v3(i * p.tile - offX, 0, j * p.tile - offZ), [-Math.PI / 2, 0, 0]) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            tunnel: {
+                name: 'Frame Tunnel',
+                cam: p => ({ pos: [0, 0, p.size * 0.8], target: [0, 0, -p.count * p.spacing / 2] }),
+                params: [
+                    num('count', 'Frames', 2, 150, 1, 40),
+                    num('size', 'Size', 0.5, 15, 0.1, 4),
+                    num('spacing', 'Spacing', 0.05, 5, 0.05, 0.8),
+                    num('bar', 'Bar thickness', 0.01, 1, 0.01, 0.15),
+                    num('twist', 'Twist°', -45, 45, 0.5, 4),
+                    num('shrink', 'Shrink % per frame', -5, 5, 0.1, 0),
+                ],
+                // Square frames of 4 bars receding along -z
+                build(p) {
+                    const half = p.size / 2;
+                    const across = box(p.size + p.bar, p.bar, p.bar);
+                    const side = box(p.bar, p.size - p.bar, p.bar);
+                    const bars = [[across, 0, half], [across, 0, -half], [side, half, 0], [side, -half, 0]];
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const s = Math.pow(1 - p.shrink / 100, i);
+                        const frame = pose(v3(0, 0, -i * p.spacing), [0, 0, i * p.twist * DEG], [s, s, s]);
+                        for (const [g, x, y] of bars) out.push({ g, m: frame.clone().multiply(pose(v3(x, y, 0))) });
+                    }
+                    return out;
+                },
+            },
+
+            helix: {
+                name: 'Helix Cards',
+                cam: { dir: [1, 0.35, 1], dist: 2 },
+                params: [
+                    num('count', 'Cards', 4, 800, 1, 160),
+                    num('strands', 'Strands', 1, 8, 1, 2),
+                    num('radius', 'Radius', 0.3, 12, 0.1, 3),
+                    num('turns', 'Turns', 0.25, 20, 0.25, 3),
+                    num('height', 'Height', 0, 60, 0.5, 14),
+                    num('w', 'Card width', 0.05, 5, 0.05, 1),
+                    num('h', 'Card height', 0.05, 5, 0.05, 0.5),
+                    num('spin', 'Card spin°', -90, 90, 0.5, 0),
+                    pick('facing', 'Facing', ['Out', 'Tangent', 'Up']),
+                ],
+                build(p) {
+                    const g = card(p.w, p.h);
+                    const per = Math.ceil(p.count / p.strands);
+                    const out = [];
+
+                    for (let s = 0; s < p.strands; s++) {
+                        for (let k = 0; k < per; k++) {
+                            const t = per > 1 ? k / (per - 1) : 0.5;
+                            const a = t * p.turns * TAU + s * TAU / p.strands;
+                            const outward = onXZ(a);
+                            const pos = outward.clone().multiplyScalar(p.radius).setY((t - 0.5) * p.height);
+                            const tangent = v3(-Math.sin(a), 0, Math.cos(a));
+                            const [n, up] = {
+                                Out: [outward, AX.y],
+                                Tangent: [tangent, AX.y],
+                                Up: [AX.y, outward],
+                            }[p.facing];
+                            out.push({ g, m: orient(pos, n, up, 0, 0, p.spin * DEG) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            city: {
+                name: 'Block City',
+                cam: { dir: [1, 0.8, 1.2], dist: 1.5 },
+                params: [
+                    num('grid', 'Grid', 2, 60, 1, 16),
+                    num('gap', 'Street width', 0, 2, 0.05, 0.25),
+                    num('minH', 'Min height', 0.05, 10, 0.05, 0.3),
+                    num('maxH', 'Max height', 0.1, 30, 0.1, 6),
+                    num('bias', 'Height bias', 0.5, 8, 0.1, 2.5),
+                ],
+                build(p, rand) {
+                    const g = box();
+                    const pitch = 1 + p.gap;
+                    const off = (p.grid - 1) * pitch / 2;
+                    const out = [];
+
+                    for (let i = 0; i < p.grid; i++) {
+                        for (let j = 0; j < p.grid; j++) {
+                            const h = p.minH + (p.maxH - p.minH) * Math.pow(rand(), p.bias);
+                            out.push({ g, m: pose(v3(i * pitch - off, h / 2, j * pitch - off), undefined, [1, h, 1]) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            sphere: {
+                name: 'Tile Sphere',
+                cam: { dir: [0, 0.25, 1], dist: 2.4 },
+                params: [
+                    num('count', 'Tiles', 8, 3000, 1, 400),
+                    num('radius', 'Radius', 1, 20, 0.1, 6),
+                    num('size', 'Tile size', 0.05, 4, 0.05, 0.5),
+                    num('cover', 'Coverage', 0.05, 1, 0.01, 1),
+                    num('spin', 'Tile spin°', -180, 180, 1, 0),
+                ],
+                // Fibonacci spiral placement, coverage below 1 makes a dome
+                build(p) {
+                    const g = card(p.size, p.size);
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const y = 1 - 2 * p.cover * (i + 0.5) / p.count;
+                        const r = Math.sqrt(Math.max(0, 1 - y * y));
+                        const a = i * GOLDEN_ANGLE;
+                        const n = v3(Math.cos(a) * r, y, Math.sin(a) * r);
+                        out.push({ g, m: orient(n.clone().multiplyScalar(p.radius), n, AX.y, 0, 0, p.spin * DEG) });
+                    }
+                    return out;
+                },
+            },
+
+            stack: {
+                name: 'Twisted Stack',
+                cam: { dir: [1, 0.55, 1], dist: 2 },
+                params: [
+                    num('layers', 'Layers', 2, 300, 1, 60),
+                    num('size', 'Size', 0.2, 15, 0.1, 4),
+                    num('slab', 'Slab thickness', 0.005, 2, 0.005, 0.08),
+                    num('gap', 'Gap', 0, 2, 0.01, 0.08),
+                    num('twist', 'Twist°', -90, 90, 0.5, 3),
+                    num('top', 'Top scale', 0.05, 3, 0.05, 1),
+                ],
+                build(p) {
+                    const g = box();
+                    const pitch = p.slab + p.gap;
+                    const y0 = -(p.layers - 1) * pitch / 2;
+                    const out = [];
+
+                    for (let i = 0; i < p.layers; i++) {
+                        const t = i / (p.layers - 1);
+                        const s = p.size * (1 + (p.top - 1) * t);
+                        out.push({ g, m: pose(v3(0, y0 + i * pitch, 0), [0, i * p.twist * DEG, 0], [s, p.slab, s]) });
+                    }
+                    return out;
+                },
+            },
+
+            corridor: {
+                name: 'Pillar Corridor',
+                cam: p => ({
+                    pos: [0, p.height * 0.45, p.spacing * 1.5],
+                    target: [0, p.height * 0.45, -p.count * p.spacing / 2],
+                }),
+                params: [
+                    num('count', 'Pillar pairs', 2, 60, 1, 14),
+                    num('spacing', 'Spacing', 0.5, 10, 0.1, 3),
+                    num('width', 'Width', 1, 20, 0.1, 6),
+                    num('height', 'Height', 1, 20, 0.1, 6),
+                    num('pillar', 'Pillar size', 0.05, 3, 0.05, 0.6),
+                    num('tiles', 'Floor tiles across', 0, 12, 1, 4),
+                    num('gap', 'Tile gap', 0, 1, 0.01, 0.1),
+                    pick('lintels', 'Lintels', ['Yes', 'No']),
+                ],
+                build(p) {
+                    const col = box(p.pillar, p.height, p.pillar);
+                    const lintel = box(p.width + p.pillar, p.pillar, p.pillar);
+                    const tw = p.width / Math.max(p.tiles, 1);
+                    const tile = card(Math.max(tw - p.gap, MIN_STEP), Math.max(p.spacing - p.gap, MIN_STEP));
+                    const half = p.width / 2;
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const z = -i * p.spacing;
+                        out.push({ g: col, m: pose(v3(-half, p.height / 2, z)) });
+                        out.push({ g: col, m: pose(v3(half, p.height / 2, z)) });
+                        if (p.lintels === 'Yes') out.push({ g: lintel, m: pose(v3(0, p.height + p.pillar / 2, z)) });
+
+                        for (let k = 0; k < p.tiles; k++) {
+                            const x = -half + tw * (k + 0.5);
+                            out.push({ g: tile, m: pose(v3(x, 0, z - p.spacing / 2), [-Math.PI / 2, 0, 0]) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            fan: {
+                name: 'Radial Fan',
+                cam: { dir: [0.4, 1, 0.8], dist: 1.8 },
+                params: [
+                    num('blades', 'Blades per ring', 2, 120, 1, 24),
+                    num('rings', 'Rings', 1, 16, 1, 3),
+                    num('inner', 'Inner radius', 0, 10, 0.1, 1),
+                    num('len', 'Blade length', 0.1, 10, 0.1, 2),
+                    num('w', 'Blade width', 0.05, 5, 0.05, 0.6),
+                    num('pitch', 'Pitch°', -90, 90, 0.5, 35),
+                    num('pitchStep', 'Pitch per ring°', -45, 45, 0.5, 0),
+                    num('ringTwist', 'Ring twist°', -90, 90, 0.5, 7.5),
+                    num('rise', 'Ring rise', -3, 3, 0.05, 0),
+                ],
+                build(p) {
+                    const g = card(p.len, p.w);
+                    const out = [];
+
+                    for (let k = 0; k < p.rings; k++) {
+                        const r = p.inner + p.len / 2 + k * p.len * RING_SPACING;
+                        const tilt = (p.pitch + k * p.pitchStep) * DEG - Math.PI / 2;
+
+                        for (let j = 0; j < p.blades; j++) {
+                            const a = TAU * j / p.blades + k * p.ringTwist * DEG;
+                            const pos = onXZ(a).multiplyScalar(r).setY(k * p.rise);
+                            out.push({ g, m: radial(pos, a, tilt) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            cloud: {
+                name: 'Shape Cloud',
+                cam: { dir: [1, 0.5, 1], dist: 2 },
+                params: [
+                    num('count', 'Count', 1, 2000, 1, 220),
+                    num('spread', 'Spread', 1, 30, 0.5, 8),
+                    num('min', 'Min size', 0.05, 5, 0.05, 0.3),
+                    num('max', 'Max size', 0.05, 5, 0.05, 1.2),
+                    num('align', 'Alignment', 0, 1, 0.01, 0),
+                    pick('shape', 'Shape', ['Cube', 'Slab', 'Card', 'Tetra', 'Octa', 'Mixed']),
+                ],
+                build(p, rand) {
+                    const kinds = {
+                        Cube: box(),
+                        Slab: box(1, 1, SLAB_DEPTH),
+                        Card: card(),
+                        Tetra: new THREE.TetrahedronGeometry(POLY_RADIUS),
+                        Octa: new THREE.OctahedronGeometry(POLY_RADIUS),
+                    };
+                    const pool = p.shape === 'Mixed' ? Object.values(kinds) : [kinds[p.shape]];
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const pos = inBall(rand).multiplyScalar(p.spread);
+                        const q = new THREE.Quaternion().slerp(randomQuat(rand), 1 - p.align);
+                        const s = p.min + (p.max - p.min) * rand();
+                        const g = pool[Math.floor(rand() * pool.length)];
+                        out.push({ g, m: new THREE.Matrix4().compose(pos, q, v3(s, s, s)) });
+                    }
+                    return out;
+                },
+            },
+
+            stair: {
+                name: 'Spiral Stair',
+                cam: { dir: [0.06, -1, 0.1], dist: 1.25 },
+                params: [
+                    num('steps', 'Steps', 4, 400, 1, 60),
+                    num('rise', 'Rise', 0, 2, 0.01, 0.22),
+                    num('inner', 'Inner radius', 0, 10, 0.1, 0.6),
+                    num('outer', 'Outer radius', 0.5, 20, 0.1, 4),
+                    num('angle', 'Step angle°', 2, 90, 0.5, 15),
+                    num('thick', 'Thickness', 0.01, 2, 0.01, 0.12),
+                    num('fill', 'Step width', 0.1, 1, 0.01, 0.9),
+                ],
+                build(p) {
+                    const outer = Math.max(p.outer, p.inner + MIN_STEP);
+                    const mid = (p.inner + outer) / 2;
+                    const chord = 2 * mid * Math.sin(p.angle * DEG / 2) * p.fill;
+                    const g = box(outer - p.inner, p.thick, chord);
+                    const y0 = -(p.steps - 1) * p.rise / 2;
+                    const out = [];
+
+                    for (let i = 0; i < p.steps; i++) {
+                        const a = i * p.angle * DEG;
+                        out.push({ g, m: radial(onXZ(a).multiplyScalar(mid).setY(y0 + i * p.rise), a, 0) });
+                    }
+                    return out;
+                },
+            },
+
+            torus: {
+                name: 'Card Torus',
+                cam: { dir: [0.3, 1, 0.8], dist: 1.6 },
+                params: [
+                    num('major', 'Around', 3, 160, 1, 40),
+                    num('minor', 'Tube', 3, 64, 1, 14),
+                    num('R', 'Ring radius', 1, 20, 0.1, 5),
+                    num('r', 'Tube radius', 0.1, 10, 0.1, 1.8),
+                    num('fill', 'Card size', 0.05, 1, 0.01, 0.85),
+                    num('twist', 'Twist°', -30, 30, 0.5, 0),
+                ],
+                build(p) {
+                    const g = card();
+                    const out = [];
+
+                    for (let i = 0; i < p.major; i++) {
+                        const u = TAU * i / p.major;
+
+                        for (let j = 0; j < p.minor; j++) {
+                            const v = TAU * j / p.minor + i * p.twist * DEG;
+                            const ring = p.R + p.r * Math.cos(v);
+                            const pos = v3(ring * Math.cos(u), p.r * Math.sin(v), ring * Math.sin(u));
+                            const n = v3(Math.cos(v) * Math.cos(u), Math.sin(v), Math.cos(v) * Math.sin(u));
+                            const tube = v3(-Math.sin(v) * Math.cos(u), Math.cos(v), -Math.sin(v) * Math.sin(u));
+                            const w = 2 * ring * Math.sin(Math.PI / p.major) * p.fill;
+                            const h = 2 * p.r * Math.sin(Math.PI / p.minor) * p.fill;
+                            out.push({ g, m: orient(pos, n, tube).scale(v3(w, h, 1)) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            vortex: {
+                name: 'Vortex Funnel',
+                cam: { dir: [0, 0, 1], dist: 1.15 },
+                params: [
+                    num('rings', 'Rings', 1, 40, 1, 14),
+                    num('per', 'Cards per ring', 3, 96, 1, 24),
+                    num('r0', 'Inner radius', 0.1, 10, 0.1, 1),
+                    num('growth', 'Growth', 1, 1.3, 0.01, 1.2),
+                    num('depth', 'Ring depth', -5, 5, 0.05, 0.8),
+                    num('twist', 'Twist°', -45, 45, 0.5, 7.5),
+                    num('tilt', 'Tilt°', -80, 80, 0.5, 30),
+                    num('fill', 'Card width', 0.05, 1, 0.01, 0.9),
+                    num('aspect', 'Card aspect', 0.1, 4, 0.05, 1),
+                ],
+                build(p) {
+                    const g = card();
+                    const out = [];
+
+                    for (let i = 0; i < p.rings; i++) {
+                        const r = p.r0 * Math.pow(p.growth, i);
+                        const chord = 2 * r * Math.sin(Math.PI / p.per);
+                        const apothem = r * Math.cos(Math.PI / p.per);
+                        const scale = v3(chord * p.fill, chord * p.aspect * p.fill, 1);
+
+                        for (let j = 0; j < p.per; j++) {
+                            const a = TAU * j / p.per + i * p.twist * DEG;
+                            const pos = onXY(a).multiplyScalar(apothem).setZ(i * p.depth);
+                            out.push({ g, m: orient(pos, onXY(a).negate(), AX.z, p.tilt * DEG).scale(scale) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            exploded: {
+                name: 'Exploded Solid',
+                cam: { dir: [1, 0.6, 1], dist: 2 },
+                params: [
+                    pick('solid', 'Solid', Object.keys(SOLIDS)),
+                    num('radius', 'Radius', 0.5, 15, 0.1, 4),
+                    num('explode', 'Explode', 1, 4, 0.01, 1.4),
+                    num('shrink', 'Face scale', 0.05, 1, 0.01, 0.85),
+                    num('layers', 'Layers', 1, 6, 1, 1),
+                    num('layerScale', 'Layer scale', 0.1, 0.95, 0.01, 0.6),
+                    num('layerSpin', 'Layer spin°', -90, 90, 0.5, 20),
+                ],
+                // Faces pushed outward from the center, optionally nested
+                build(p) {
+                    const faces = splitFaces(SOLIDS[p.solid](p.radius));
+                    const out = [];
+
+                    for (let l = 0; l < p.layers; l++) {
+                        const s = Math.pow(p.layerScale, l);
+                        const spin = new THREE.Matrix4().makeRotationY(l * p.layerSpin * DEG);
+
+                        for (const { g, center } of faces) {
+                            const place = pose(center.clone().multiplyScalar(p.explode * s), undefined, Array(3).fill(s * p.shrink));
+                            out.push({ g, m: spin.clone().multiply(place) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            wave: {
+                name: 'Wave Field',
+                cam: { dir: [1, 0.9, 1], dist: 1.5 },
+                params: [
+                    num('grid', 'Grid', 2, 120, 1, 32),
+                    num('size', 'Size', 2, 50, 0.5, 14),
+                    num('amp', 'Amplitude', 0, 6, 0.05, 1.2),
+                    num('freq', 'Frequency', 0.05, 6, 0.05, 1),
+                    num('fill', 'Tile size', 0.05, 1, 0.01, 0.9),
+                    pick('surface', 'Surface', Object.keys(SURFACES)),
+                    pick('form', 'Form', ['Tiles', 'Blocks']),
+                ],
+                build(p) {
+                    const g = p.form === 'Tiles' ? card() : box();
+                    const cell = p.size / p.grid;
+                    const half = p.size / 2;
+                    const base = -p.amp - BLOCK_BASE;
+                    const f = (u, v) => p.amp * SURFACES[p.surface](u, v, p.freq);
+                    const out = [];
+
+                    for (let i = 0; i < p.grid; i++) {
+                        for (let j = 0; j < p.grid; j++) {
+                            const x = -half + cell * (i + 0.5), z = -half + cell * (j + 0.5);
+                            const u = x / half, v = z / half;
+                            const y = f(u, v);
+                            const t = cell * p.fill;
+
+                            if (p.form === 'Blocks') {
+                                out.push({ g, m: pose(v3(x, (y + base) / 2, z), undefined, [t, y - base, t]) });
+                                continue;
+                            }
+
+                            // Tilt each tile to the surface slope via central differences
+                            const dx = (f(u + DIFF_EPS, v) - f(u - DIFF_EPS, v)) / (2 * DIFF_EPS * half);
+                            const dz = (f(u, v + DIFF_EPS) - f(u, v - DIFF_EPS)) / (2 * DIFF_EPS * half);
+                            out.push({ g, m: orient(v3(x, y, z), v3(-dx, 1, -dz), v3(0, 0, -1)).scale(v3(t, t, 1)) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            mobius: {
+                name: 'Möbius Cards',
+                cam: { dir: [0.3, 1, 0.9], dist: 1.7 },
+                params: [
+                    num('count', 'Cards', 6, 400, 1, 90),
+                    num('radius', 'Radius', 1, 20, 0.1, 5),
+                    num('width', 'Band width', 0.1, 8, 0.05, 2),
+                    num('twists', 'Half twists', 0, 9, 1, 1),
+                    num('fill', 'Card width', 0.05, 1, 0.01, 0.85),
+                ],
+                build(p) {
+                    const g = card();
+                    const w = 2 * p.radius * Math.sin(Math.PI / p.count) * p.fill;
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const u = TAU * i / p.count;
+                        const outward = onXZ(u);
+                        const tangent = v3(-Math.sin(u), 0, Math.cos(u));
+                        const th = p.twists * u / 2;
+                        const band = outward.clone().multiplyScalar(Math.cos(th)).addScaledVector(AX.y, Math.sin(th));
+                        const n = tangent.clone().cross(band);
+                        out.push({ g, m: orient(outward.multiplyScalar(p.radius), n, band).scale(v3(w, p.width, 1)) });
+                    }
+                    return out;
+                },
+            },
+
+            monolith: {
+                name: 'Monolith Field',
+                cam: { dir: [1, 0.35, 1], dist: 1.4 },
+                params: [
+                    num('floor', 'Floor tiles', 0, 40, 1, 12),
+                    num('tile', 'Tile size', 0.2, 4, 0.05, 1),
+                    num('gap', 'Tile gap', 0, 0.5, 0.01, 0.06),
+                    num('count', 'Monoliths', 0, 200, 1, 16),
+                    num('w', 'Width', 0.05, 5, 0.05, 0.9),
+                    num('h', 'Height', 0.1, 15, 0.1, 4),
+                    num('d', 'Depth', 0.01, 3, 0.01, 0.25),
+                    num('lean', 'Lean°', 0, 60, 0.5, 0),
+                    pick('snap', 'Rotation', ['Free', '90°', '45°']),
+                ],
+                build(p, rand) {
+                    const tile = card(Math.max(p.tile - p.gap, MIN_STEP), Math.max(p.tile - p.gap, MIN_STEP));
+                    const slab = box(p.w, p.h, p.d);
+                    const off = (p.floor - 1) * p.tile / 2;
+                    const span = Math.max(p.floor, 4) * p.tile;
+                    const step = { 'Free': 0, '90°': Math.PI / 2, '45°': Math.PI / 4 }[p.snap];
+                    const out = [];
+
+                    for (let i = 0; i < p.floor; i++) {
+                        for (let j = 0; j < p.floor; j++) {
+                            out.push({ g: tile, m: pose(v3(i * p.tile - off, 0, j * p.tile - off), [-Math.PI / 2, 0, 0]) });
+                        }
+                    }
+
+                    for (let k = 0; k < p.count; k++) {
+                        const x = (rand() - 0.5) * span, z = (rand() - 0.5) * span;
+                        const raw = rand() * TAU;
+                        const yaw = step ? Math.round(raw / step) * step : raw;
+                        const tilt = signed(rand()) * p.lean * DEG;
+                        out.push({ g: slab, m: pose(v3(x, p.h / 2, z), [tilt, yaw, 0, 'YXZ']) });
+                    }
+                    return out;
+                },
+            },
+
+            nautilus: {
+                name: 'Spiral Shell',
+                cam: { dir: [0, 1, 0.02], dist: 1.5 },
+                params: [
+                    num('count', 'Cards', 4, 600, 1, 140),
+                    num('step', 'Angle step°', 1, 180, 0.5, 17),
+                    num('r0', 'Start radius', 0.05, 5, 0.05, 0.3),
+                    num('r1', 'End radius', 0.5, 40, 0.5, 8),
+                    num('size', 'Card scale', 0.05, 2, 0.01, 0.45),
+                    num('tilt', 'Tilt°', -90, 90, 0.5, 0),
+                    num('rise', 'Rise', -0.5, 0.5, 0.005, 0),
+                ],
+                // Logarithmic spiral of cards growing from r0 to r1
+                build(p) {
+                    const g = card();
+                    const ratio = p.r1 / p.r0;
+                    const out = [];
+
+                    for (let i = 0; i < p.count; i++) {
+                        const r = p.r0 * Math.pow(ratio, i / (p.count - 1));
+                        const a = i * p.step * DEG;
+                        const s = r * p.size;
+                        const pos = onXZ(a).multiplyScalar(r).setY(i * p.rise);
+                        out.push({ g, m: radial(pos, a, p.tilt * DEG - Math.PI / 2).scale(v3(s, s, 1)) });
+                    }
+                    return out;
+                },
+            },
+
+            lattice: {
+                name: 'Beam Lattice',
+                cam: { dir: [1, 0.7, 1.2], dist: 1.6 },
+                params: [
+                    num('n', 'Cells', 1, 14, 1, 5),
+                    num('spacing', 'Spacing', 0.3, 8, 0.1, 2),
+                    num('beam', 'Beam thickness', 0.01, 1, 0.01, 0.12),
+                    num('node', 'Node size', 0, 3, 0.01, 0),
+                    pick('axes', 'Axes', ['XYZ', 'XY', 'XZ', 'X']),
+                ],
+                build(p) {
+                    const g = box();
+                    const span = p.n * p.spacing;
+                    const off = span / 2;
+                    const len = span + p.beam;
+                    const b = p.beam;
+                    const dims = { x: [len, b, b], y: [b, len, b], z: [b, b, len] };
+                    const at = { x: (i, j) => v3(0, i, j), y: (i, j) => v3(i, 0, j), z: (i, j) => v3(i, j, 0) };
+                    const coord = i => i * p.spacing - off;
+                    const out = [];
+
+                    for (const axis of p.axes.toLowerCase()) {
+                        for (let i = 0; i <= p.n; i++) {
+                            for (let j = 0; j <= p.n; j++) {
+                                out.push({ g, m: pose(at[axis](coord(i), coord(j)), undefined, dims[axis]) });
+                            }
+                        }
+                    }
+
+                    if (!p.node) return out;
+
+                    for (let i = 0; i <= p.n; i++) {
+                        for (let j = 0; j <= p.n; j++) {
+                            for (let k = 0; k <= p.n; k++) {
+                                out.push({ g, m: pose(v3(coord(i), coord(j), coord(k)), undefined, [p.node, p.node, p.node]) });
+                            }
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            slats: {
+                name: 'Slat Wall',
+                cam: { dir: [0.35, 0.2, 1], dist: 1.5 },
+                params: [
+                    num('cols', 'Columns', 1, 100, 1, 24),
+                    num('rows', 'Rows', 1, 100, 1, 12),
+                    num('w', 'Slat width', 0.05, 5, 0.05, 1),
+                    num('h', 'Slat height', 0.02, 5, 0.02, 0.3),
+                    num('gapX', 'Gap X', 0, 2, 0.01, 0.1),
+                    num('gapY', 'Gap Y', 0, 2, 0.01, 0.1),
+                    num('depth', 'Depth', 0, 0.5, 0.01, 0),
+                    num('amp', 'Rotation°', 0, 180, 1, 60),
+                    num('freq', 'Frequency', 0, 6, 0.05, 1),
+                    pick('axis', 'Hinge', ['X', 'Y', 'Both']),
+                    pick('wave', 'Wave', ['Diagonal', 'Radial', 'Horizontal', 'Vertical', 'Random']),
+                ],
+                build(p, rand) {
+                    const g = p.depth > 0 ? box() : card();
+                    const px = p.w + p.gapX, py = p.h + p.gapY;
+                    const offX = (p.cols - 1) * px / 2, offY = (p.rows - 1) * py / 2;
+                    const unit = (i, n) => n > 1 ? i / (n - 1) * 2 - 1 : 0;
+                    const out = [];
+
+                    for (let r = 0; r < p.rows; r++) {
+                        for (let c = 0; c < p.cols; c++) {
+                            const u = unit(c, p.cols), v = unit(r, p.rows);
+                            const phase = {
+                                Diagonal: (u + v) / 2,
+                                Radial: Math.hypot(u, v),
+                                Horizontal: u,
+                                Vertical: v,
+                                Random: signed(rand()),
+                            }[p.wave];
+                            const ang = p.amp * DEG * Math.sin(p.freq * Math.PI * phase);
+                            const rot = { X: [ang, 0, 0], Y: [0, ang, 0], Both: [ang, ang, 0] }[p.axis];
+                            out.push({ g, m: pose(v3(c * px - offX, r * py - offY, 0), rot, [p.w, p.h, p.depth || 1]) });
+                        }
+                    }
+                    return out;
+                },
+            },
+
+            room: {
+                name: 'Tiled Room',
+                cam: { dir: [0.25, 0.15, 1], dist: 0.35 },
+                params: [
+                    num('n', 'Tiles per wall', 1, 30, 1, 8),
+                    num('size', 'Room size', 2, 40, 0.5, 10),
+                    num('fill', 'Tile size', 0.05, 1, 0.01, 0.9),
+                    num('relief', 'Relief', 0, 3, 0.01, 0),
+                    pick('walls', 'Walls', ['6 closed', '5 open front']),
+                ],
+                // Tiles on the inside of a cube, relief pushes random tiles inward
+                build(p, rand) {
+                    const flat = p.relief === 0;
+                    const g = flat ? card() : box();
+                    const cell = p.size / p.n;
+                    const t = cell * p.fill;
+                    const half = p.size / 2;
+                    const inward = [
+                        [v3(1, 0, 0), AX.y], [v3(-1, 0, 0), AX.y],
+                        [v3(0, 1, 0), AX.z], [v3(0, -1, 0), AX.z],
+                        [v3(0, 0, 1), AX.y], [v3(0, 0, -1), AX.y],
+                    ];
+                    const walls = p.walls.startsWith('5') ? inward.slice(0, 5) : inward;
+                    const out = [];
+
+                    for (const [n, up] of walls) {
+                        const side = up.clone().cross(n);
+                        const wall = n.clone().multiplyScalar(-half);
+
+                        for (let i = 0; i < p.n; i++) {
+                            for (let j = 0; j < p.n; j++) {
+                                const d = flat ? 1 : cell * 0.04 + rand() * p.relief;
+                                const pos = wall.clone()
+                                    .addScaledVector(side, (i - (p.n - 1) / 2) * cell)
+                                    .addScaledVector(up, (j - (p.n - 1) / 2) * cell)
+                                    .addScaledVector(n, flat ? 0 : d / 2);
+                                out.push({ g, m: orient(pos, n, up).scale(v3(t, t, d)) });
+                            }
+                        }
+                    }
+                    return out;
+                },
+            },
+        };
+
+        // ===== Palettes =====
+
+        const SATURATIONS = [0.85, 0.6, 0.95];
+        const LIGHTNESSES = [0.5, 0.35, 0.68, 0.45];
+        const UNIQUE_TRIES = 20;
+        const TRY_NUDGE = 0.01;
+        const HEX_PATTERN = /#?[0-9a-f]{6}\b/gi;
+        const REPEATING_PALETTES = ['custom', 'white'];
+
+        function parseHex(text) {
+            return (text.match(HEX_PATTERN) || []).map(h => '#' + h.replace('#', ''));
+        }
+
+        function swatch(kind, i, h0, rand, list, nudge) {
+            const c = new THREE.Color();
+
+            switch (kind) {
+                case 'random': return c.setRGB(rand(), rand(), rand());
+                case 'vivid': return c.setHSL(rand(), 1, 0.45 + rand() * 0.1);
+                case 'pastel': return c.setHSL(rand(), 0.55 + rand() * 0.3, 0.72 + rand() * 0.12);
+                case 'gray': { const v = rand(); return c.setRGB(v, v, v); }
+                case 'white': return c.setRGB(1, 1, 1);
+                case 'custom': if (list.length) return c.set(list[Math.floor(rand() * list.length)]);
+            }
+
+            // Golden ratio hue steps keep neighbors far apart on the wheel
+            const hue = (h0 + i * GOLDEN_RATIO) % 1;
+            const lit = LIGHTNESSES[Math.floor(i / SATURATIONS.length) % LIGHTNESSES.length] + nudge;
+            return c.setHSL(hue, SATURATIONS[i % SATURATIONS.length], lit);
+        }
+
+        // n colors, unique where the palette allows, so each region is selectable on its own
+        function makePalette(n, kind, custom, rand) {
+            const list = parseHex(custom);
+            const unique = !REPEATING_PALETTES.includes(kind);
+            const seen = new Set();
+            const h0 = rand();
+            const out = [];
+
+            for (let i = 0; i < n; i++) {
+                let c, tries = 0;
+                do {
+                    c = swatch(kind, i, h0, rand, list, tries * TRY_NUDGE);
+                } while (unique && seen.has(c.getHex()) && ++tries < UNIQUE_TRIES);
+
+                seen.add(c.getHex());
+                out.push(c);
+            }
+            return out;
+        }
+
+        // ===== Scene assembly =====
+        // Turns preset items into one merged fill geometry and one edge list
+
+        const MOD_SALT = 0x9e3779b9;
+        const MOD_DRAWS = 8;
+        const MIN_SCALE = 0.05;
+
+        // Seeded dropout and jitter. Draw count is fixed so one slider never reshuffles the others.
+        function modify(items, mods, seed) {
+            const rand = mulberry(seed ^ MOD_SALT);
+            const q = new THREE.Quaternion(), e = new THREE.Euler();
+            const out = [];
+
+            for (const it of items) {
+                const r = Array.from({ length: MOD_DRAWS }, rand);
+                if (r[0] < mods.drop) continue;
+
+                const s = Math.max(MIN_SCALE, 1 + mods.scale * signed(r[1]));
+                const tumble = mods.tumble * DEG;
+                e.set(signed(r[2]) * tumble, signed(r[3]) * tumble, signed(r[4]) * tumble);
+                const shift = v3(signed(r[5]), signed(r[6]), signed(r[7])).multiplyScalar(mods.shift);
+                const jitter = new THREE.Matrix4().compose(shift, q.setFromEuler(e), v3(s, s, s));
+                out.push({ g: it.g, m: it.m.clone().multiply(jitter) });
+            }
+            return out;
+        }
+
+        // Triangles, planar face ids and crease edges, computed once per shared geometry
+        function analyze(geo, cache) {
+            if (cache.has(geo)) return cache.get(geo);
+
+            const pos = flatPositions(geo);
+            const { faceOf, count } = planarFaces(pos);
+            const edges = new THREE.EdgesGeometry(geo, EDGE_ANGLE);
+            const info = { pos, faceOf, faces: count, edges: edges.attributes.position.array };
+            edges.dispose();
+            cache.set(geo, info);
+            return info;
+        }
+
+        function assemble(items, look) {
+            const cache = new Map();
+            const infos = items.map(it => analyze(it.g, cache));
+            const byFace = look.colorBy === 'face';
+            let floats = 0, edgeFloats = 0, faces = 0;
+
+            for (const info of infos) {
+                floats += info.pos.length;
+                edgeFloats += info.edges.length;
+                faces += info.faces;
+            }
+
+            const colors = makePalette(byFace ? faces : items.length, look.palette, look.custom, mulberry(look.colorSeed));
+            const pos = new Float32Array(floats), col = new Float32Array(floats), lines = new Float32Array(edgeFloats);
+            const v = v3();
+            let pv = 0, pl = 0, slot = 0;
+
+            items.forEach((it, k) => {
+                const info = infos[k];
+
+                // 9 floats per triangle, so i / 9 is the triangle index
+                for (let i = 0; i < info.pos.length; i += 3) {
+                    v.fromArray(info.pos, i).applyMatrix4(it.m).toArray(pos, pv + i);
+                    colors[byFace ? slot + info.faceOf[Math.floor(i / 9)] : k].toArray(col, pv + i);
+                }
+                for (let i = 0; i < info.edges.length; i += 3) {
+                    v.fromArray(info.edges, i).applyMatrix4(it.m).toArray(lines, pl + i);
+                }
+
+                pv += info.pos.length;
+                pl += info.edges.length;
+                slot += info.faces;
+            });
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            geo.computeBoundingSphere();
+
+            return { geo, lines, stats: { items: items.length, faces, tris: floats / 9 } };
+        }
+
+        // Camera pose relative to scene bounds, unless the preset gives exact coordinates
+        function viewFor(preset, p, sphere) {
+            if (typeof preset.cam === 'function') {
+                const { pos, target } = preset.cam(p);
+                return { pos: v3(...pos), target: v3(...target) };
+            }
+
+            const dir = v3(...preset.cam.dir).normalize();
+            const r = sphere.radius > 0 ? sphere.radius : 1;
+            return { pos: sphere.center.clone().addScaledVector(dir, r * preset.cam.dist), target: sphere.center.clone() };
+        }
+
+        // ===== Stage =====
+        // Owns the WebGL renderer, cameras, materials and PNG snapshots
+
+        const NEAR_RATIO = 0.004;
+        const FAR_RATIO = 60;
+        const MIN_PREVIEW_LINE = 0.5;
+        const MSAA_SAMPLES = 4;
+        const MAX_EXPORT = 8192;
+        const RGBA = 4;
+        const OPAQUE = 255;
+
+        function createStage(host) {
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            host.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const persp = new THREE.PerspectiveCamera(60, 1, 0.01, 1000);
+            const ortho = new THREE.OrthographicCamera();
+            let cam = persp;
+
+            const controls = new OrbitControls(persp, renderer.domElement);
+            controls.zoomToCursor = true;
+            controls.addEventListener('change', draw);
+
+            // Fills sit slightly behind so edge lines win the depth test
+            const plainMat = new THREE.MeshBasicMaterial({
+                side: THREE.DoubleSide,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 2,
+            });
+            const colorMat = plainMat.clone();
+            colorMat.vertexColors = true;
+            const lineMat = new LineMaterial({ linewidth: 2 });
+
+            const fill = new THREE.Mesh(new THREE.BufferGeometry(), plainMat);
+            const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
+            lines.frustumCulled = false;
+            lines.renderOrder = 1;
+            scene.add(fill, lines);
+
+            let style = null, hasLines = false, orthoHalf = 5;
+            const size = { w: 1, h: 1, exportH: 1 };
+
+            function draw() {
+                renderer.render(scene, cam);
+            }
+
+            function project(aspect = size.w / size.h) {
+                persp.aspect = aspect;
+                persp.updateProjectionMatrix();
+                Object.assign(ortho, { left: -orthoHalf * aspect, right: orthoHalf * aspect, top: orthoHalf, bottom: -orthoHalf });
+                ortho.updateProjectionMatrix();
+            }
+
+            function previewLines() {
+                lineMat.resolution.set(size.w, size.h);
+                lineMat.linewidth = Math.max(MIN_PREVIEW_LINE, style.lineW * size.h / size.exportH);
+            }
+
+            function apply(s) {
+                const outline = s.mode === 'outline';
+                fill.material = s.mode === 'color' ? colorMat : plainMat;
+                plainMat.color.set(s.mode === 'silhouette' ? s.ink : s.bg);
+                plainMat.colorWrite = !(outline && s.transparent);
+                fill.visible = !(outline && s.xray);
+                lines.visible = hasLines && (outline || (s.mode === 'color' && s.outline));
+                lineMat.color.set(s.ink);
+                lineMat.depthTest = !s.xray;
+                renderer.setClearColor(s.transparent ? 0x000000 : s.bg, s.transparent ? 0 : 1);
+            }
+
+            function setStyle(s) {
+                style = s;
+                apply(s);
+                previewLines();
+                draw();
+            }
+
+            function setParts(geo, linePos) {
+                fill.geometry.dispose();
+                fill.geometry = geo;
+                lines.geometry.dispose();
+                lines.geometry = new LineSegmentsGeometry();
+                hasLines = linePos.length > 0;
+                if (hasLines) lines.geometry.setPositions(linePos);
+
+                const r = Math.max(geo.boundingSphere?.radius || 0, MIN_STEP);
+                persp.near = r * NEAR_RATIO;
+                persp.far = r * FAR_RATIO;
+                ortho.near = -persp.far;
+                ortho.far = persp.far;
+                project();
+                if (style) apply(style);
+            }
+
+            function look(view) {
+                controls.target.copy(view.target);
+                persp.position.copy(view.pos);
+                ortho.position.copy(view.pos);
+                orthoHalf = view.pos.distanceTo(view.target) * Math.tan(persp.fov * DEG / 2);
+                ortho.zoom = 1;
+                project();
+                controls.update();
+                draw();
+            }
+
+            function setProjection(kind) {
+                const next = kind === 'ortho' ? ortho : persp;
+                if (next === cam) return;
+
+                next.position.copy(cam.position);
+                next.quaternion.copy(cam.quaternion);
+                if (next === ortho) {
+                    orthoHalf = cam.position.distanceTo(controls.target) * Math.tan(persp.fov * DEG / 2);
+                    ortho.zoom = 1;
+                }
+
+                cam = next;
+                controls.object = cam;
+                project();
+                controls.update();
+                draw();
+            }
+
+            function setFov(fov) {
+                persp.fov = fov;
+                project();
+                draw();
+            }
+
+            function resize(w, h, exportH) {
+                Object.assign(size, { w, h, exportH });
+                renderer.setSize(w, h);
+                project();
+                if (style) previewLines();
+                draw();
+            }
+
+            // Render offscreen at full export size, then read back into a PNG
+            function snapshot(w, h, aa, override = {}) {
+                const s = { ...style, ...override };
+                const rt = new THREE.WebGLRenderTarget(w, h, { samples: aa ? MSAA_SAMPLES : 0 });
+
+                apply(s);
+                lineMat.resolution.set(w, h);
+                lineMat.linewidth = s.lineW;
+                project(w / h);
+
+                renderer.setRenderTarget(rt);
+                renderer.clear();
+                renderer.render(scene, cam);
+                const px = new Uint8Array(w * h * RGBA);
+                renderer.readRenderTargetPixels(rt, 0, 0, w, h, px);
+                renderer.setRenderTarget(null);
+                rt.dispose();
+
+                apply(style);
+                previewLines();
+                project();
+                draw();
+                return toPng(px, w, h, s.transparent);
+            }
+
+            const maxSize = Math.min(renderer.capabilities.maxTextureSize, MAX_EXPORT);
+            return { setParts, setStyle, look, setProjection, setFov, resize, snapshot, maxSize };
+        }
+
+        // GL rows are bottom-up and blended alpha is premultiplied, so flip and unpremultiply
+        function toPng(px, w, h, unpremultiply) {
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            const img = ctx.createImageData(w, h);
+            const row = w * RGBA;
+
+            for (let y = 0; y < h; y++) img.data.set(px.subarray((h - 1 - y) * row, (h - y) * row), y * row);
+
+            if (unpremultiply) {
+                const d = img.data;
+                for (let i = 0; i < d.length; i += RGBA) {
+                    const a = d[i + 3];
+                    if (!a || a === OPAQUE) continue;
+                    for (let c = 0; c < 3; c++) d[i + c] = d[i + c] * OPAQUE / a;
+                }
+            }
+
+            ctx.putImageData(img, 0, 0);
+            return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        }
+
+        // ===== UI =====
+
+        const FRAME_PAD = 16;
+        const SEED_MAX = 1e6;
+        const SHUFFLE_SPAN = 0.5;
+        const REVOKE_MS = 1000;
+
+        const MODS = [
+            num('drop', 'Drop out', 0, 0.95, 0.01, 0),
+            num('shift', 'Shift', 0, 5, 0.01, 0),
+            num('tumble', 'Tumble°', 0, 180, 1, 0),
+            num('scale', 'Scale ±', 0, 0.95, 0.01, 0),
+        ];
+        const LINE_DEF = num('lineW', 'Line width (export px)', 0.5, 40, 0.5, 4);
+        const FOV_DEF = num('fov', 'Field of view°', 10, 140, 1, 60);
+
+        const $ = id => document.getElementById(id);
+        const panel = $('panel'), frame = $('frame'), view = $('view');
+        const stage = createStage(frame);
+
+        const state = {
+            preset: 'barrel', seed: 1, colorSeed: 1, paramsBy: {},
+            mods: Object.fromEntries(MODS.map(d => [d.key, d.value])),
+            mode: 'outline', colorBy: 'object', palette: 'distinct', custom: '',
+            outline: true, xray: false, lineW: LINE_DEF.value,
+            ink: '#000000', bg: '#ffffff', transparent: false,
+            proj: 'persp', fov: FOV_DEF.value,
+            aspect: 'view', size: 4096, aa: true,
+        };
+
+        let stats = null, resetPending = true, buildQueued = false;
+
+        const decimals = step => (String(step).split('.')[1] || '').length;
+        const fmt = (v, step) => Number(v).toFixed(decimals(step));
+        const randInt = n => Math.floor(Math.random() * n);
+
+        function params() {
+            return state.paramsBy[state.preset] ??= Object.fromEntries(PRESETS[state.preset].params.map(d => [d.key, d.value]));
+        }
+
+        const styleOf = () => ({
+            mode: state.mode, ink: state.ink, bg: state.bg, outline: state.outline,
+            xray: state.xray, lineW: state.lineW, transparent: state.transparent,
+        });
+
+        // --- Controls built from param definitions ---
+
+        // Range input with live readout. Double-click resets to the default.
+        function rangeField(def, value, onChange) {
+            const wrap = document.createElement('div');
+            const label = document.createElement('label');
+            const name = document.createElement('span');
+            const out = document.createElement('output');
+            const input = document.createElement('input');
+
+            wrap.className = 'field';
+            name.textContent = def.label;
+            Object.assign(input, { type: 'range', min: def.min, max: def.max, step: def.step, value });
+
+            const show = () => { out.textContent = fmt(input.value, def.step); };
+            input.addEventListener('input', () => { show(); onChange(+input.value); });
+            input.addEventListener('dblclick', () => { input.value = def.value; show(); onChange(def.value); });
+
+            show();
+            label.append(name, out);
+            wrap.append(label, input);
+            return wrap;
+        }
+
+        function selectField(def, value, onChange) {
+            const wrap = document.createElement('div');
+            const label = document.createElement('label');
+            const select = document.createElement('select');
+
+            wrap.className = 'field';
+            label.textContent = def.label;
+            select.append(...def.options.map(o => new Option(o, o)));
+            select.value = value;
+            select.addEventListener('change', () => onChange(select.value));
+
+            wrap.append(label, select);
+            return wrap;
+        }
+
+        const control = (def, value, onChange) => (def.options ? selectField : rangeField)(def, value, onChange);
+
+        function renderParams() {
+            const p = params();
+            $('params').replaceChildren(...PRESETS[state.preset].params.map(d =>
+                control(d, p[d.key], v => { p[d.key] = v; queueBuild(); })));
+        }
+
+        // --- Build and layout ---
+
+        function queueBuild(reset = false) {
+            resetPending ||= reset;
+            if (buildQueued) return;
+
+            buildQueued = true;
+            requestAnimationFrame(() => {
+                buildQueued = false;
+                build();
+            });
+        }
+
+        function build() {
+            const preset = PRESETS[state.preset];
+            const p = params();
+            const raw = preset.build(p, mulberry(state.seed));
+            const result = assemble(modify(raw, state.mods, state.seed), state);
+
+            stage.setParts(result.geo, result.lines);
+            if (resetPending) stage.look(viewFor(preset, p, result.geo.boundingSphere));
+            else stage.setStyle(styleOf());
+
+            resetPending = false;
+            stats = result.stats;
+            showStats();
+        }
+
+        function aspectRatio() {
+            if (state.aspect !== 'view') {
+                const [a, b] = state.aspect.split(':').map(Number);
+                return a / b;
+            }
+            const r = view.getBoundingClientRect();
+            return Math.max(r.width - FRAME_PAD * 2, 1) / Math.max(r.height - FRAME_PAD * 2, 1);
+        }
+
+        function exportSize() {
+            const ar = aspectRatio(), long = state.size;
+            const [w, h] = ar >= 1 ? [long, Math.round(long / ar)] : [Math.round(long * ar), long];
+            const fit = Math.min(1, stage.maxSize / Math.max(w, h));
+            return [Math.max(1, Math.floor(w * fit)), Math.max(1, Math.floor(h * fit))];
+        }
+
+        // Letterbox the canvas to the export aspect so the preview matches the PNG
+        function layout() {
+            const r = view.getBoundingClientRect();
+            const availW = Math.max(r.width - FRAME_PAD * 2, 1), availH = Math.max(r.height - FRAME_PAD * 2, 1);
+            const ar = aspectRatio();
+            let w = availW, h = w / ar;
+            if (h > availH) { h = availH; w = h * ar; }
+
+            frame.style.width = Math.floor(w) + 'px';
+            frame.style.height = Math.floor(h) + 'px';
+            stage.resize(Math.floor(w), Math.floor(h), exportSize()[1]);
+            showStats();
+        }
+
+        function showStats() {
+            if (!stats) return;
+            const [w, h] = exportSize();
+            $('stats').textContent = `${PRESETS[state.preset].name} · ${stats.items} objects · ${stats.faces} faces · export ${w}×${h}`;
+        }
+
+        // --- Export ---
+
+        function status(text, error = false) {
+            $('status').textContent = text;
+            $('status').classList.toggle('error', error);
+        }
+
+        function download(blob, name) {
+            const url = URL.createObjectURL(blob);
+            Object.assign(document.createElement('a'), { href: url, download: name }).click();
+            setTimeout(() => URL.revokeObjectURL(url), REVOKE_MS);
+        }
+
+        const fileName = mode => `${state.preset}-${state.seed}-${mode}.png`;
+
+        async function snap(override) {
+            const [w, h] = exportSize();
+            return stage.snapshot(w, h, state.aa, override);
+        }
+
+        // Disable export buttons while a render is in flight
+        async function busy(task) {
+            const buttons = ['save', 'copy', 'saveSet'].map($);
+            buttons.forEach(b => { b.disabled = true; });
+            status('Rendering...');
+            try {
+                status(await task());
+            } catch (err) {
+                status(`Failed: ${err.message}`, true);
+            } finally {
+                buttons.forEach(b => { b.disabled = false; });
+            }
+        }
+
+        const dims = () => exportSize().join('×');
+
+        $('save').addEventListener('click', () => busy(async () => {
+            download(await snap(), fileName(state.mode));
+            return `Saved ${dims()}`;
+        }));
+
+        $('copy').addEventListener('click', () => busy(async () => {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': snap() })]);
+            return `Copied ${dims()}`;
+        }));
+
+        // Matching line art and color mask from the same camera
+        $('saveSet').addEventListener('click', () => busy(async () => {
+            download(await snap({ mode: 'outline' }), fileName('outline'));
+            download(await snap({ mode: 'color', outline: false }), fileName('color'));
+            return `Saved pair ${dims()}`;
+        }));
+
+        // --- Scene controls ---
+
+        function setPreset(key) {
+            state.preset = key;
+            $('preset').value = key;
+            renderParams();
+            queueBuild(true);
+        }
+
+        function setSeed(seed) {
+            state.seed = seed;
+            $('seed').value = seed;
+            queueBuild();
+        }
+
+        // Nudge numbers around their defaults and pick random options
+        function shuffle() {
+            const p = params();
+
+            for (const d of PRESETS[state.preset].params) {
+                if (d.options) {
+                    p[d.key] = d.options[randInt(d.options.length)];
+                    continue;
+                }
+                const v = clamp(d.value + (Math.random() - 0.5) * (d.max - d.min) * SHUFFLE_SPAN, d.min, d.max);
+                p[d.key] = +(d.min + Math.round((v - d.min) / d.step) * d.step).toFixed(decimals(d.step));
+            }
+
+            renderParams();
+            setSeed(randInt(SEED_MAX));
+            queueBuild(true);
+        }
+
+        $('preset').append(...Object.entries(PRESETS).map(([k, p]) => new Option(p.name, k)));
+        $('preset').addEventListener('change', e => setPreset(e.target.value));
+        $('seed').addEventListener('input', e => setSeed(Math.max(0, parseInt(e.target.value, 10) || 0)));
+        $('roll').addEventListener('click', () => setSeed(randInt(SEED_MAX)));
+        $('shuffle').addEventListener('click', shuffle);
+        $('randomScene').addEventListener('click', () => {
+            const keys = Object.keys(PRESETS);
+            setPreset(keys[randInt(keys.length)]);
+            shuffle();
+        });
+
+        $('mods').append(...MODS.map(d => rangeField(d, state.mods[d.key], v => { state.mods[d.key] = v; queueBuild(); })));
+
+        // --- Style controls ---
+
+        function restyle() {
+            panel.dataset.mode = state.mode;
+            panel.dataset.palette = state.palette;
+            frame.classList.toggle('checker', state.transparent);
+            stage.setStyle(styleOf());
+        }
+
+        // Wire a static input to a state key. Palette inputs need a rebuild, the rest only a restyle.
+        function bind(id, key, { prop = 'value', event = 'change', cast = v => v, rebuild = false } = {}) {
+            const el = $(id);
+            el[prop] = state[key];
+            el.addEventListener(event, () => {
+                state[key] = cast(el[prop]);
+                restyle();
+                if (rebuild) queueBuild();
+            });
+        }
+
+        bind('mode', 'mode');
+        bind('colorBy', 'colorBy', { rebuild: true });
+        bind('palette', 'palette', { rebuild: true });
+        bind('custom', 'custom', { event: 'input', rebuild: true });
+        bind('outline', 'outline', { prop: 'checked' });
+        bind('xray', 'xray', { prop: 'checked' });
+        bind('ink', 'ink', { event: 'input' });
+        bind('bg', 'bg', { event: 'input' });
+        bind('transparent', 'transparent', { prop: 'checked' });
+        bind('aa', 'aa', { prop: 'checked' });
+
+        $('reroll').addEventListener('click', () => { state.colorSeed = randInt(SEED_MAX); queueBuild(); });
+        $('lineField').append(rangeField(LINE_DEF, state.lineW, v => { state.lineW = v; restyle(); }));
+
+        // --- Camera and export controls ---
+
+        $('fovField').append(rangeField(FOV_DEF, state.fov, v => { state.fov = v; stage.setFov(v); }));
+        $('proj').addEventListener('change', e => { state.proj = e.target.value; stage.setProjection(state.proj); });
+        $('resetView').addEventListener('click', () => queueBuild(true));
+
+        $('aspect').value = state.aspect;
+        $('size').value = state.size;
+        $('aspect').addEventListener('change', e => { state.aspect = e.target.value; layout(); });
+        $('size').addEventListener('change', e => { state.size = +e.target.value; layout(); });
+
+        // --- Start ---
+
+        $('seed').value = state.seed;
+        new ResizeObserver(layout).observe(view);
+        restyle();
+        setPreset(state.preset);
+    </script>
+</body>
+
+</html>
