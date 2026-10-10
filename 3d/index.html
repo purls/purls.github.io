@@ -277,6 +277,20 @@
             </div>
         </div>
 
+        <h2>Depth layers</h2>
+        <div class="field">
+            <label for="depth">Show</label>
+            <select id="depth">
+                <option value="all">All objects</option>
+                <option value="near">Near only</option>
+                <option value="far">Far only</option>
+            </select>
+        </div>
+        <div id="splitField"></div>
+        <div class="btns">
+            <button id="saveLayers">Save near + far</button>
+        </div>
+
         <h2>Camera</h2>
         <div class="field">
             <label for="proj">Projection</label>
@@ -1332,20 +1346,30 @@
 
             const colors = makePalette(byFace ? faces : items.length, look.palette, look.custom, mulberry(look.colorSeed));
             const pos = new Float32Array(floats), col = new Float32Array(floats), lines = new Float32Array(edgeFloats);
-            const v = v3();
+            const objCenter = new Float32Array(floats), lineCenters = new Float32Array(edgeFloats / 2);
+            const centers = new Float32Array(items.length * 3);
+            const v = v3(), mid = v3(), bounds = new THREE.Box3();
             let pv = 0, pl = 0, slot = 0;
 
             items.forEach((it, k) => {
                 const info = infos[k];
+                bounds.makeEmpty();
 
                 // 9 floats per triangle, so i / 9 is the triangle index
                 for (let i = 0; i < info.pos.length; i += 3) {
                     v.fromArray(info.pos, i).applyMatrix4(it.m).toArray(pos, pv + i);
+                    bounds.expandByPoint(v);
                     colors[byFace ? slot + info.faceOf[Math.floor(i / 9)] : k].toArray(col, pv + i);
                 }
                 for (let i = 0; i < info.edges.length; i += 3) {
                     v.fromArray(info.edges, i).applyMatrix4(it.m).toArray(lines, pl + i);
                 }
+
+                // Every vertex and edge carries its object's center so depth layers keep objects whole.
+                // A segment is 6 floats and its center 3, so segment offsets halve.
+                bounds.getCenter(mid).toArray(centers, k * 3);
+                for (let i = 0; i < info.pos.length; i += 3) mid.toArray(objCenter, pv + i);
+                for (let i = 0; i < info.edges.length; i += 6) mid.toArray(lineCenters, (pl + i) / 2);
 
                 pv += info.pos.length;
                 pl += info.edges.length;
@@ -1355,9 +1379,10 @@
             const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
             geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            geo.setAttribute('objCenter', new THREE.BufferAttribute(objCenter, 3));
             geo.computeBoundingSphere();
 
-            return { geo, lines, stats: { items: items.length, faces, tris: floats / 9 } };
+            return { geo, lines, lineCenters, centers, stats: { items: items.length, faces, tris: floats / 9 } };
         }
 
         // Camera pose relative to scene bounds, unless the preset gives exact coordinates
@@ -1382,6 +1407,34 @@
         const MAX_EXPORT = 8192;
         const RGBA = 4;
         const OPAQUE = 255;
+
+        // Depth layers discard whole objects by their center depth. Mode 1 keeps near, 2 keeps far.
+        const DEPTH_MODES = { all: 0, near: 1, far: 2 };
+        const MAIN = /void main\(\)\s*\{/;
+        const DEPTH_VARYING = 'varying float vObjDepth;';
+        const DEPTH_UNIFORMS = `uniform float depthCut;\nuniform float depthMode;\n${DEPTH_VARYING}`;
+        const DEPTH_DISCARD = `
+            if (depthMode == 1.0 && vObjDepth >= depthCut) discard;
+            if (depthMode == 2.0 && vObjDepth < depthCut) discard;`;
+        const depthVert = attr => `vObjDepth = -(modelViewMatrix * vec4(${attr}, 1.0)).z;`;
+
+        function depthMesh(shader, uniforms) {
+            Object.assign(shader.uniforms, uniforms);
+            shader.vertexShader = shader.vertexShader
+                .replace('#include <common>', `#include <common>\nattribute vec3 objCenter;\n${DEPTH_VARYING}`)
+                .replace('#include <begin_vertex>', `#include <begin_vertex>\n${depthVert('objCenter')}`);
+            shader.fragmentShader = shader.fragmentShader
+                .replace('#include <common>', `#include <common>\n${DEPTH_UNIFORMS}`)
+                .replace(MAIN, m => `${m}${DEPTH_DISCARD}`);
+        }
+
+        function depthLines(mat, uniforms) {
+            Object.assign(mat.uniforms, uniforms);
+            mat.vertexShader = mat.vertexShader
+                .replace(MAIN, m => `attribute vec3 instanceCenter;\n${DEPTH_VARYING}\n${m}\n${depthVert('instanceCenter')}`);
+            mat.fragmentShader = mat.fragmentShader
+                .replace(MAIN, m => `${DEPTH_UNIFORMS}\n${m}${DEPTH_DISCARD}`);
+        }
 
         function createStage(host) {
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1409,16 +1462,36 @@
             colorMat.vertexColors = true;
             const lineMat = new LineMaterial({ linewidth: 2 });
 
+            const depth = { depthCut: { value: 0 }, depthMode: { value: DEPTH_MODES.all } };
+            plainMat.onBeforeCompile = colorMat.onBeforeCompile = shader => depthMesh(shader, depth);
+            depthLines(lineMat, depth);
+
             const fill = new THREE.Mesh(new THREE.BufferGeometry(), plainMat);
             const lines = new LineSegments2(new LineSegmentsGeometry(), lineMat);
             lines.frustumCulled = false;
             lines.renderOrder = 1;
             scene.add(fill, lines);
 
-            let style = null, hasLines = false, orthoHalf = 5;
+            let style = null, hasLines = false, orthoHalf = 5, split = 0, centers = new Float32Array();
             const size = { w: 1, h: 1, exportH: 1 };
+            const probe = v3();
+
+            // Split 0..1 maps onto the nearest to farthest object center as seen from the camera now
+            function updateCut() {
+                if (depth.depthMode.value === DEPTH_MODES.all || !centers.length) return;
+
+                cam.updateMatrixWorld();
+                let lo = Infinity, hi = -Infinity;
+                for (let i = 0; i < centers.length; i += 3) {
+                    const d = -probe.fromArray(centers, i).applyMatrix4(cam.matrixWorldInverse).z;
+                    lo = Math.min(lo, d);
+                    hi = Math.max(hi, d);
+                }
+                depth.depthCut.value = lo + split * (hi - lo);
+            }
 
             function draw() {
+                updateCut();
                 renderer.render(scene, cam);
             }
 
@@ -1443,6 +1516,8 @@
                 lines.visible = hasLines && (outline || (s.mode === 'color' && s.outline));
                 lineMat.color.set(s.ink);
                 lineMat.depthTest = !s.xray;
+                depth.depthMode.value = DEPTH_MODES[s.depth];
+                split = s.split;
                 renderer.setClearColor(s.transparent ? 0x000000 : s.bg, s.transparent ? 0 : 1);
             }
 
@@ -1453,13 +1528,19 @@
                 draw();
             }
 
-            function setParts(geo, linePos) {
+            function setParts(parts) {
+                const { geo } = parts;
                 fill.geometry.dispose();
                 fill.geometry = geo;
                 lines.geometry.dispose();
                 lines.geometry = new LineSegmentsGeometry();
-                hasLines = linePos.length > 0;
-                if (hasLines) lines.geometry.setPositions(linePos);
+                centers = parts.centers;
+                hasLines = parts.lines.length > 0;
+
+                if (hasLines) {
+                    lines.geometry.setPositions(parts.lines);
+                    lines.geometry.setAttribute('instanceCenter', new THREE.InstancedBufferAttribute(parts.lineCenters, 3));
+                }
 
                 const r = Math.max(geo.boundingSphere?.radius || 0, MIN_STEP);
                 persp.near = r * NEAR_RATIO;
@@ -1525,7 +1606,7 @@
 
                 renderer.setRenderTarget(rt);
                 renderer.clear();
-                renderer.render(scene, cam);
+                draw();
                 const px = new Uint8Array(w * h * RGBA);
                 renderer.readRenderTargetPixels(rt, 0, 0, w, h, px);
                 renderer.setRenderTarget(null);
@@ -1581,6 +1662,7 @@
         ];
         const LINE_DEF = num('lineW', 'Line width (export px)', 0.5, 40, 0.5, 4);
         const FOV_DEF = num('fov', 'Field of view°', 10, 140, 1, 60);
+        const SPLIT_DEF = num('split', 'Split (near → far)', 0, 1, 0.01, 0.5);
 
         const $ = id => document.getElementById(id);
         const panel = $('panel'), frame = $('frame'), view = $('view');
@@ -1592,6 +1674,7 @@
             mode: 'outline', colorBy: 'object', palette: 'distinct', custom: '',
             outline: true, xray: false, lineW: LINE_DEF.value,
             ink: '#000000', bg: '#ffffff', transparent: false,
+            depth: 'all', split: SPLIT_DEF.value,
             proj: 'persp', fov: FOV_DEF.value,
             aspect: 'view', size: 4096, aa: true,
         };
@@ -1609,6 +1692,7 @@
         const styleOf = () => ({
             mode: state.mode, ink: state.ink, bg: state.bg, outline: state.outline,
             xray: state.xray, lineW: state.lineW, transparent: state.transparent,
+            depth: state.depth, split: state.split,
         });
 
         // --- Controls built from param definitions ---
@@ -1677,7 +1761,7 @@
             const raw = preset.build(p, mulberry(state.seed));
             const result = assemble(modify(raw, state.mods, state.seed), state);
 
-            stage.setParts(result.geo, result.lines);
+            stage.setParts(result);
             if (resetPending) stage.look(viewFor(preset, p, result.geo.boundingSphere));
             else stage.setStyle(styleOf());
 
@@ -1744,7 +1828,7 @@
 
         // Disable export buttons while a render is in flight
         async function busy(task) {
-            const buttons = ['save', 'copy', 'saveSet'].map($);
+            const buttons = ['save', 'copy', 'saveSet', 'saveLayers'].map($);
             buttons.forEach(b => { b.disabled = true; });
             status('Rendering...');
             try {
@@ -1773,6 +1857,13 @@
             download(await snap({ mode: 'outline' }), fileName('outline'));
             download(await snap({ mode: 'color', outline: false }), fileName('color'));
             return `Saved pair ${dims()}`;
+        }));
+
+        // Two complementary layers to sandwich a subject between. Always transparent or the near layer hides everything.
+        $('saveLayers').addEventListener('click', () => busy(async () => {
+            download(await snap({ depth: 'near', transparent: true }), fileName(`${state.mode}-near`));
+            download(await snap({ depth: 'far', transparent: true }), fileName(`${state.mode}-far`));
+            return `Saved near + far ${dims()}`;
         }));
 
         // --- Scene controls ---
@@ -1850,10 +1941,12 @@
         bind('ink', 'ink', { event: 'input' });
         bind('bg', 'bg', { event: 'input' });
         bind('transparent', 'transparent', { prop: 'checked' });
+        bind('depth', 'depth');
         bind('aa', 'aa', { prop: 'checked' });
 
         $('reroll').addEventListener('click', () => { state.colorSeed = randInt(SEED_MAX); queueBuild(); });
         $('lineField').append(rangeField(LINE_DEF, state.lineW, v => { state.lineW = v; restyle(); }));
+        $('splitField').append(rangeField(SPLIT_DEF, state.split, v => { state.split = v; restyle(); }));
 
         // --- Camera and export controls ---
 
