@@ -1,0 +1,69 @@
+/* Paste box */
+
+.paste-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.paste-row textarea {
+  flex: 1;
+  margin-bottom: 0;
+  max-height: 200px;
+}
+
+.paste-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 160px;
+}
+
+.paste-actions input[type="text"] {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .paste-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paste-actions {
+    width: auto;
+  }
+}
+
+/* Loaded lists */
+
+.list-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 15px 0;
+}
+
+/* Results */
+
+.name-cell {
+  cursor: copy;
+  color: #e0e0e0;
+}
+
+.name-cell:hover {
+  color: #60c8c5;
+}
+
+.star {
+  cursor: pointer;
+  color: #6d6d6d;
+  user-select: none;
+}
+
+.star.on {
+  color: #c8c860;
+}
+
+.shape-cell {
+  color: #808080;
+}

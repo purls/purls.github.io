@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Username Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <link rel="stylesheet" href="../nc/parser.css" />
+    <link rel="stylesheet" href="un.css" />
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Username Finder</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 10px 0;">Load lists of available usernames, then filter, sort and shortlist.</p>
+
+    <!-- Upload -->
+    <div class="upload-area" id="uploadArea">
+        <p>Drop text files here or click to upload (one list per file)</p>
+        <input type="file" id="fileInput" accept=".txt,.csv,.tsv,.list,text/plain" multiple />
+    </div>
+    <div class="paste-row">
+        <textarea id="pasteInput" rows="3"
+            placeholder="…or paste names separated by lines, spaces or commas"></textarea>
+        <div class="paste-actions">
+            <input type="text" id="pasteName" placeholder="list name" />
+            <button type="button" id="pasteBtn">Add pasted</button>
+        </div>
+    </div>
+    <div class="list-chips" id="listChips"></div>
+
+    <!-- Filters -->
+    <div class="filter-grid" id="filtersSection" style="display:none;">
+
+        <!-- Length -->
+        <div class="filter-group">
+            <h3>Length</h3>
+            <div class="filter-row">
+                <label>Chars:</label>
+                <label>Min:</label>
+                <input type="number" id="minLength" min="1" placeholder="—" />
+                <label>Max:</label>
+                <input type="number" id="maxLength" min="1" placeholder="—" />
+            </div>
+            <div class="filter-row">
+                <label>Distinct:</label>
+                <label>Min:</label>
+                <input type="number" id="minDistinct" min="1" placeholder="—" />
+                <label>Max:</label>
+                <input type="number" id="maxDistinct" min="1" placeholder="—" />
+            </div>
+            <p class="hint"><em>Distinct</em> counts unique characters, so <code>anna</code> has 2.</p>
+        </div>
+
+        <!-- Character toggles -->
+        <div class="filter-group">
+            <h3>Character Filters</h3>
+            <div class="filter-row">
+                <label>Letters:</label>
+                <div class="tri-toggle" data-filter="letters">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Vowels:</label>
+                <div class="tri-toggle" data-filter="vowels">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Numbers:</label>
+                <div class="tri-toggle" data-filter="numbers">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Symbols:</label>
+                <div class="tri-toggle" data-filter="symbols" title="Anything other than a-z and 0-9, e.g. _ . -">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Letter first:</label>
+                <div class="tri-toggle" data-filter="letterFirst">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern filters -->
+        <div class="filter-group">
+            <h3>Pattern Filters</h3>
+            <div class="filter-row">
+                <label>Palindrome:</label>
+                <div class="tri-toggle" data-filter="palindrome">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>All unique:</label>
+                <div class="tri-toggle" data-filter="unique" title="No character appears twice">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Repeats:</label>
+                <div class="tri-toggle" data-filter="repeats"
+                    title="Whether the name contains a run of the same character repeated">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+                <label>Run of:</label>
+                <input type="number" id="repeatCount" min="2" max="20" placeholder="2" />
+            </div>
+            <div class="filter-row">
+                <label>Max run:</label>
+                <label>Consonants:</label>
+                <input type="number" id="maxConsRun" min="1" placeholder="—" />
+                <label>Vowels:</label>
+                <input type="number" id="maxVowelRun" min="1" placeholder="—" />
+            </div>
+            <p class="hint">
+                <em>Run of</em> 2 = dubs, 3 = trips. <em>Max run</em> caps letters of one kind in a row,
+                a quick pronounceability check. Consonants max 2 drops <code>strng</code>.
+            </p>
+        </div>
+
+        <!-- Lists & shortlist -->
+        <div class="filter-group">
+            <h3>Lists &amp; Shortlist</h3>
+            <div class="filter-row">
+                <label>In list:</label>
+                <select id="sourceFilter" style="flex:1;">
+                    <option value="">Any</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Min lists:</label>
+                <input type="number" id="minLists" min="1" placeholder="—" />
+            </div>
+            <div class="filter-row">
+                <label>Starred:</label>
+                <div class="tri-toggle" data-filter="starred">
+                    <button data-val="yes">Yes</button>
+                    <button data-val="no">No</button>
+                    <button data-val="any" class="active-any">Any</button>
+                </div>
+                <button type="button" class="mini-btn" id="clearStars">Clear stars</button>
+            </div>
+            <p class="hint">
+                <em>Min lists</em> keeps names available on several sites at once.
+                Stars persist in this browser.
+            </p>
+        </div>
+
+        <!-- Substrings -->
+        <div class="filter-group full-width">
+            <h3>Substrings</h3>
+            <div class="filter-row">
+                <label>Include any:</label>
+                <div class="tag-input-wrap" id="substringWrap">
+                    <input type="text" class="tag-text-input" id="substringInput" placeholder="e.g. fox ↵" />
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Exclude any:</label>
+                <div class="tag-input-wrap" id="subExcludeWrap">
+                    <input type="text" class="tag-text-input" id="subExcludeInput" placeholder="e.g. xxx ↵" />
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Starts with:</label>
+                <div class="tag-input-wrap" id="prefixWrap">
+                    <input type="text" class="tag-text-input" id="prefixInput" placeholder="e.g. the ↵" />
+                </div>
+                <label>Ends with:</label>
+                <div class="tag-input-wrap" id="suffixWrap">
+                    <input type="text" class="tag-text-input" id="suffixInput" placeholder="e.g. ly ↵" />
+                </div>
+            </div>
+            <div class="filter-row">
+                <label>Regex:</label>
+                <input type="text" id="regexInput" placeholder="e.g. ^[a-z]+\d{2}$" />
+            </div>
+            <p class="hint">Matching ignores case. Several tags in one box match any of them.</p>
+        </div>
+
+        <!-- Structure -->
+        <div class="filter-group">
+            <h3>Structure</h3>
+            <div class="filter-row">
+                <label>Pattern:</label>
+                <div class="tag-input-wrap" id="structureWrap">
+                    <input type="text" class="tag-text-input" id="structureInput" placeholder="e.g. CVCV ↵" />
+                </div>
+            </div>
+            <p class="hint">
+                <code>L</code> letter · <code>C</code> consonant · <code>V</code> vowel · <code>N</code> number ·
+                <code>S</code> symbol · <code>*</code> any · any other character matches itself.
+                Prefix with <code>\</code> for a literal, so <code>\s</code> is the letter s.
+                Patterns match the whole name, so <code>CVCV_N</code> gives <code>kiro_7</code>.
+            </p>
+        </div>
+
+        <!-- Repeat shape -->
+        <div class="filter-group">
+            <h3>Repeat Shape</h3>
+            <div class="filter-row">
+                <label>Shape:</label>
+                <div class="tag-input-wrap" id="shapeWrap">
+                    <input type="text" class="tag-text-input" id="shapeInput" placeholder="e.g. ABBA ↵" />
+                </div>
+            </div>
+            <p class="hint">
+                Same placeholder means same character, different placeholders mean different characters.
+                <code>ABBA</code> gives <code>otto</code>, <code>ABAB</code> gives <code>coco</code>,
+                <code>ABCABC</code> gives <code>zapzap</code>.
+            </p>
+        </div>
+
+        <!-- Keyboard patterns -->
+        <div class="filter-group full-width">
+            <h3>Keyboard Patterns (QWERTY)</h3>
+            <div class="filter-row">
+                <label>Scoring:</label>
+                <input type="checkbox" id="keyboardEnabled" checked />
+                <label class="check-label" for="keyboardEnabled">Score keyboard patterns</label>
+            </div>
+            <div id="keyboardOptions">
+                <div class="filter-row">
+                    <label>Same Row:</label>
+                    <div class="tri-toggle" data-filter="sameRow">
+                        <button data-val="yes">Yes</button>
+                        <button data-val="no">No</button>
+                        <button data-val="any" class="active-any">Any</button>
+                    </div>
+                    <label>One hand:</label>
+                    <select id="handFilter">
+                        <option value="">Any</option>
+                        <option value="either">Either</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                    <label>Min Adj %:</label>
+                    <input type="number" id="minAdjacentPct" min="0" max="100" placeholder="—" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- Sort & Actions -->
+    <div class="controls" id="actionsSection" style="display:none;">
+        <div class="sort-controls" id="sortControls">
+            <label for="sortBy">Sort:</label>
+            <select class="sort-select" id="sortBy"></select>
+            <button type="button" class="mini-btn" id="addSort">+ then by</button>
+        </div>
+        <button id="applyBtn">Apply Filters</button>
+        <button id="copyBtn" disabled>Copy</button>
+        <button id="exportBtn" disabled>Export TXT</button>
+        <button id="resetBtn">Reset Filters</button>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="info-message" id="infoMessage"></div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar" style="display:none;">
+        <div>Showing <span id="resultCount">0</span> of <span id="totalCount">0</span> names</div>
+        <div id="starStat"></div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-table-wrap" id="tableWrap" style="display:none;">
+        <table id="resultsTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevPage">← Prev</button>
+        <span id="pageInfo">Page 1</span>
+        <button id="nextPage">Next →</button>
+        <label style="margin-left:10px;">Per page:</label>
+        <select id="perPage">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="0">All</option>
+        </select>
+    </div>
+
+    <hr>
+    <p>
+        Load one or more lists. Each file becomes a list named after the file. Names are split on lines,
+        spaces, commas and semicolons, a leading <code>@</code> is dropped, and duplicates merge case insensitively.
+    </p>
+    <p>
+        <strong>Tri-toggles:</strong> <em>Yes</em> = must have, <em>No</em> = must not have, <em>Any</em> = don't care.
+        For tag boxes, press Enter to add tags.
+    </p>
+    <p>
+        <strong>Results:</strong> click a name to copy it, click ☆ to star it.
+        <em>Shape</em> spells the name in structure letters, ready to paste into the Structure filter.
+        <em>Copy</em> and <em>Export</em> take the whole filtered set, one name per line.
+    </p>
+    <p>
+        <strong>Keyboard Patterns:</strong> "Same Row" means every key sits on one keyboard row.
+        "One hand" means every key is typed by the same hand. "Adjacent %" measures how many
+        consecutive key-pairs are physically next to each other.
+    </p>
+
+    <script src="un.js"></script>
+</body>
+
+</html>
