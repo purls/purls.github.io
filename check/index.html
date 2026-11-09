@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>List Checker</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <link rel="stylesheet" href="check.css" />
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">List Checker</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 10px 0;">Paste a master list, then paste lines to cross off. Items turn green once found.</p>
+
+    <!-- Inputs -->
+    <div class="inputs">
+        <div>
+            <label for="masterInput">Master</label>
+            <textarea id="masterInput" placeholder="One item per line"></textarea>
+        </div>
+        <div>
+            <label for="checkInput">Checker</label>
+            <textarea id="checkInput" placeholder="Lines to cross off"></textarea>
+        </div>
+    </div>
+
+    <!-- Options -->
+    <div class="options">
+        <label><input type="checkbox" id="optCase" checked /> Ignore case</label>
+        <label><input type="checkbox" id="optStrip" checked /> Strip track numbers &amp; times</label>
+        <label><input type="checkbox" id="optPunct" checked /> Ignore punctuation &amp; spaces</label>
+        <label><input type="checkbox" id="optAccents" /> Ignore Latin accents</label>
+        <label>Match:
+            <select id="optMode">
+                <option value="exact">Exact line</option>
+                <option value="contains">Line contains item</option>
+            </select>
+        </label>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+        <span id="summaryText">0 / 0 found</span>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <button type="button" id="copyMissing">Copy missing</button>
+        <button type="button" id="clearBtn">Clear</button>
+    </div>
+
+    <!-- Results -->
+    <ol class="items" id="items"></ol>
+
+    <div id="extrasSection" hidden>
+        <h3>Not in master <span id="extrasCount"></span></h3>
+        <ul class="extras" id="extras"></ul>
+    </div>
+
+    <hr>
+    <p>
+        One item per line. Blank lines and duplicates are ignored. Multiple hits on the same item count once.
+    </p>
+    <p>
+        <strong>Strip track numbers &amp; times:</strong> drops prefixes like <code>01.</code>, <code>1 -</code>,
+        <code>A1</code> and trailing durations like <code>3:45</code>. Applied to both lists, so over-stripping rarely
+        hurts.
+    </p>
+    <p>
+        <strong>Ignore punctuation &amp; spaces:</strong> <code>"Song" (Remix)</code> matches <code>Song Remix</code>.
+        Full-width characters always fold to their normal form, so <code>Ａ</code> matches <code>A</code>.
+    </p>
+    <p>
+        <strong>Ignore Latin accents:</strong> <code>Café</code> matches <code>Cafe</code>. Other scripts are untouched,
+        so <code>が</code> stays distinct from <code>か</code>.
+    </p>
+    <p>
+        <strong>Line contains item:</strong> an item counts as found if any checker line contains it,
+        e.g. <code>Artist - Song.flac</code> finds <code>Song</code>.
+    </p>
+
+    <script src="check.js"></script>
+</body>
+
+</html>
