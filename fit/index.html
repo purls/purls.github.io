@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Row Fitter</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <link rel="stylesheet" href="fit.css" />
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Row Fitter</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 10px 0;">One per line, which then gets reordered to wrap into the fewest rows.</p>
+
+    <!-- Input -->
+    <textarea id="itemsInput" placeholder="One item per line"></textarea>
+
+    <!-- Options -->
+    <div class="options">
+        <label>Size from:
+            <select id="optSource">
+                <option value="chars">Character count</option>
+                <option value="value">Trailing value</option>
+            </select>
+        </label>
+        <label>Width: <input type="number" id="optWidth" value="55.5" min="0" step="any" /></label>
+        <label>Padding: <input type="number" id="optPad" value="2.5" min="0" step="any" /></label>
+        <label>Gap: <input type="number" id="optGap" value="2.5" min="0" step="any" /></label>
+        <label><input type="checkbox" id="optBlank" /> Blank line between rows</label>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+        <span id="summaryText">0 items</span>
+        <button type="button" id="moreBtn" hidden>Search longer</button>
+        <button type="button" id="copyBtn">Copy order</button>
+        <button type="button" id="clearBtn">Clear</button>
+    </div>
+    <div class="error" id="errorText"></div>
+
+    <!-- Results -->
+    <ol class="rows" id="rows"></ol>
+
+    <h3>Order</h3>
+    <textarea id="orderOutput" readonly></textarea>
+
+    <hr>
+    <p>
+        This is one-dimensional bin packing. Rows are bins, the container width is the bin capacity. The search is
+        branch and bound, so the row count is the true minimum unless the summary says it is unproven.
+    </p>
+    <p>
+        <strong>Width, Padding, Gap:</strong> all in the same unit as the item sizes. Padding is the total added to
+        each item, left plus right. Gap is the space between neighbors. A row fits when item sizes plus padding plus
+        gaps stay within the width.
+    </p>
+    <p>
+        <strong>Character count:</strong> an item is as wide as its text, so the unit is one monospace character.
+        Divide pixel sizes by the glyph width to convert, e.g. 9.6px for JetBrains Mono at 16px. The defaults are the
+        link box on the home page.
+    </p>
+    <p>
+        <strong>Trailing value:</strong> the size is the number ending the line, e.g. <code>Crate A, 12.5</code> or
+        <code>Crate A 12.5</code>. Set padding and gap to 0 for plain packing.
+    </p>
+    <p>
+        <strong>Order:</strong> the items in sequence. Placed in a wrapping container they break into the rows shown.
+        Items wider than the container get a row of their own.
+    </p>
+
+    <script src="pack.js"></script>
+    <script src="fit.js"></script>
+</body>
+
+</html>
