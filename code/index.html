@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Snippets</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        #search {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+        }
+
+        #search:focus {
+            outline: 2px solid #4cafac;
+        }
+
+        .cats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0 5px;
+        }
+
+        .cats button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        .cats button.active {
+            background-color: #2f7373;
+        }
+
+        .cats .count {
+            color: #9ababa;
+            margin-left: 6px;
+            font-size: 12px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 14px;
+        }
+
+        h2 {
+            margin: 30px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #3d3d3d;
+            font-size: 20px;
+        }
+
+        .snippet {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .snippet-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px 0;
+        }
+
+        .snippet h3 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .snippet p {
+            margin: 2px 14px 10px;
+            font-size: 13px;
+        }
+
+        .snippet button {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .snippet pre {
+            margin: 0;
+            padding: 12px 14px;
+            background-color: #161616;
+            border-top: 1px solid #2d2d2d;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+
+        .tok-comment {
+            color: #6f8080;
+        }
+
+        .tok-string {
+            color: #dacdac;
+        }
+
+        .tok-keyword {
+            color: #80cccc;
+        }
+
+        .tok-number,
+        .tok-tag {
+            color: #c99999;
+        }
+
+        kbd {
+            border: 1px solid #3d3d3d;
+            border-radius: 3px;
+            padding: 0 5px;
+            font-family: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Code Snippets</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;"><kbd>/</kbd> to search.</p>
+    <br />
+
+    <input id="search" type="search" placeholder="Search titles, descriptions, and code..." autocomplete="off" />
+
+    <div class="cats" id="cats"></div>
+    <div class="info-message" id="countLabel"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <div id="list"></div>
+
+    <script>
+        // Categories in display order, each with its default highlighter
+        const CATEGORIES = [
+            { id: 'sql', label: 'SQL', lang: 'sql' },
+            { id: 'cs', label: 'C#', lang: 'cs' },
+            { id: 'html', label: 'HTML / CSS', lang: 'markup' },
+            { id: 'ts', label: 'TS / JS', lang: 'ts' },
+            { id: 'svelte', label: 'Svelte 5', lang: 'markup' }
+        ];
+
+        const SOURCE_URL = 'snippets.txt';
+
+        // Snippet header line, for example "=== cs sh | dotnet CLI". The highlighter is optional
+        const HEADER = /^=== (\w+)(?: (\w+))? \| (.+)$/;
+
+        const ALL = 'all';
+        const COPIED_MS = 1200;
+        const SEARCH_KEY = '/';
+
+        // Regex sources shared by several languages
+        const C_COMMENT = String.raw`//.*|/\*[\s\S]*?\*/`;
+        const QUOTED = String.raw`"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'`;
+        const NUMBER = String.raw`\b\d[\d_]*(?:\.\d+)?\b`;
+
+        // Turns "a b c" into a whole word alternation
+        const words = list => String.raw`\b(?:${list.trim().split(/\s+/).join('|')})\b`;
+
+        const SQL_WORDS = `
+            SELECT FROM WHERE AND OR NOT IN IS NULL AS ON JOIN LEFT RIGHT INNER OUTER CROSS APPLY
+            GROUP BY ORDER HAVING UNION ALL EXCEPT INTERSECT INSERT INTO VALUES UPDATE SET DELETE
+            CREATE ALTER DROP TABLE INDEX ADD IF EXISTS BEGIN END TRANSACTION COMMIT ROLLBACK
+            DECLARE EXEC WITH CASE WHEN THEN ELSE TOP DISTINCT LIKE DESC ASC OFFSET ROWS FETCH
+            NEXT ONLY OVER PARTITION WITHIN WHILE BREAK OUTPUT PRIMARY KEY IDENTITY DEFAULT FOR
+            DBCC INT NVARCHAR VARCHAR DATETIME2 DATE DECIMAL`;
+
+        const CS_WORDS = `
+            abstract as async await base bool break case catch class const continue decimal default
+            do double else enum equals false finally for foreach from get if in init int interface
+            internal into is join long new not null object on out override partial private protected
+            public readonly record return select set static string switch this throw true try typeof
+            using var void when where while with`;
+
+        const TS_WORDS = `
+            as async await break case catch class const continue default delete do else export
+            extends false finally for from function if import in instanceof interface keyof let
+            new null of return satisfies static switch this throw true try type typeof undefined
+            var void while`;
+
+        // Rules per language. Earlier rules win when two could start at the same spot
+        const GRAMMARS = {
+            sql: [
+                ['comment', String.raw`--.*|/\*[\s\S]*?\*/`],
+                ['string', String.raw`N?'(?:[^']|'')*'`],
+                ['keyword', words(SQL_WORDS)],
+                ['number', NUMBER]
+            ],
+            cs: [
+                ['comment', C_COMMENT],
+                ['string', String.raw`[$@]{0,2}` + QUOTED],
+                ['keyword', words(CS_WORDS)],
+                ['number', NUMBER]
+            ],
+            ts: [
+                ['comment', C_COMMENT],
+                ['string', QUOTED + '|`(?:[^`\\\\]|\\\\.)*`'],
+                ['keyword', words(TS_WORDS)],
+                ['number', NUMBER]
+            ],
+            css: [
+                ['comment', String.raw`/\*[\s\S]*?\*/`],
+                ['string', QUOTED],
+                ['keyword', String.raw`@[\w-]+`]
+            ],
+            sh: [
+                ['comment', String.raw`(?<=^|\s)#.*`],
+                ['string', QUOTED]
+            ],
+            tags: [
+                ['comment', String.raw`<!--[\s\S]*?-->`],
+                ['string', String.raw`"[^"\n]*"`],
+                ['tag', String.raw`</?[A-Za-z][\w:.-]*`],
+                ['keyword', String.raw`\{[#:/@]\w+`]
+            ]
+        };
+
+        // Script and style blocks inside markup get their own grammar
+        const EMBEDDED = /(<(script|style)\b[^>]*>)([\s\S]*?)(<\/\2>)/g;
+        const EMBEDDED_LANG = { script: 'ts', style: 'css' };
+        const MARKUP = 'markup';
+
+        const matchers = {};
+
+        // One combined regex per language, a capture group per rule
+        function matcherFor(lang) {
+            matchers[lang] ??= new RegExp(GRAMMARS[lang].map(([, source]) => `(${source})`).join('|'), 'gm');
+
+            return matchers[lang];
+        }
+
+        // Appends code to parent, wrapping recognized tokens in colored spans
+        function paint(parent, code, lang) {
+            const rules = GRAMMARS[lang];
+
+            if (!rules) {
+                parent.append(code);
+                return;
+            }
+
+            let cursor = 0;
+
+            for (const match of code.matchAll(matcherFor(lang))) {
+                // The first defined group tells which rule matched
+                const ruleIndex = match.findIndex((group, i) => i > 0 && group !== undefined) - 1;
+                const span = document.createElement('span');
+
+                span.className = `tok-${rules[ruleIndex][0]}`;
+                span.textContent = match[0];
+
+                parent.append(code.slice(cursor, match.index), span);
+                cursor = match.index + match[0].length;
+            }
+
+            parent.append(code.slice(cursor));
+        }
+
+        // Markup is painted in pieces so script and style bodies use their own grammar
+        function paintMarkup(parent, code) {
+            let cursor = 0;
+
+            for (const match of code.matchAll(EMBEDDED)) {
+                const [whole, openTag, tagName, body, closeTag] = match;
+
+                paint(parent, code.slice(cursor, match.index) + openTag, 'tags');
+                paint(parent, body, EMBEDDED_LANG[tagName]);
+                paint(parent, closeTag, 'tags');
+
+                cursor = match.index + whole.length;
+            }
+
+            paint(parent, code.slice(cursor), 'tags');
+        }
+
+        function highlight(parent, code, lang) {
+            if (lang === MARKUP) {
+                paintMarkup(parent, code);
+                return;
+            }
+
+            paint(parent, code, lang);
+        }
+
+        // Small element factory
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+
+            if (className) node.className = className;
+            if (text) node.textContent = text;
+
+            return node;
+        }
+
+        // Builds one card from a parsed snippet
+        function buildCard({ cat, lang, title, desc, code }) {
+            const category = CATEGORIES.find(c => c.id === cat);
+
+            const card = el('div', 'snippet');
+            const head = el('div', 'snippet-head');
+            const copyBtn = el('button', '', 'Copy');
+            const pre = el('pre');
+            const codeEl = el('code');
+
+            highlight(codeEl, code, lang ?? category.lang);
+
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(code);
+                    copyBtn.textContent = 'Copied';
+                } catch {
+                    copyBtn.textContent = 'Failed';
+                }
+
+                setTimeout(() => (copyBtn.textContent = 'Copy'), COPIED_MS);
+            });
+
+            head.append(el('h3', '', title), copyBtn);
+            pre.append(codeEl);
+            card.append(head, el('p', '', desc), pre);
+
+            return { cat, card, haystack: `${title} ${desc} ${code}`.toLowerCase() };
+        }
+
+        // Splits the source text into snippets. Format notes sit at the top of snippets.txt
+        function parseSnippets(text) {
+            const blocks = [];
+
+            for (const line of text.split(/\r?\n/)) {
+                const header = HEADER.exec(line);
+
+                if (header) {
+                    const [, cat, lang, title] = header;
+
+                    blocks.push({ cat, lang, title, lines: [] });
+                    continue;
+                }
+
+                // Lines before the first header belong to no snippet
+                blocks.at(-1)?.lines.push(line);
+            }
+
+            return blocks
+                .filter(block => CATEGORIES.some(c => c.id === block.cat))
+                .map(({ lines, ...meta }) => ({
+                    ...meta,
+                    desc: lines[0].trim(),
+                    code: lines.slice(1).join('\n').replace(/^\n+|\s+$/g, '')
+                }));
+        }
+
+        async function loadSnippets() {
+            const response = await fetch(SOURCE_URL);
+
+            if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+
+            return parseSnippets(await response.text());
+        }
+
+        const searchInput = document.getElementById('search');
+        const catsEl = document.getElementById('cats');
+        const listEl = document.getElementById('list');
+        const countLabel = document.getElementById('countLabel');
+        const errorMessage = document.getElementById('errorMessage');
+
+        const sections = [];
+        const catButtons = [];
+
+        let snippets = [];
+        let activeCat = ALL;
+
+        // One section per category, in display order
+        function renderSections() {
+            for (const category of CATEGORIES) {
+                const section = el('section');
+
+                section.append(el('h2', '', category.label));
+                section.append(...snippets.filter(s => s.cat === category.id).map(s => s.card));
+
+                sections.push(section);
+                listEl.append(section);
+            }
+        }
+
+        // Category button with its snippet count
+        function addCatButton(id, label, count) {
+            const button = el('button', '', label);
+
+            button.dataset.cat = id;
+            button.append(el('span', 'count', String(count)));
+            button.addEventListener('click', () => selectCat(id));
+
+            catButtons.push(button);
+            catsEl.append(button);
+        }
+
+        function renderCatButtons() {
+            addCatButton(ALL, 'All', snippets.length);
+
+            for (const category of CATEGORIES) {
+                addCatButton(category.id, category.label, snippets.filter(s => s.cat === category.id).length);
+            }
+        }
+
+        // Shows snippets that match the category and every search term
+        function applyFilter() {
+            const terms = searchInput.value.toLowerCase().split(/\s+/).filter(Boolean);
+            let shown = 0;
+
+            for (const snippet of snippets) {
+                const inCat = activeCat === ALL || snippet.cat === activeCat;
+                const visible = inCat && terms.every(term => snippet.haystack.includes(term));
+
+                snippet.card.hidden = !visible;
+                if (visible) shown++;
+            }
+
+            for (const section of sections) {
+                section.hidden = !section.querySelector('.snippet:not([hidden])');
+            }
+
+            countLabel.textContent = shown === 1 ? '1 snippet' : `${shown} snippets`;
+        }
+
+        // Switches category and mirrors it in the URL hash so it can be bookmarked
+        function selectCat(id) {
+            activeCat = id;
+
+            for (const button of catButtons) {
+                button.classList.toggle('active', button.dataset.cat === id);
+            }
+
+            history.replaceState(null, '', id === ALL ? location.pathname : `#${id}`);
+            applyFilter();
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+
+        document.addEventListener('keydown', event => {
+            const inSearch = event.target === searchInput;
+
+            // Slash jumps to search
+            if (event.key === SEARCH_KEY && !inSearch) {
+                event.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+                return;
+            }
+
+            // Escape clears it
+            if (event.key === 'Escape' && inSearch) {
+                searchInput.value = '';
+                applyFilter();
+            }
+        });
+
+        async function init() {
+            try {
+                snippets = (await loadSnippets()).map(buildCard);
+            } catch (err) {
+                // fetch is blocked on file URLs, so the page needs a web server
+                errorMessage.textContent = `Could not load ${SOURCE_URL} (${err.message}). Serve this page over HTTP.`;
+                return;
+            }
+
+            renderSections();
+            renderCatButtons();
+
+            // Initial category from the URL hash, for example #sql
+            const hashCat = location.hash.slice(1);
+
+            selectCat(CATEGORIES.some(c => c.id === hashCat) ? hashCat : ALL);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

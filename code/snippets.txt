@@ -1,0 +1,2602 @@
+Code snippets for localhost.beer/code
+
+Format
+  A line starting with "=== " opens a snippet. It holds the category, an optional
+  highlighter, a pipe, and the title.
+  The next line is the description. Everything after it, up to the next "=== " line,
+  is the code. Paste code as is, nothing needs escaping.
+  Text above the first snippet, like this note, is ignored.
+
+Categories    sql, cs, html, ts, svelte
+Highlighters  sql, cs, ts, markup, css, sh (defaults to the one of the category)
+
+Example, shown indented so it is not read as a snippet
+  === cs sh | dotnet CLI
+  Project, package, and test commands.
+
+  dotnet new webapi -n MyApi
+
+=== sql | Table schema
+Columns, types, sizes, nullability, and defaults of one table.
+
+SELECT
+  COLUMN_NAME,
+  DATA_TYPE,
+  CHARACTER_MAXIMUM_LENGTH,
+  NUMERIC_PRECISION,
+  NUMERIC_SCALE,
+  IS_NULLABLE,
+  COLUMN_DEFAULT
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'dbo'
+  AND TABLE_NAME = 'tablename';
+
+=== sql | Count tables
+Total number of tables, then the split per schema.
+
+SELECT COUNT(*) AS TableCount
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_TYPE = 'BASE TABLE';
+
+SELECT TABLE_SCHEMA, COUNT(*) AS TableCount
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_TYPE = 'BASE TABLE'
+GROUP BY TABLE_SCHEMA
+ORDER BY TableCount DESC;
+
+=== sql | Row counts for every table
+Reads partition metadata, so it is instant even on huge tables.
+
+SELECT
+  s.name AS SchemaName,
+  t.name AS TableName,
+  SUM(p.rows) AS RowCnt
+FROM sys.tables t
+JOIN sys.schemas s ON s.schema_id = t.schema_id
+JOIN sys.partitions p ON p.object_id = t.object_id
+  AND p.index_id IN (0, 1) -- heap or clustered index only, avoids double counting
+GROUP BY s.name, t.name
+ORDER BY RowCnt DESC;
+
+=== sql | Table sizes on disk
+Rows plus reserved and used space per table, largest first.
+
+SELECT
+  s.name AS SchemaName,
+  t.name AS TableName,
+  SUM(CASE WHEN ps.index_id IN (0, 1) THEN ps.row_count ELSE 0 END) AS RowCnt,
+  CAST(SUM(ps.reserved_page_count) * 8 / 1024.0 AS DECIMAL(18, 2)) AS ReservedMB,
+  CAST(SUM(ps.used_page_count) * 8 / 1024.0 AS DECIMAL(18, 2)) AS UsedMB
+FROM sys.dm_db_partition_stats ps
+JOIN sys.tables t ON t.object_id = ps.object_id
+JOIN sys.schemas s ON s.schema_id = t.schema_id
+GROUP BY s.name, t.name
+ORDER BY ReservedMB DESC;
+
+=== sql | Find a column by name
+Every table that has a column matching the pattern.
+
+SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE COLUMN_NAME LIKE '%needle%'
+ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION;
+
+=== sql | Search every table for a value
+Scans all text columns in the database and lists where the value occurs. Slow on big databases. Needs SQL Server 2017 or newer.
+
+DECLARE @search NVARCHAR(200) = N'%needle%';
+DECLARE @sql NVARCHAR(MAX);
+
+-- One counting query per text column, glued together with UNION ALL
+SELECT @sql = STRING_AGG(
+  CAST(
+    N'SELECT ' + QUOTENAME(s.name, '''') + N' AS SchemaName, '
+    + QUOTENAME(t.name, '''') + N' AS TableName, '
+    + QUOTENAME(c.name, '''') + N' AS ColumnName, COUNT(*) AS Hits'
+    + N' FROM ' + QUOTENAME(s.name) + N'.' + QUOTENAME(t.name)
+    + N' WHERE ' + QUOTENAME(c.name) + N' LIKE @search'
+    + N' HAVING COUNT(*) > 0'
+  AS NVARCHAR(MAX)),
+  N' UNION ALL ')
+FROM sys.columns c
+JOIN sys.tables t ON t.object_id = c.object_id
+JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE TYPE_NAME(c.system_type_id) IN ('char', 'varchar', 'nchar', 'nvarchar');
+
+EXEC sp_executesql @sql, N'@search NVARCHAR(200)', @search = @search;
+
+=== sql | Search procedures, views, and functions
+Finds every code object whose definition mentions a piece of text.
+
+SELECT
+  OBJECT_SCHEMA_NAME(m.object_id) AS SchemaName,
+  o.name AS ObjectName,
+  o.type_desc AS ObjectType
+FROM sys.sql_modules m
+JOIN sys.objects o ON o.object_id = m.object_id
+WHERE m.definition LIKE N'%needle%'
+ORDER BY o.type_desc, o.name;
+
+=== sql | Show an object definition
+Source of a procedure, view, function, or trigger.
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('dbo.procname')) AS Definition;
+
+-- Same, one row per line
+EXEC sp_helptext 'dbo.procname';
+
+=== sql | Foreign keys of a table
+Both directions. Tables pointing at it and tables it points at.
+
+SELECT
+  fk.name AS ForeignKey,
+  OBJECT_SCHEMA_NAME(fk.parent_object_id) + '.' + OBJECT_NAME(fk.parent_object_id) AS ChildTable,
+  pc.name AS ChildColumn,
+  OBJECT_SCHEMA_NAME(fk.referenced_object_id) + '.' + OBJECT_NAME(fk.referenced_object_id) AS ParentTable,
+  rc.name AS ParentColumn,
+  fk.delete_referential_action_desc AS OnDelete
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+JOIN sys.columns pc ON pc.object_id = fkc.parent_object_id
+  AND pc.column_id = fkc.parent_column_id
+JOIN sys.columns rc ON rc.object_id = fkc.referenced_object_id
+  AND rc.column_id = fkc.referenced_column_id
+WHERE fk.referenced_object_id = OBJECT_ID('dbo.tablename')
+   OR fk.parent_object_id = OBJECT_ID('dbo.tablename')
+ORDER BY ChildTable, fk.name, fkc.constraint_column_id;
+
+=== sql | Indexes of a table
+Key and included columns per index. Needs SQL Server 2017 or newer.
+
+SELECT
+  i.name AS IndexName,
+  i.type_desc AS IndexType,
+  i.is_unique AS IsUnique,
+  i.is_primary_key AS IsPrimaryKey,
+  STRING_AGG(CASE WHEN ic.is_included_column = 0 THEN c.name END, ', ')
+    WITHIN GROUP (ORDER BY ic.key_ordinal) AS KeyColumns,
+  STRING_AGG(CASE WHEN ic.is_included_column = 1 THEN c.name END, ', ')
+    WITHIN GROUP (ORDER BY ic.key_ordinal) AS IncludedColumns
+FROM sys.indexes i
+JOIN sys.index_columns ic ON ic.object_id = i.object_id
+  AND ic.index_id = i.index_id
+JOIN sys.columns c ON c.object_id = ic.object_id
+  AND c.column_id = ic.column_id
+WHERE i.object_id = OBJECT_ID('dbo.tablename')
+GROUP BY i.name, i.type_desc, i.is_unique, i.is_primary_key
+ORDER BY i.is_primary_key DESC, i.name;
+
+=== sql | Recently changed objects
+What was created or altered lately. Handy after a deployment.
+
+SELECT TOP (50)
+  OBJECT_SCHEMA_NAME(object_id) AS SchemaName,
+  name AS ObjectName,
+  type_desc AS ObjectType,
+  create_date,
+  modify_date
+FROM sys.objects
+WHERE is_ms_shipped = 0
+ORDER BY modify_date DESC;
+
+=== sql | Database sizes
+Data and log file size of every database on the server.
+
+SELECT
+  DB_NAME(database_id) AS DatabaseName,
+  type_desc AS FileType,
+  CAST(SUM(size) * 8 / 1024.0 AS DECIMAL(18, 2)) AS SizeMB
+FROM sys.master_files
+GROUP BY database_id, type_desc
+ORDER BY SizeMB DESC;
+
+=== sql | Running queries and blocking
+Active requests with their SQL text. A nonzero blocking_session_id names the session in the way.
+
+SELECT
+  r.session_id,
+  r.blocking_session_id,
+  r.status,
+  r.wait_type,
+  r.total_elapsed_time / 1000 AS ElapsedSec,
+  DB_NAME(r.database_id) AS DatabaseName,
+  s.login_name,
+  s.host_name,
+  t.text AS SqlText
+FROM sys.dm_exec_requests r
+JOIN sys.dm_exec_sessions s ON s.session_id = r.session_id
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t
+WHERE r.session_id <> @@SPID
+ORDER BY r.total_elapsed_time DESC;
+
+=== sql | Generate C# properties from a table
+One property line per column, ready to paste into a class.
+
+SELECT
+  'public ' +
+  CASE
+    WHEN DATA_TYPE = 'bigint' THEN 'long'
+    WHEN DATA_TYPE = 'int' THEN 'int'
+    WHEN DATA_TYPE = 'smallint' THEN 'short'
+    WHEN DATA_TYPE = 'tinyint' THEN 'byte'
+    WHEN DATA_TYPE = 'bit' THEN 'bool'
+    WHEN DATA_TYPE IN ('decimal', 'numeric', 'money', 'smallmoney') THEN 'decimal'
+    WHEN DATA_TYPE = 'float' THEN 'double'
+    WHEN DATA_TYPE = 'real' THEN 'float'
+    WHEN DATA_TYPE = 'date' THEN 'DateOnly'
+    WHEN DATA_TYPE = 'time' THEN 'TimeOnly'
+    WHEN DATA_TYPE IN ('datetime', 'datetime2', 'smalldatetime') THEN 'DateTime'
+    WHEN DATA_TYPE = 'datetimeoffset' THEN 'DateTimeOffset'
+    WHEN DATA_TYPE = 'uniqueidentifier' THEN 'Guid'
+    WHEN DATA_TYPE IN ('binary', 'varbinary', 'image', 'timestamp') THEN 'byte[]'
+    ELSE 'string'
+  END +
+  CASE WHEN IS_NULLABLE = 'YES' THEN '?' ELSE '' END +
+  ' ' + COLUMN_NAME + ' { get; set; }' AS Property
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'dbo'
+  AND TABLE_NAME = 'tablename'
+ORDER BY ORDINAL_POSITION;
+
+=== sql | Find duplicates
+Groups that occur more than once for a set of columns.
+
+SELECT col1, col2, COUNT(*) AS Cnt
+FROM dbo.tablename
+GROUP BY col1, col2
+HAVING COUNT(*) > 1
+ORDER BY Cnt DESC;
+
+=== sql | Delete duplicates, keep one
+Keeps the row with the lowest Id in each duplicate group.
+
+WITH Ranked AS (
+  SELECT ROW_NUMBER() OVER (PARTITION BY col1, col2 ORDER BY Id) AS Rn
+  FROM dbo.tablename
+)
+DELETE FROM Ranked
+WHERE Rn > 1;
+
+=== sql | Update inside a transaction
+See old and new values before deciding to keep the change.
+
+BEGIN TRANSACTION;
+
+UPDATE dbo.tablename
+SET col1 = 'new value'
+OUTPUT deleted.Id, deleted.col1 AS OldValue, inserted.col1 AS NewValue
+WHERE Id = 1;
+
+-- Check the output, then run exactly one of these
+ROLLBACK TRANSACTION;
+-- COMMIT TRANSACTION;
+
+=== sql | Upsert
+Update when the row exists, insert when it does not. The lock hints stop two sessions from inserting the same key.
+
+DECLARE @name NVARCHAR(50) = N'theme', @value NVARCHAR(100) = N'dark';
+
+BEGIN TRANSACTION;
+
+UPDATE dbo.Settings WITH (UPDLOCK, SERIALIZABLE)
+SET Value = @value
+WHERE Name = @name;
+
+IF @@ROWCOUNT = 0
+  INSERT INTO dbo.Settings (Name, Value)
+  VALUES (@name, @value);
+
+COMMIT TRANSACTION;
+
+=== sql | Insert and return the new id
+OUTPUT hands back generated values in the same statement.
+
+INSERT INTO dbo.tablename (col1, col2)
+OUTPUT inserted.Id
+VALUES ('a', 'b');
+
+-- Alternative, read it after the insert in the same scope
+SELECT SCOPE_IDENTITY() AS NewId;
+
+=== sql | Pagination
+Page through an ordered result with OFFSET and FETCH.
+
+DECLARE @page INT = 1, @pageSize INT = 50;
+
+SELECT *
+FROM dbo.tablename
+ORDER BY Id
+OFFSET (@page - 1) * @pageSize ROWS
+FETCH NEXT @pageSize ROWS ONLY;
+
+=== sql | Top N rows per group
+Example keeps the 3 newest orders of each customer.
+
+WITH Ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (PARTITION BY CustomerId ORDER BY CreatedAt DESC) AS Rn
+  FROM dbo.Orders
+)
+SELECT *
+FROM Ranked
+WHERE Rn <= 3;
+
+=== sql | Join rows into one string
+Comma separated list per group. Needs SQL Server 2017 or newer.
+
+SELECT
+  CustomerId,
+  STRING_AGG(OrderNumber, ', ') WITHIN GROUP (ORDER BY OrderNumber) AS Orders
+FROM dbo.Orders
+GROUP BY CustomerId;
+
+=== sql | Compare two tables
+Rows present in one result and missing from the other.
+
+-- In A but not in B
+SELECT col1, col2 FROM dbo.TableA
+EXCEPT
+SELECT col1, col2 FROM dbo.TableB;
+
+-- In both
+SELECT col1, col2 FROM dbo.TableA
+INTERSECT
+SELECT col1, col2 FROM dbo.TableB;
+
+=== sql | Date boundaries and ranges
+Common anchors, plus the range filter that keeps indexes usable.
+
+SELECT
+  CAST(GETDATE() AS DATE) AS Today,
+  DATEADD(DAY, -7, CAST(GETDATE() AS DATE)) AS WeekAgo,
+  DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1) AS MonthStart,
+  EOMONTH(GETDATE()) AS MonthEnd,
+  DATEFROMPARTS(YEAR(GETDATE()), 1, 1) AS YearStart;
+
+-- Half open range covers the whole last day and avoids functions on the column
+SELECT *
+FROM dbo.Orders
+WHERE CreatedAt >= '2026-01-01'
+  AND CreatedAt < '2026-02-01';
+
+=== sql | Schema changes that can rerun
+Guards that make a migration script safe to run twice.
+
+-- Add a column
+IF COL_LENGTH('dbo.tablename', 'NewColumn') IS NULL
+  ALTER TABLE dbo.tablename ADD NewColumn NVARCHAR(100) NULL;
+
+-- Create a table
+IF OBJECT_ID('dbo.NewTable', 'U') IS NULL
+  CREATE TABLE dbo.NewTable (
+    Id INT IDENTITY(1, 1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+
+-- Create an index
+IF NOT EXISTS (
+  SELECT 1 FROM sys.indexes
+  WHERE name = 'IX_NewTable_Name' AND object_id = OBJECT_ID('dbo.NewTable')
+)
+  CREATE INDEX IX_NewTable_Name ON dbo.NewTable (Name);
+
+-- Drop
+DROP TABLE IF EXISTS dbo.NewTable;
+DROP TABLE IF EXISTS #temp;
+
+=== sql | Delete in batches
+Small chunks keep the transaction log and lock time short on large deletes.
+
+DECLARE @batch INT = 5000;
+
+WHILE 1 = 1
+BEGIN
+  DELETE TOP (@batch)
+  FROM dbo.tablename
+  WHERE CreatedAt < '2020-01-01';
+
+  IF @@ROWCOUNT < @batch BREAK;
+END
+
+=== sql | Identity value check and reseed
+Read the current identity or reset it after cleaning a table.
+
+SELECT IDENT_CURRENT('dbo.tablename') AS CurrentIdentity;
+
+-- The next insert gets 1001
+DBCC CHECKIDENT ('dbo.tablename', RESEED, 1000);
+
+=== sql | JSON in and out
+Turn rows into JSON and JSON back into rows. Needs SQL Server 2016 or newer.
+
+-- Rows to JSON
+SELECT Id, col1
+FROM dbo.tablename
+FOR JSON PATH;
+
+-- JSON to rows
+DECLARE @json NVARCHAR(MAX) = N'[{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]';
+
+SELECT Id, Name
+FROM OPENJSON(@json)
+WITH (
+  Id INT '$.id',
+  Name NVARCHAR(100) '$.name'
+);
+
+-- Single value
+SELECT JSON_VALUE(@json, '$[0].name') AS FirstName;
+
+=== cs sh | dotnet CLI
+Project, package, test, publish, and EF Core migration commands.
+
+# Create
+dotnet new webapi -n MyApi
+dotnet new sln -n MyApp
+dotnet sln add MyApi
+
+# Dependencies
+dotnet add package Dapper
+dotnet add reference ../Shared/Shared.csproj
+
+# Run and test
+dotnet watch run
+dotnet test --filter "FullyQualifiedName~OrderTests"
+
+# Publish
+dotnet publish -c Release -r win-x64 --self-contained false -o ./publish
+
+# EF Core
+dotnet tool install --global dotnet-ef
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+dotnet ef migrations script --idempotent -o migrate.sql
+dotnet ef dbcontext scaffold "Name=ConnectionStrings:Default" Microsoft.EntityFrameworkCore.SqlServer -o Models
+
+=== cs sh | User secrets
+Move API keys out of appsettings.json before committing. Leave the keys there with empty values, the real ones live in your user profile.
+
+# Run in the project folder. Adds a UserSecretsId to the csproj
+dotnet user-secrets init
+
+# A colon steps into a section, so this overrides Key inside Api
+dotnet user-secrets set "Api:Key" "the-real-key"
+dotnet user-secrets set "Api:BaseUrl" "https://api.example.com/"
+dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost;Database=MyDb;Trusted_Connection=True"
+
+# Inspect and clean up
+dotnet user-secrets list
+dotnet user-secrets remove "Api:Key"
+dotnet user-secrets clear
+
+# From the solution folder
+dotnet user-secrets set "Api:Key" "the-real-key" --project src/MyApi
+
+# Import every value of a JSON file shaped like appsettings.json
+cat secrets.json | dotnet user-secrets set
+
+# Stored as plain text in %APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json
+# Outside development, set the environment variable Api__Key instead. Two underscores stand for the colon
+
+=== cs | Read user secrets and config
+Secrets override appsettings.json under the same keys, so the reading code does not change.
+
+var builder = WebApplication.CreateBuilder(args);
+
+// CreateBuilder loads user secrets by itself when the environment is Development
+var apiKey = builder.Configuration["Api:Key"];
+
+// Fail at startup instead of on the first API call
+if (string.IsNullOrWhiteSpace(apiKey)) {
+    throw new InvalidOperationException("Api:Key is missing. Run dotnet user-secrets set.");
+}
+
+// Or bind the whole section to a class
+builder.Services.Configure<ApiOptions>(builder.Configuration.GetSection("Api"));
+
+// Console apps and tests opt in. Needs the Microsoft.Extensions.Configuration.UserSecrets package
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
+    .Build();
+
+public class ApiOptions {
+    public string Key { get; set; } = "";
+    public string BaseUrl { get; set; } = "";
+}
+
+=== cs | HTTP requests with JSON
+GET and POST with HttpClient. Create the client once and reuse it.
+
+using System.Net.Http.Json;
+
+var http = new HttpClient { BaseAddress = new Uri("https://api.example.com/") };
+
+// GET
+var user = await http.GetFromJsonAsync<User>("users/1");
+
+// POST
+var response = await http.PostAsJsonAsync("users", new User(0, "Ada"));
+response.EnsureSuccessStatusCode();
+
+var created = await response.Content.ReadFromJsonAsync<User>();
+
+record User(int Id, string Name);
+
+=== cs | JSON serialize and deserialize
+System.Text.Json with web defaults, meaning camelCase and case insensitive reads.
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+    WriteIndented = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    Converters = { new JsonStringEnumConverter() }
+};
+
+var json = JsonSerializer.Serialize(new User(1, "Ada"), options);
+var user = JsonSerializer.Deserialize<User>(json, options);
+
+// Read a value without a matching class
+using var doc = JsonDocument.Parse(json);
+var name = doc.RootElement.GetProperty("name").GetString();
+
+record User(int Id, string Name);
+
+=== cs | Dump an object as JSON
+Print any object to the console while debugging. Dump returns its input, so it can sit in the middle of an expression.
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+var order = new { Id = 1, Customer = new { Name = "Ada" }, Tags = new[] { "new", "paid" } };
+
+// One line to paste anywhere
+Console.WriteLine(JsonSerializer.Serialize(order, new JsonSerializerOptions { WriteIndented = true }));
+
+// Reusable version
+order.Dump();
+order.Customer.Dump("customer");
+
+public static class DumpExtensions {
+    private static readonly JsonSerializerOptions Options = new() {
+        WriteIndented = true,
+        IncludeFields = true,                               // Tuples keep their values in fields
+        ReferenceHandler = ReferenceHandler.IgnoreCycles,   // EF entities often point back at each other
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    public static T Dump<T>(this T value, string? label = null) {
+        if (label is not null) Console.WriteLine($"--- {label}");
+
+        // Serializing as object prints the runtime type, not just the declared one
+        Console.WriteLine(JsonSerializer.Serialize<object?>(value, Options));
+
+        return value;
+    }
+}
+
+=== cs | SQL query with ADO.NET
+Parameterized query with Microsoft.Data.SqlClient. Never concatenate values into the SQL text.
+
+using Microsoft.Data.SqlClient;
+
+const string ConnectionString = "Server=localhost;Database=MyDb;Trusted_Connection=True;TrustServerCertificate=True";
+const string Sql = "SELECT Id, Name FROM dbo.Users WHERE Name LIKE @name";
+
+await using var conn = new SqlConnection(ConnectionString);
+await conn.OpenAsync();
+
+await using var cmd = new SqlCommand(Sql, conn);
+cmd.Parameters.AddWithValue("@name", "A%");
+
+await using var reader = await cmd.ExecuteReaderAsync();
+
+while (await reader.ReadAsync()) {
+    var id = reader.GetInt32(0);
+    var name = reader.GetString(1);
+
+    Console.WriteLine($"{id} {name}");
+}
+
+=== cs | SQL query with Dapper
+Maps rows to objects. Anonymous object properties become parameters.
+
+using Dapper;
+using Microsoft.Data.SqlClient;
+
+const string ConnectionString = "Server=localhost;Database=MyDb;Trusted_Connection=True;TrustServerCertificate=True";
+
+await using var conn = new SqlConnection(ConnectionString);
+
+// Many rows
+var users = await conn.QueryAsync<User>(
+    "SELECT Id, Name FROM dbo.Users WHERE Name LIKE @Name",
+    new { Name = "A%" });
+
+// One row or null
+var user = await conn.QuerySingleOrDefaultAsync<User>(
+    "SELECT Id, Name FROM dbo.Users WHERE Id = @Id",
+    new { Id = 1 });
+
+// Insert, update, delete. Returns affected rows
+var affected = await conn.ExecuteAsync(
+    "UPDATE dbo.Users SET Name = @Name WHERE Id = @Id",
+    new { Id = 1, Name = "Ada" });
+
+record User(int Id, string Name);
+
+=== cs | EF Core DbContext
+Context, entities, mapping, and registration.
+
+using Microsoft.EntityFrameworkCore;
+
+public class AppDb(DbContextOptions<AppDb> options) : DbContext(options) {
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    protected override void OnModelCreating(ModelBuilder model) {
+        model.Entity<Order>(e => {
+            e.ToTable("Orders", "dbo");
+            e.Property(o => o.Total).HasPrecision(18, 2);
+            e.HasIndex(o => o.CreatedAt);
+            e.HasOne(o => o.Customer).WithMany(c => c.Orders).HasForeignKey(o => o.CustomerId);
+        });
+    }
+}
+
+public class Order {
+    public int Id { get; set; }
+    public int CustomerId { get; set; }
+    public decimal Total { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public Customer Customer { get; set; } = null!;
+}
+
+public class Customer {
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public List<Order> Orders { get; set; } = [];
+}
+
+// Program.cs
+builder.Services.AddDbContext<AppDb>(o =>
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+=== cs | EF Core queries
+Read, load related rows, update, and bulk operations. db is an injected AppDb.
+
+using Microsoft.EntityFrameworkCore;
+
+var since = DateTime.UtcNow.AddDays(-30);
+
+// Read only list with a projection
+var rows = await db.Orders
+    .AsNoTracking()
+    .Where(o => o.CreatedAt >= since)
+    .OrderByDescending(o => o.CreatedAt)
+    .Select(o => new { o.Id, o.Total, Customer = o.Customer.Name })
+    .Take(50)
+    .ToListAsync();
+
+// Load related rows
+var order = await db.Orders
+    .Include(o => o.Customer)
+    .FirstOrDefaultAsync(o => o.Id == 1);
+
+// Change tracked entities, then save once
+if (order is not null) {
+    order.Total = 99.50m;
+    await db.SaveChangesAsync();
+}
+
+// Bulk update and delete without loading rows
+await db.Orders
+    .Where(o => o.CreatedAt < since)
+    .ExecuteUpdateAsync(s => s.SetProperty(o => o.Total, 0m));
+
+await db.Orders
+    .Where(o => o.CreatedAt < since)
+    .ExecuteDeleteAsync();
+
+=== cs | Minimal API
+Small CRUD service in one Program.cs.
+
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+var todos = new List<Todo>();
+
+app.MapGet("/todos", () => todos);
+
+app.MapGet("/todos/{id:int}", (int id) =>
+    todos.FirstOrDefault(t => t.Id == id) is { } todo
+        ? Results.Ok(todo)
+        : Results.NotFound());
+
+app.MapPost("/todos", (Todo todo) => {
+    todos.Add(todo);
+    return Results.Created($"/todos/{todo.Id}", todo);
+});
+
+app.MapDelete("/todos/{id:int}", (int id) =>
+    todos.RemoveAll(t => t.Id == id) > 0
+        ? Results.NoContent()
+        : Results.NotFound());
+
+app.Run();
+
+record Todo(int Id, string Title, bool Done = false);
+
+=== cs | Dependency injection lifetimes
+Registration cheat sheet plus constructor injection.
+
+builder.Services.AddSingleton<IClock, SystemClock>();   // One for the whole app
+builder.Services.AddScoped<IOrderRepo, OrderRepo>();    // One per request
+builder.Services.AddTransient<IMailer, Mailer>();       // New on every resolve
+
+// Typed HttpClient with pooled handlers
+builder.Services.AddHttpClient<GitHubClient>(c => c.BaseAddress = new Uri("https://api.github.com/"));
+
+// Dependencies arrive through the primary constructor
+public class OrderService(IOrderRepo repo, IClock clock, ILogger<OrderService> logger) {
+    public void Place(int orderId) {
+        repo.Save(orderId);
+        logger.LogInformation("Order {OrderId} placed at {Time}", orderId, clock.Now);
+    }
+}
+
+=== cs | Typed configuration
+Binds the Smtp section of appsettings.json to a class.
+
+using Microsoft.Extensions.Options;
+
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+
+public class SmtpOptions {
+    public string Host { get; set; } = "";
+    public int Port { get; set; } = 25;
+}
+
+public class SmtpMailer(IOptions<SmtpOptions> options) {
+    private readonly SmtpOptions _smtp = options.Value;
+
+    public string Endpoint => $"{_smtp.Host}:{_smtp.Port}";
+}
+
+=== cs | Background service on a timer
+Hosted service that does work on a fixed interval and stops cleanly.
+
+public class Cleanup(ILogger<Cleanup> logger) : BackgroundService {
+    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+        using var timer = new PeriodicTimer(Interval);
+
+        // Returns false when the host shuts down
+        while (await timer.WaitForNextTickAsync(stoppingToken)) {
+            logger.LogInformation("Cleanup ran at {Time}", DateTimeOffset.Now);
+        }
+    }
+}
+
+// Program.cs
+builder.Services.AddHostedService<Cleanup>();
+
+=== cs | LINQ essentials
+Grouping, lookups, distinct, batching, and a left join.
+
+List<Order> orders = [new(1, 10, 250m, DateTime.Today), new(2, 10, 80m, DateTime.Today.AddDays(-1))];
+List<Customer> customers = [new(10, "Ada"), new(11, "Linus")];
+
+// Group and aggregate
+var totals = orders
+    .GroupBy(o => o.CustomerId)
+    .Select(g => new { CustomerId = g.Key, Total = g.Sum(o => o.Total), Count = g.Count() })
+    .OrderByDescending(x => x.Total);
+
+// Lookups. One value per key, then many values per key
+var byId = orders.ToDictionary(o => o.Id);
+var byCustomer = orders.ToLookup(o => o.CustomerId);
+
+// Newest order of each customer
+var latest = orders
+    .OrderByDescending(o => o.CreatedAt)
+    .DistinctBy(o => o.CustomerId);
+
+var biggest = orders.MaxBy(o => o.Total);
+var batches = orders.Chunk(100);
+var anyLarge = orders.Any(o => o.Total > 1000);
+
+// Left join. Customers without orders get a total of 0
+var report =
+    from c in customers
+    join o in orders on c.Id equals o.CustomerId into matches
+    from o in matches.DefaultIfEmpty()
+    select new { c.Name, Total = o?.Total ?? 0 };
+
+record Order(int Id, int CustomerId, decimal Total, DateTime CreatedAt);
+record Customer(int Id, string Name);
+
+=== cs | Async patterns
+Run in parallel, time out, throttle, and lock.
+
+int[] ids = [1, 2, 3];
+
+static async Task<string> LoadAsync(int id, CancellationToken ct = default) {
+    await Task.Delay(100, ct);
+    return $"item {id}";
+}
+
+// Start everything, wait for all
+var results = await Task.WhenAll(ids.Select(id => LoadAsync(id)));
+
+// Time out after 10 seconds
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+var item = await LoadAsync(1, cts.Token);
+
+// At most 4 at a time
+await Parallel.ForEachAsync(ids, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (id, ct) => {
+    await LoadAsync(id, ct);
+});
+
+// Lock that works across await
+var gate = new SemaphoreSlim(1, 1);
+await gate.WaitAsync();
+
+try {
+    await LoadAsync(1);
+} finally {
+    gate.Release();
+}
+
+=== cs | Retry with backoff
+Retries a failing call and doubles the wait each time.
+
+static async Task<T> RetryAsync<T>(Func<Task<T>> action, int maxAttempts = 3) {
+    for (var attempt = 1; ; attempt++) {
+        try {
+            return await action();
+        } catch (Exception) when (attempt < maxAttempts) {
+            // Waits 1s, 2s, 4s
+            await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt - 1)));
+        }
+    }
+}
+
+using var http = new HttpClient();
+var html = await RetryAsync(() => http.GetStringAsync("https://example.com"));
+
+=== cs | Files and paths
+Read, write, stream lines, find files, and build paths.
+
+// Whole file
+var text = await File.ReadAllTextAsync("in.txt");
+await File.WriteAllTextAsync("out.txt", text);
+
+// Line by line without loading the whole file
+await foreach (var line in File.ReadLinesAsync("big.log")) {
+    if (line.Contains("ERROR")) Console.WriteLine(line);
+}
+
+// Append
+await File.AppendAllLinesAsync("out.log", ["first", "second"]);
+
+// Find files in all subfolders
+var files = Directory.EnumerateFiles("C:/data", "*.csv", SearchOption.AllDirectories);
+
+// Paths
+var path = Path.Combine(AppContext.BaseDirectory, "data", "file.json");
+var name = Path.GetFileNameWithoutExtension(path);
+var folder = Path.GetDirectoryName(path)!;
+
+Directory.CreateDirectory(folder);
+
+=== cs | Run a process and capture output
+Starts a command line tool and reads what it prints.
+
+using System.Diagnostics;
+
+var info = new ProcessStartInfo("git", "status --short") {
+    RedirectStandardOutput = true,
+    RedirectStandardError = true,
+    UseShellExecute = false
+};
+
+using var process = Process.Start(info)!;
+
+// Read both streams at once so a full buffer cannot stall the process
+var stdout = process.StandardOutput.ReadToEndAsync();
+var stderr = process.StandardError.ReadToEndAsync();
+
+await process.WaitForExitAsync();
+
+if (process.ExitCode != 0) throw new InvalidOperationException(await stderr);
+
+Console.WriteLine(await stdout);
+
+=== cs | Pattern matching and records
+Switch expressions, property patterns, with, and deconstruction.
+
+static string Describe(object? value) => value switch {
+    null => "nothing",
+    int n when n < 0 => "negative",
+    int => "number",
+    string { Length: 0 } => "empty text",
+    string s => $"text {s}",
+    IEnumerable<int> list => $"{list.Count()} numbers",
+    _ => value.GetType().Name
+};
+
+static decimal Discount(Order order) => order switch {
+    { Total: > 1000 } => 0.10m,
+    { Total: > 100, IsMember: true } => 0.05m,
+    _ => 0m
+};
+
+var first = new Order(1, 250m, true);
+
+// Copy with one change
+var second = first with { Total = 300m };
+
+// Deconstruct
+var (id, total, _) = second;
+
+record Order(int Id, decimal Total, bool IsMember);
+
+=== cs | Format and parse
+Format specifiers for numbers and dates, plus safe parsing.
+
+using System.Globalization;
+
+var price = 1234.5m;
+var now = DateTime.Now;
+
+string[] samples =
+[
+    $"{price:N2}",                  // 1,234.50
+    $"{price:C}",                   // $1,234.50 in en-US
+    $"{0.256:P1}",                  // 25.6%
+    $"{42:D5}",                     // 00042
+    $"{255:X}",                     // FF
+    $"{now:yyyy-MM-dd HH:mm:ss}",   // 2026-01-31 14:05:09
+    $"{now:O}",                     // ISO 8601, round trips
+    $"{"left",-10}|{"right",10}|"   // Pad to 10 characters
+];
+
+// TryParse returns false instead of throwing
+if (int.TryParse("42", out var number)) Console.WriteLine(number);
+
+if (DateTime.TryParseExact("2026-01-31", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)) {
+    Console.WriteLine(date);
+}
+
+if (Enum.TryParse<DayOfWeek>("monday", ignoreCase: true, out var day)) Console.WriteLine(day);
+
+// Compare text without caring about case
+var same = "abc".Equals("ABC", StringComparison.OrdinalIgnoreCase);
+
+=== cs | Hashing, tokens, and Base64
+SHA-256, secure random values, and encoding helpers.
+
+using System.Security.Cryptography;
+using System.Text;
+
+// SHA-256 of text as hex
+var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("text")));
+
+// SHA-256 of a file
+await using var stream = File.OpenRead("file.zip");
+var fileHash = Convert.ToHexString(await SHA256.HashDataAsync(stream));
+
+// Secure random token and 6 digit code
+var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+
+// Base64 round trip
+var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes("text"));
+var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+
+=== cs | Guard clauses
+Built in throw helpers and early returns instead of nested ifs.
+
+static void Ship(Order order, string address, int quantity) {
+    ArgumentNullException.ThrowIfNull(order);
+    ArgumentException.ThrowIfNullOrWhiteSpace(address);
+    ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
+
+    if (order.Shipped) return;
+
+    Console.WriteLine($"Shipping {quantity} of order {order.Id} to {address}");
+}
+
+record Order(int Id, bool Shipped);
+
+=== cs | Measure elapsed time
+Allocation free timing with Stopwatch timestamps.
+
+using System.Diagnostics;
+
+var started = Stopwatch.GetTimestamp();
+
+await Task.Delay(250);
+
+var elapsed = Stopwatch.GetElapsedTime(started);
+Console.WriteLine($"Took {elapsed.TotalMilliseconds:N0} ms");
+
+=== cs | Extension method with a generated regex
+Source generated regex is compiled at build time.
+
+using System.Text.RegularExpressions;
+
+public static partial class StringExtensions {
+    [GeneratedRegex(@"[^a-z0-9]+")]
+    private static partial Regex NonSlugChars();
+
+    // "  Hello,  World! " becomes "hello-world"
+    public static string ToSlug(this string value) {
+        ArgumentNullException.ThrowIfNull(value);
+
+        return NonSlugChars().Replace(value.ToLowerInvariant(), "-").Trim('-');
+    }
+}
+
+=== cs | xUnit tests
+Fact for one case, Theory for a table of cases.
+
+using Xunit;
+
+public class SlugTests {
+    [Fact]
+    public void ToSlug_LowercasesAndJoins() {
+        var slug = "Hello World".ToSlug();
+
+        Assert.Equal("hello-world", slug);
+    }
+
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("  A  B ", "a-b")]
+    [InlineData("C# rocks!", "c-rocks")]
+    public void ToSlug_HandlesEdgeCases(string input, string expected) {
+        Assert.Equal(expected, input.ToSlug());
+    }
+
+    [Fact]
+    public void ToSlug_RejectsNull() {
+        Assert.Throws<ArgumentNullException>(() => ((string)null!).ToSlug());
+    }
+}
+
+=== html | Document boilerplate
+Minimal valid page.
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Title</title>
+    <link rel="icon" href="favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="main.js" defer></script>
+</head>
+
+<body>
+    <main>
+        <h1>Title</h1>
+    </main>
+</body>
+
+</html>
+
+=== html | Head meta and social tags
+Search description, link previews, icons, and robots.
+
+<meta name="description" content="One or two sentences shown in search results." />
+<meta name="theme-color" content="#121212" />
+<link rel="canonical" href="https://example.com/page" />
+
+<!-- Link previews -->
+<meta property="og:title" content="Title" />
+<meta property="og:description" content="Summary" />
+<meta property="og:image" content="https://example.com/preview.png" />
+<meta property="og:url" content="https://example.com/page" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<!-- Icons -->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+<!-- Keep a page out of search engines -->
+<meta name="robots" content="noindex" />
+
+=== html | Script and resource loading
+defer, async, modules, preconnect, and preload.
+
+<!-- Runs after parsing, in document order -->
+<script src="main.js" defer></script>
+
+<!-- Runs as soon as it downloads, order not guaranteed -->
+<script src="analytics.js" async></script>
+
+<!-- ES module, deferred by default -->
+<script type="module" src="app.js"></script>
+
+<!-- Open the connection to another origin early -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+
+<!-- Fetch early what the page needs soon -->
+<link rel="preload" href="/fonts/mono.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="/hero.jpg" as="image" />
+
+=== html | Form with native validation
+Input types, autocomplete hints, and constraints the browser enforces.
+
+<form action="/signup" method="post">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email" required />
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required />
+
+    <label for="zip">ZIP</label>
+    <input id="zip" name="zip" inputmode="numeric" pattern="[0-9]{5}" title="Five digits" />
+
+    <label for="qty">Quantity</label>
+    <input id="qty" name="qty" type="number" min="1" max="10" step="1" value="1" />
+
+    <label for="plan">Plan</label>
+    <select id="plan" name="plan" required>
+        <option value="">Choose</option>
+        <option value="free">Free</option>
+        <option value="pro">Pro</option>
+    </select>
+
+    <!-- Free text with suggestions -->
+    <label for="city">City</label>
+    <input id="city" name="city" list="cities" />
+    <datalist id="cities">
+        <option value="Boston"></option>
+        <option value="Berlin"></option>
+    </datalist>
+
+    <button type="submit">Sign up</button>
+</form>
+
+=== html | Modal dialog
+Native dialog with focus trap, backdrop, and Escape to close.
+
+<button id="open">Delete</button>
+
+<dialog id="confirm">
+    <form method="dialog">
+        <p>Delete this item?</p>
+        <button value="cancel">Cancel</button>
+        <button value="ok">Delete</button>
+    </form>
+</dialog>
+
+<script>
+    const dialog = document.getElementById('confirm');
+
+    document.getElementById('open').addEventListener('click', () => dialog.showModal());
+
+    // returnValue is the value of the button that closed the dialog
+    dialog.addEventListener('close', () => console.log(dialog.returnValue));
+</script>
+
+<style>
+    dialog::backdrop {
+        background: rgb(0 0 0 / 0.6);
+    }
+</style>
+
+=== html | Popover
+Menu or tooltip without JavaScript. Closes on outside click and Escape.
+
+<button popovertarget="menu">Menu</button>
+
+<div id="menu" popover>
+    <a href="/settings">Settings</a>
+    <a href="/logout">Log out</a>
+</div>
+
+=== html | Accordion
+Collapsible sections without JavaScript.
+
+<!-- Sharing a name keeps only one open at a time -->
+<details name="faq" open>
+    <summary>First question</summary>
+    <p>First answer.</p>
+</details>
+
+<details name="faq">
+    <summary>Second question</summary>
+    <p>Second answer.</p>
+</details>
+
+=== html | Responsive images
+Let the browser pick a size or format. Width and height prevent layout shift.
+
+<img src="photo-800.jpg"
+     srcset="photo-400.jpg 400w, photo-800.jpg 800w, photo-1600.jpg 1600w"
+     sizes="(max-width: 600px) 100vw, 600px"
+     width="800" height="600"
+     alt="Description"
+     loading="lazy" decoding="async" />
+
+<!-- Modern formats with a fallback -->
+<picture>
+    <source srcset="photo.avif" type="image/avif" />
+    <source srcset="photo.webp" type="image/webp" />
+    <img src="photo.jpg" alt="Description" width="800" height="600" />
+</picture>
+
+=== html | Accessible table
+Caption, header scopes, and a footer row.
+
+<table>
+    <caption>Orders this week</caption>
+    <thead>
+        <tr>
+            <th scope="col">Order</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">1001</th>
+            <td>Ada</td>
+            <td>$120.00</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <th scope="row" colspan="2">Sum</th>
+            <td>$120.00</td>
+        </tr>
+    </tfoot>
+</table>
+
+=== html | Links
+New tab, download, email, phone, and in page jumps.
+
+<!-- New tab without exposing window.opener -->
+<a href="https://example.com" target="_blank" rel="noopener noreferrer">External</a>
+
+<!-- Download with a suggested file name -->
+<a href="/files/report.pdf" download="report-2026.pdf">Download</a>
+
+<a href="mailto:hello@example.com?subject=Hello">Email</a>
+<a href="tel:+15551234567">Call</a>
+
+<!-- Jump within the page -->
+<a href="#pricing">Pricing</a>
+<h2 id="pricing">Pricing</h2>
+
+=== html | Template cloning
+Stamp out repeated markup from an inert template.
+
+<template id="row">
+    <li class="row">
+        <span class="name"></span>
+        <button class="remove">Remove</button>
+    </li>
+</template>
+
+<ul id="list"></ul>
+
+<script>
+    const template = document.getElementById('row');
+    const list = document.getElementById('list');
+
+    function addRow(name) {
+        const row = template.content.cloneNode(true);
+
+        row.querySelector('.name').textContent = name;
+        list.append(row);
+    }
+
+    addRow('First');
+</script>
+
+=== html | Video
+Player with fallbacks, and a silent background loop.
+
+<video controls preload="metadata" poster="poster.jpg" width="640" height="360">
+    <source src="clip.webm" type="video/webm" />
+    <source src="clip.mp4" type="video/mp4" />
+</video>
+
+<!-- Autoplay only works when muted -->
+<video autoplay muted loop playsinline src="loop.mp4"></video>
+
+=== html css | CSS reset
+Small baseline that removes the usual surprises.
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    line-height: 1.5;
+    font-family: system-ui, sans-serif;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+=== html css | CSS centering and page layout
+Center anything, cap content width, and pin the footer down.
+
+/* Center a child both ways */
+.center {
+    display: grid;
+    place-items: center;
+}
+
+/* Centered column with side gutters */
+.container {
+    width: min(100% - 2rem, 60rem);
+    margin-inline: auto;
+}
+
+/* Header, growing main, footer at the bottom on short pages */
+body {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
+=== html css | CSS responsive grid and rows
+Layouts that adapt without media queries.
+
+/* As many 16rem columns as fit */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    gap: 1rem;
+}
+
+/* Row that wraps */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Push the last item to the far side */
+.row > :last-child {
+    margin-left: auto;
+}
+
+=== html css | CSS truncate text
+Ellipsis after one line or after several.
+
+/* One line */
+.truncate {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Three lines */
+.clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+=== html css | CSS visually hidden
+Hide from sight but keep readable for screen readers.
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+=== html css | CSS dark mode with variables
+Follows the system theme through custom properties.
+
+:root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --accent: #0a7c7c;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #121212;
+        --text: #e0e0e0;
+        --accent: #80cccc;
+    }
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+a {
+    color: var(--accent);
+}
+
+=== html css | CSS media and container queries
+Width, pointer, motion preference, and parent size.
+
+/* Narrow screens */
+@media (max-width: 600px) {
+    .sidebar {
+        display: none;
+    }
+}
+
+/* Hover effects only where a real pointer exists */
+@media (hover: hover) {
+    .card:hover {
+        transform: translateY(-2px);
+    }
+}
+
+/* Respect the reduced motion setting */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* React to the parent width instead of the viewport */
+.panel {
+    container-type: inline-size;
+}
+
+@container (min-width: 400px) {
+    .card {
+        display: flex;
+    }
+}
+
+=== ts | Fetch JSON
+GET and POST with a timeout and a real error on bad status codes.
+
+const TIMEOUT_MS = 10_000;
+
+async function getJson<T>(url: string): Promise<T> {
+    const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+
+    // fetch only rejects on network failure, so check the status
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+
+    return response.json() as Promise<T>;
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS)
+    });
+
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+
+    return response.json() as Promise<T>;
+}
+
+=== ts | Debounce and throttle
+Debounce waits for a pause. Throttle allows one call per interval.
+
+function debounce<A extends unknown[]>(fn: (...args: A) => void, waitMs: number) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    return (...args: A) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), waitMs);
+    };
+}
+
+function throttle<A extends unknown[]>(fn: (...args: A) => void, waitMs: number) {
+    let last = 0;
+
+    return (...args: A) => {
+        const now = Date.now();
+        if (now - last < waitMs) return;
+
+        last = now;
+        fn(...args);
+    };
+}
+
+const onSearch = debounce((query: string) => console.log(query), 300);
+const onScroll = throttle(() => console.log(window.scrollY), 100);
+
+=== ts | Sleep and retry
+Pause in async code and retry a flaky call with backoff.
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+async function retry<T>(fn: () => Promise<T>, attempts = 3, baseMs = 500): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (attempt >= attempts) throw error;
+
+            // Waits 500ms, 1s, 2s
+            await sleep(baseMs * 2 ** (attempt - 1));
+        }
+    }
+}
+
+const page = await retry(() => fetch('/api/data').then(r => r.text()));
+
+=== ts | Limit concurrent promises
+Process a list with a fixed number of calls in flight, and collect partial successes.
+
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+    const results = new Array<R>(items.length);
+    let next = 0;
+
+    // Each worker takes the next index until the list is empty
+    async function worker() {
+        while (next < items.length) {
+            const index = next++;
+            results[index] = await fn(items[index]);
+        }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+
+    return results;
+}
+
+const urls = ['/a', '/b', '/c'];
+const bodies = await mapLimit(urls, 2, url => fetch(url).then(r => r.text()));
+
+// Keep the successes when some calls fail
+const settled = await Promise.allSettled(urls.map(url => fetch(url)));
+const succeeded = settled
+    .filter((r): r is PromiseFulfilledResult<Response> => r.status === 'fulfilled')
+    .map(r => r.value);
+
+=== ts | Result instead of try and catch
+Wrap a promise so failure is a value the type system makes you handle.
+
+type Result<T, E = Error> =
+    | { ok: true; value: T }
+    | { ok: false; error: E };
+
+async function attempt<T>(promise: Promise<T>): Promise<Result<T>> {
+    try {
+        return { ok: true, value: await promise };
+    } catch (error) {
+        return { ok: false, error: error instanceof Error ? error : new Error(String(error)) };
+    }
+}
+
+const result = await attempt(fetch('/api/user'));
+
+if (result.ok) {
+    console.log(result.value.status);
+} else {
+    console.error(result.error.message);
+}
+
+=== ts | Array helpers
+Unique, chunk, range, sum, sort, group, and index.
+
+const unique = <T>(items: T[]) => [...new Set(items)];
+
+// Last item wins for each key
+const uniqueBy = <T, K>(items: T[], key: (item: T) => K) =>
+    [...new Map(items.map(item => [key(item), item])).values()];
+
+// chunk([1, 2, 3, 4, 5], 2) gives [[1, 2], [3, 4], [5]]
+const chunk = <T>(items: T[], size: number) =>
+    Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size));
+
+// range(2, 5) gives [2, 3, 4]
+const range = (start: number, end: number) => Array.from({ length: end - start }, (_, i) => start + i);
+
+const sum = (numbers: number[]) => numbers.reduce((total, n) => total + n, 0);
+
+// Sorted copy, the input stays untouched
+const sortBy = <T>(items: T[], key: (item: T) => number | string) =>
+    [...items].sort((a, b) => {
+        const x = key(a);
+        const y = key(b);
+
+        return x < y ? -1 : x > y ? 1 : 0;
+    });
+
+const orders = [{ id: 1, status: 'paid' }, { id: 2, status: 'draft' }, { id: 3, status: 'paid' }];
+
+// One list per status. Needs a 2024 or newer runtime
+const byStatus = Object.groupBy(orders, order => order.status);
+
+// Fast lookup by id
+const byId = new Map(orders.map(order => [order.id, order]));
+
+=== ts | Object helpers
+Clone, pick, omit, strip empty values, and safe access.
+
+const original = { id: 1, name: 'Ada', address: { city: 'London' }, note: null as string | null };
+
+// Deep copy, also handles Date, Map, and Set
+const copy = structuredClone(original);
+
+const pick = <T extends object, K extends keyof T>(obj: T, ...keys: K[]) =>
+    Object.fromEntries(keys.map(key => [key, obj[key]])) as Pick<T, K>;
+
+const omit = <T extends object, K extends keyof T>(obj: T, ...keys: K[]) =>
+    Object.fromEntries(Object.entries(obj).filter(([key]) => !keys.includes(key as K))) as Omit<T, K>;
+
+const summary = pick(original, 'id', 'name');
+const withoutNote = omit(original, 'note');
+
+// Drop null and undefined values
+const compact = Object.fromEntries(Object.entries(original).filter(([, value]) => value != null));
+
+// Missing links in the chain give the fallback instead of throwing
+const user: { address?: { city?: string } } = {};
+const city = user.address?.city ?? 'Unknown';
+
+=== ts | Format dates and numbers
+Intl handles locale rules, no library needed.
+
+const date = new Date(2026, 0, 31, 14, 5);
+
+// Jan 31, 2026, 2:05 PM
+new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+
+// 2026-01-31 in local time
+date.toLocaleDateString('en-CA');
+
+// 2026-01-31T19:05:00.000Z style UTC timestamp
+date.toISOString();
+
+// yesterday, in 3 hours
+const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+relative.format(-1, 'day');
+relative.format(3, 'hour');
+
+// $1,234.50
+new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(1234.5);
+
+// 1.5M
+new Intl.NumberFormat('en-US', { notation: 'compact' }).format(1_500_000);
+
+// 25.6%
+new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 }).format(0.256);
+
+// Date math that survives month ends and daylight saving
+const addDays = (from: Date, days: number) =>
+    new Date(from.getFullYear(), from.getMonth(), from.getDate() + days);
+
+=== ts | Text helpers
+Escape HTML, slugify, truncate, and format bytes.
+
+// Safe to place inside HTML text or attributes
+const escapeHtml = (text: string) =>
+    text.replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
+
+// "Crème Brûlée!" becomes "creme-brulee"
+const slugify = (text: string) =>
+    text
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+const truncate = (text: string, max: number) =>
+    text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+// formatBytes(1536) gives "1.5 KB"
+function formatBytes(bytes: number, decimals = 1) {
+    const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const BASE = 1024;
+
+    if (bytes === 0) return '0 B';
+
+    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(BASE)), UNITS.length - 1);
+
+    return `${(bytes / BASE ** index).toFixed(decimals)} ${UNITS[index]}`;
+}
+
+=== ts | Regex recipes
+Named groups, all matches, replace with a function, and escaping user input.
+
+const ISO_DATE = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/;
+
+// Named groups
+const { year, month, day } = ISO_DATE.exec('Due 2026-01-31')?.groups ?? {};
+
+// Every match. Gives ['one', 'two']
+const tags = [...'#one #two'.matchAll(/#(\w+)/g)].map(match => match[1]);
+
+// Replace with a function. Gives 'fooBarBaz'
+const camel = 'foo-bar-baz'.replace(/-(\w)/g, (_, ch: string) => ch.toUpperCase());
+
+// Escape user input before building a pattern from it
+const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const finder = new RegExp(escapeRegex('1.5 (approx)'), 'i');
+
+=== ts | Random values and ids
+UUID, integer in a range, pick, shuffle, and a secure token.
+
+const id = crypto.randomUUID();
+
+// Integer from min to max, both included
+const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const pickOne = <T>(items: T[]) => items[Math.floor(Math.random() * items.length)];
+
+// Fisher-Yates shuffle on a copy
+function shuffle<T>(items: T[]) {
+    const copy = [...items];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+}
+
+// 32 hex characters from the secure generator
+const token = [...crypto.getRandomValues(new Uint8Array(16))]
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+=== ts | URL and query string
+Read, change, and build query parameters.
+
+const url = new URL('https://example.com/search?q=beer&page=2');
+
+url.searchParams.get('q');          // 'beer'
+url.searchParams.set('page', '3');
+url.searchParams.delete('q');
+url.toString();                     // 'https://example.com/search?page=3'
+
+// Current page
+const params = new URLSearchParams(location.search);
+const page = Number(params.get('page') ?? 1);
+
+// Update the address bar without a reload
+params.set('page', String(page + 1));
+history.replaceState(null, '', `?${params}`);
+
+// Build from an object, encoding included. Gives 'q=a+b&sort=name'
+const query = new URLSearchParams({ q: 'a b', sort: 'name' }).toString();
+
+=== ts | Local storage with JSON
+Typed load with a fallback when the key is missing or corrupt.
+
+function load<T>(key: string, fallback: T): T {
+    try {
+        const raw = localStorage.getItem(key);
+
+        return raw === null ? fallback : (JSON.parse(raw) as T);
+    } catch {
+        return fallback;
+    }
+}
+
+function save(key: string, value: unknown) {
+    localStorage.setItem(key, JSON.stringify(value));
+}
+
+const settings = load('settings', { theme: 'dark', pageSize: 50 });
+save('settings', { ...settings, pageSize: 100 });
+
+=== ts | Clipboard and file download
+Copy text and save generated content as a file.
+
+async function copyText(text: string) {
+    await navigator.clipboard.writeText(text);
+}
+
+function downloadFile(name: string, content: BlobPart, type = 'text/plain') {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = name;
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+downloadFile('data.json', JSON.stringify({ hello: 'world' }, null, 2), 'application/json');
+
+=== ts | Read files from input or drop
+Get text or bytes from files the user picks or drags in.
+
+const input = document.querySelector<HTMLInputElement>('#file')!;
+const zone = document.querySelector<HTMLElement>('#drop')!;
+
+async function handle(files: File[]) {
+    for (const file of files) {
+        const text = await file.text();
+        const bytes = new Uint8Array(await file.arrayBuffer());
+
+        console.log(file.name, file.type, text.length, bytes.length);
+    }
+}
+
+input.addEventListener('change', () => handle([...(input.files ?? [])]));
+
+// Without preventDefault on dragover the drop event never fires
+zone.addEventListener('dragover', event => event.preventDefault());
+
+zone.addEventListener('drop', event => {
+    event.preventDefault();
+    handle([...(event.dataTransfer?.files ?? [])]);
+});
+
+=== ts | DOM helpers and event delegation
+Short query helpers and one listener that covers present and future elements.
+
+const $ = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document) =>
+    root.querySelector<T>(selector);
+
+const $$ = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document) =>
+    [...root.querySelectorAll<T>(selector)];
+
+// One listener on the container instead of one per button
+document.addEventListener('click', event => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('button[data-id]');
+    if (!button) return;
+
+    console.log(button.dataset.id);
+});
+
+// Build an element
+const item = document.createElement('li');
+item.className = 'row';
+item.textContent = 'Safe text, never parsed as HTML';
+$('#list')?.append(item);
+
+=== ts | Keyboard shortcuts
+Modifier combos, Escape, and single keys that stay quiet while typing.
+
+const TYPING_TARGETS = 'input, textarea, select, [contenteditable]';
+
+document.addEventListener('keydown', event => {
+    const typing = (event.target as Element).matches(TYPING_TARGETS);
+
+    // Ctrl+K or Cmd+K
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        console.log('open palette');
+        return;
+    }
+
+    if (event.key === 'Escape') {
+        console.log('close');
+        return;
+    }
+
+    if (event.key === '/' && !typing) {
+        event.preventDefault();
+        console.log('focus search');
+    }
+});
+
+=== ts | Observe visibility and size
+IntersectionObserver for lazy work, ResizeObserver for element size.
+
+// Fires once when an element comes within 200px of the viewport
+const reveal = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+
+        entry.target.classList.add('visible');
+        reveal.unobserve(entry.target);
+    }
+}, { rootMargin: '200px' });
+
+document.querySelectorAll('.lazy').forEach(element => reveal.observe(element));
+
+// Fires whenever the element changes size
+const resize = new ResizeObserver(entries => {
+    for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        console.log(width, height);
+    }
+});
+
+resize.observe(document.body);
+
+=== ts | Utility types
+Built in type transformers worth remembering.
+
+interface User {
+    id: number;
+    name: string;
+    email?: string;
+}
+
+async function loadUser(id: number): Promise<User> {
+    return { id, name: 'Ada' };
+}
+
+type Draft = Partial<User>;                         // Every field optional
+type Complete = Required<User>;                     // Every field required
+type Frozen = Readonly<User>;                       // No reassignment
+type Preview = Pick<User, 'id' | 'name'>;           // Only these fields
+type NewUser = Omit<User, 'id'>;                    // All but these fields
+type ById = Record<number, User>;                   // Dictionary
+type Key = keyof User;                              // 'id' | 'name' | 'email'
+type Name = User['name'];                           // string
+type Email = NonNullable<User['email']>;            // string
+type Loaded = Awaited<ReturnType<typeof loadUser>>; // User
+type Args = Parameters<typeof loadUser>;            // [id: number]
+
+=== ts | Unions and narrowing
+Union from a constant list, type guards, exhaustive switch, and satisfies.
+
+// Union type derived from a runtime list
+const STATUSES = ['draft', 'sent', 'paid'] as const;
+type Status = (typeof STATUSES)[number];
+
+const isStatus = (value: unknown): value is Status =>
+    STATUSES.includes(value as Status);
+
+// Discriminated union
+type Shape =
+    | { kind: 'circle'; radius: number }
+    | { kind: 'rect'; width: number; height: number };
+
+function area(shape: Shape): number {
+    switch (shape.kind) {
+        case 'circle':
+            return Math.PI * shape.radius ** 2;
+        case 'rect':
+            return shape.width * shape.height;
+        default:
+            // Fails to compile when a new kind is not handled above
+            return shape satisfies never;
+    }
+}
+
+// satisfies checks the shape but keeps the exact keys and literal types
+const ROUTES = {
+    home: '/',
+    orders: '/orders'
+} satisfies Record<string, string>;
+
+=== ts | tsconfig baseline
+Strict settings for a bundled browser project.
+
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2023", "DOM", "DOM.Iterable"],
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true,
+        "noEmit": true
+    },
+    "include": ["src"]
+}
+
+=== svelte sh | Project setup
+Create, run, check, and build a SvelteKit project.
+
+npx sv create my-app
+cd my-app
+npm install
+npm run dev -- --open
+
+# Add integrations later
+npx sv add tailwindcss
+
+# Type check, then production build
+npm run check
+npm run build
+npm run preview
+
+=== svelte | State, derived, and effect
+The three core runes in one component.
+
+<script lang="ts">
+    let count = $state(0);
+    let doubled = $derived(count * 2);
+
+    // Reruns whenever a value it reads changes
+    $effect(() => {
+        document.title = `Count ${count}`;
+    });
+</script>
+
+<button onclick={() => count++}>
+    {count} doubled is {doubled}
+</button>
+
+=== svelte | Props
+Typed props with defaults, a callback, and rest attributes passed to the element.
+
+<script lang="ts">
+    import type { HTMLButtonAttributes } from 'svelte/elements';
+
+    interface Props extends HTMLButtonAttributes {
+        label: string;
+        variant?: 'primary' | 'ghost';
+        onpick?: (label: string) => void;
+    }
+
+    let { label, variant = 'primary', onpick, ...rest }: Props = $props();
+</script>
+
+<button {...rest} class={variant} onclick={() => onpick?.(label)}>
+    {label}
+</button>
+
+=== svelte | Bindable props
+Two way binding between parent and child.
+
+<!-- TextField.svelte -->
+<script lang="ts">
+    let { value = $bindable(''), label }: { value?: string; label: string } = $props();
+</script>
+
+<label>
+    {label}
+    <input bind:value />
+</label>
+
+<!-- Parent.svelte -->
+<script lang="ts">
+    import TextField from './TextField.svelte';
+
+    let name = $state('');
+</script>
+
+<TextField bind:value={name} label="Name" />
+<p>Hello {name}</p>
+
+=== svelte | Snippets and children
+Snippets replace slots. Content between the tags arrives as children.
+
+<!-- Card.svelte -->
+<script lang="ts">
+    import type { Snippet } from 'svelte';
+
+    interface Props {
+        title: string;
+        children: Snippet;
+        footer?: Snippet<[string]>;
+    }
+
+    let { title, children, footer }: Props = $props();
+</script>
+
+<section>
+    <h2>{title}</h2>
+    {@render children()}
+    {@render footer?.(title)}
+</section>
+
+<!-- Page.svelte -->
+<script lang="ts">
+    import Card from './Card.svelte';
+</script>
+
+<Card title="Orders">
+    <p>This paragraph is the children snippet.</p>
+
+    {#snippet footer(title)}
+        <small>End of {title}</small>
+    {/snippet}
+</Card>
+
+=== svelte | Template blocks
+if, each with a key, await, key, and raw HTML.
+
+{#if loading}
+    <p>Loading</p>
+{:else if items.length === 0}
+    <p>Nothing here</p>
+{:else}
+    <ul>
+        {#each items as item, index (item.id)}
+            <li>{index + 1}. {item.name}</li>
+        {/each}
+    </ul>
+{/if}
+
+{#await promise}
+    <p>Waiting</p>
+{:then value}
+    <p>{value}</p>
+{:catch error}
+    <p>{error.message}</p>
+{/await}
+
+<!-- Destroys and recreates the content when the value changes -->
+{#key selectedId}
+    <Detail id={selectedId} />
+{/key}
+
+<!-- Only for HTML you trust -->
+{@html trustedHtml}
+
+=== svelte | Bindings
+Inputs, checkbox groups, element references, and dimensions.
+
+<script lang="ts">
+    const TAGS = ['red', 'green', 'blue'];
+
+    let name = $state('');
+    let agreed = $state(false);
+    let plan = $state('free');
+    let tags = $state<string[]>([]);
+    let width = $state(0);
+    let input = $state<HTMLInputElement>();
+</script>
+
+<input bind:value={name} bind:this={input} />
+<input type="checkbox" bind:checked={agreed} />
+
+<select bind:value={plan}>
+    <option value="free">Free</option>
+    <option value="pro">Pro</option>
+</select>
+
+{#each TAGS as tag}
+    <label>
+        <input type="checkbox" value={tag} bind:group={tags} />
+        {tag}
+    </label>
+{/each}
+
+<div bind:clientWidth={width}>{width}px wide</div>
+
+<button onclick={() => input?.focus()}>Focus the input</button>
+
+<svelte:window onkeydown={event => event.key === 'Escape' && input?.blur()} />
+
+=== svelte | Derived and effect details
+Multi line derivations, cleanup, untrack, and inspect.
+
+<script lang="ts">
+    import { untrack } from 'svelte';
+
+    const TICK_MS = 1000;
+
+    let query = $state('');
+    let items = $state<string[]>([]);
+    let seconds = $state(0);
+
+    // $derived.by takes a function for logic that needs statements
+    let matches = $derived.by(() => {
+        const needle = query.toLowerCase();
+
+        return items.filter(item => item.toLowerCase().includes(needle));
+    });
+
+    // The returned function runs before each rerun and on destroy
+    $effect(() => {
+        const timer = setInterval(() => seconds++, TICK_MS);
+
+        return () => clearInterval(timer);
+    });
+
+    // Reruns when query changes, but not when items changes
+    $effect(() => {
+        console.log(query, untrack(() => items.length));
+    });
+
+    // Logs on every change, removed from production builds
+    $inspect(matches);
+</script>
+
+<input bind:value={query} />
+<p>{matches.length} matches after {seconds}s</p>
+
+=== svelte | Debounced search
+Effect cleanup cancels the pending timer and the request in flight.
+
+<script lang="ts">
+    const DEBOUNCE_MS = 300;
+
+    let query = $state('');
+    let results = $state<string[]>([]);
+
+    $effect(() => {
+        const term = query.trim();
+
+        if (!term) {
+            results = [];
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const timer = setTimeout(() => {
+            fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: controller.signal })
+                .then(response => response.json())
+                .then(data => (results = data))
+                .catch(error => {
+                    // Aborted requests reject, which is expected here
+                    if (error.name !== 'AbortError') console.error(error);
+                });
+        }, DEBOUNCE_MS);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    });
+</script>
+
+<input bind:value={query} placeholder="Search" />
+
+<ul>
+    {#each results as result}
+        <li>{result}</li>
+    {/each}
+</ul>
+
+=== svelte ts | Shared state module
+Runes work in .svelte.ts files. Export an object, since a reassigned $state variable cannot be exported.
+
+// cart.svelte.ts
+interface CartItem {
+    name: string;
+    price: number;
+    qty: number;
+}
+
+class Cart {
+    items = $state<CartItem[]>([]);
+    total = $derived(this.items.reduce((sum, item) => sum + item.price * item.qty, 0));
+
+    add(item: CartItem) {
+        this.items.push(item);
+    }
+
+    clear() {
+        this.items = [];
+    }
+}
+
+// Import cart in any component and read cart.total
+export const cart = new Cart();
+
+=== svelte | Reactive collections and raw state
+Reactive Map and Set, media queries, raw state, and snapshots.
+
+<script lang="ts">
+    import { MediaQuery, SvelteMap, SvelteSet } from 'svelte/reactivity';
+
+    const selected = new SvelteSet<number>();
+    const cache = new SvelteMap<string, number>();
+    const wide = new MediaQuery('min-width: 800px');
+
+    // Not deeply reactive. Cheaper for big data that is only replaced
+    let rows = $state.raw<number[]>([]);
+
+    let form = $state({ name: '', tags: [] as string[] });
+
+    function save() {
+        // Plain copy without proxies, safe for structuredClone and postMessage
+        const plain = $state.snapshot(form);
+
+        cache.set(plain.name, plain.tags.length);
+        rows = [...rows, cache.size];
+    }
+</script>
+
+<button onclick={() => selected.add(selected.size)}>Select one more</button>
+<button onclick={save}>Save</button>
+
+<p>{selected.size} selected, {rows.length} rows, {wide.current ? 'wide' : 'narrow'} screen</p>
+
+=== svelte | Context
+Share a value with every descendant without passing props.
+
+<!-- Parent.svelte -->
+<script lang="ts">
+    import { setContext } from 'svelte';
+
+    const theme = $state({ mode: 'dark' });
+
+    setContext('theme', theme);
+</script>
+
+<button onclick={() => (theme.mode = theme.mode === 'dark' ? 'light' : 'dark')}>Toggle</button>
+
+<!-- Child.svelte, at any depth below -->
+<script lang="ts">
+    import { getContext } from 'svelte';
+
+    const theme = getContext<{ mode: string }>('theme');
+</script>
+
+<p>{theme.mode}</p>
+
+=== svelte | Lifecycle and tick
+Run code after mount with cleanup, and wait for the DOM to update.
+
+<script lang="ts">
+    import { onMount, tick } from 'svelte';
+
+    let list = $state<HTMLUListElement>();
+    let items = $state<string[]>([]);
+    let online = $state(true);
+
+    // Browser only, runs once after the first render
+    onMount(() => {
+        const update = () => (online = navigator.onLine);
+
+        window.addEventListener('online', update);
+        window.addEventListener('offline', update);
+
+        return () => {
+            window.removeEventListener('online', update);
+            window.removeEventListener('offline', update);
+        };
+    });
+
+    async function add(item: string) {
+        items.push(item);
+
+        // The new row exists in the DOM only after tick resolves
+        await tick();
+        list?.lastElementChild?.scrollIntoView();
+    }
+</script>
+
+<p>{online ? 'Online' : 'Offline'}</p>
+<button onclick={() => add(`Item ${items.length + 1}`)}>Add</button>
+
+<ul bind:this={list}>
+    {#each items as item}
+        <li>{item}</li>
+    {/each}
+</ul>
+
+=== svelte ts | Click outside action
+Reusable element behavior. Apply it with use:clickOutside={() => (open = false)}.
+
+// clickOutside.ts
+import type { Action } from 'svelte/action';
+
+export const clickOutside: Action<HTMLElement, () => void> = (node, onOutside) => {
+    function handle(event: MouseEvent) {
+        if (node.contains(event.target as Node)) return;
+
+        onOutside();
+    }
+
+    // Capture phase sees the click even when a child stops propagation
+    document.addEventListener('click', handle, true);
+
+    return {
+        destroy() {
+            document.removeEventListener('click', handle, true);
+        }
+    };
+};
+
+=== svelte | Classes, styles, and transitions
+Conditional classes, CSS variables, and enter or leave animations.
+
+<script lang="ts">
+    import { fade, fly, slide } from 'svelte/transition';
+
+    let open = $state(false);
+    let active = $state(false);
+</script>
+
+<button class:active onclick={() => (active = !active)}>Activate</button>
+<button onclick={() => (open = !open)}>Toggle</button>
+
+<!-- Array and object class values need Svelte 5.16 or newer -->
+<div class={['card', { active, open }]} style:--gap="8px">
+    {#if open}
+        <p transition:fade={{ duration: 150 }}>Fades in and out</p>
+        <p in:fly={{ y: 20 }} out:slide>Flies in, slides out</p>
+    {/if}
+</div>
+
+<style>
+    .card {
+        display: grid;
+        gap: var(--gap);
+    }
+
+    .active {
+        outline: 2px solid teal;
+    }
+</style>
+
+=== svelte | Generic component
+Type parameter on the script tag keeps item types flowing to the caller.
+
+<script lang="ts" generics="T extends { id: string | number }">
+    import type { Snippet } from 'svelte';
+
+    interface Props {
+        items: T[];
+        row: Snippet<[T]>;
+        onselect?: (item: T) => void;
+    }
+
+    let { items, row, onselect }: Props = $props();
+</script>
+
+<ul>
+    {#each items as item (item.id)}
+        <li>
+            <button onclick={() => onselect?.(item)}>
+                {@render row(item)}
+            </button>
+        </li>
+    {/each}
+</ul>
+
+=== svelte ts | Mount without SvelteKit
+Entry point for a plain Vite app. Replaces new App() from Svelte 4.
+
+// main.ts
+import { mount } from 'svelte';
+import App from './App.svelte';
+
+const app = mount(App, {
+    target: document.getElementById('app')!,
+    props: { name: 'world' }
+});
+
+export default app;
+
+=== svelte ts | SvelteKit load function
+Server side data for a page. The return value becomes the data prop.
+
+// src/routes/orders/[id]/+page.server.ts
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ params, fetch }) => {
+    const response = await fetch(`/api/orders/${params.id}`);
+
+    if (!response.ok) error(404, 'Order not found');
+
+    return { order: await response.json() };
+};
+
+=== svelte | SvelteKit page with data
+Reads what the load function returned. PageProps needs SvelteKit 2.16 or newer.
+
+<!-- src/routes/orders/[id]/+page.svelte -->
+<script lang="ts">
+    import type { PageProps } from './$types';
+
+    let { data }: PageProps = $props();
+</script>
+
+<svelte:head>
+    <title>Order {data.order.id}</title>
+</svelte:head>
+
+<h1>Order {data.order.id}</h1>
+
+=== svelte ts | SvelteKit form action
+Server side form handling with validation errors sent back to the page.
+
+// src/routes/subscribe/+page.server.ts
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
+
+export const actions = {
+    default: async ({ request }) => {
+        const form = await request.formData();
+        const email = String(form.get('email') ?? '');
+
+        if (!email.includes('@')) {
+            return fail(400, { email, message: 'Enter a valid email' });
+        }
+
+        redirect(303, '/thanks');
+    }
+} satisfies Actions;
+
+=== svelte | SvelteKit form page
+Works without JavaScript. enhance upgrades it to submit without a full reload.
+
+<!-- src/routes/subscribe/+page.svelte -->
+<script lang="ts">
+    import { enhance } from '$app/forms';
+    import type { PageProps } from './$types';
+
+    let { form }: PageProps = $props();
+</script>
+
+<form method="POST" use:enhance>
+    <input name="email" type="email" value={form?.email ?? ''} required />
+
+    {#if form?.message}
+        <p>{form.message}</p>
+    {/if}
+
+    <button>Subscribe</button>
+</form>
+
+=== svelte ts | SvelteKit API endpoint
+JSON route with GET and POST handlers.
+
+// src/routes/api/orders/+server.ts
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+
+const DEFAULT_LIMIT = 20;
+
+export const GET: RequestHandler = async ({ url }) => {
+    const limit = Number(url.searchParams.get('limit') ?? DEFAULT_LIMIT);
+
+    return json({ limit, orders: [] });
+};
+
+export const POST: RequestHandler = async ({ request }) => {
+    const order = await request.json();
+
+    return json(order, { status: 201 });
+};
+
+=== svelte | SvelteKit navigation and page state
+Current URL and params, programmatic navigation, and rerunning load. $app/state needs SvelteKit 2.12 or newer.
+
+<script lang="ts">
+    import { goto, invalidateAll } from '$app/navigation';
+    import { page } from '$app/state';
+</script>
+
+<a href="/orders" aria-current={page.url.pathname === '/orders' ? 'page' : undefined}>Orders</a>
+
+<p>Order {page.params.id}, search {page.url.searchParams.get('q')}</p>
+
+<button onclick={() => goto('/orders?sort=date')}>Sort by date</button>
+<button onclick={() => invalidateAll()}>Reload data</button>
