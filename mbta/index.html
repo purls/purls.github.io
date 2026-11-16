@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MBTA Trip Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background-color: #2d2d2d;
+            color: #6d6d6d;
+            cursor: not-allowed;
+        }
+
+        label {
+            color: #b0b0b0;
+            font-size: 14px;
+        }
+
+        select,
+        input[type="password"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            width: 200px;
+        }
+
+        .trip-section {
+            margin-bottom: 30px;
+        }
+
+        .trip-section h2 {
+            color: #80cccc;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .trip-card {
+            background-color: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 4px solid #244444;
+        }
+
+        .trip-card.warning {
+            border-left-color: #996600;
+        }
+
+        .trip-card.good {
+            border-left-color: #2d5a2d;
+        }
+
+        .time {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e0e0e0;
+            margin-bottom: 5px;
+        }
+
+        .route-name {
+            color: #b0b0b0;
+            margin-bottom: 5px;
+        }
+
+        .wait-time {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .tag {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+
+        .tag.tight {
+            color: #ff9800;
+        }
+
+        .tag.fallback,
+        .tag.safe {
+            color: #4caf50;
+        }
+
+        .wait-time.short {
+            color: #4caf50;
+        }
+
+        .wait-time.medium {
+            color: #ff9800;
+        }
+
+        .wait-time.long {
+            color: #f44336;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6d6d6d;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            background-color: #2d1e1e;
+            border: 1px solid #4d2e2e;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .info-message {
+            color: #60c8c5;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #6d6d6d;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #3d3d3d;
+            margin: 30px 0;
+        }
+
+        details {
+            margin-top: 10px;
+        }
+
+        summary {
+            cursor: pointer;
+            color: #666;
+            font-size: 14px;
+        }
+
+        summary:hover {
+            color: #888;
+        }
+
+        #results {
+            min-height: 200px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">MBTA Trip Planner</h1>
+        <a href="https://localhost.beer" class="home-link">
+            ← home
+        </a>
+    </div>
+    <p style="margin: 0;">
+        Impromptu round-trip journey planner for New Bedford/Fall River to South Station to Back Bay Station.
+    </p>
+    <br />
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="apiKey">MBTA API Key:</label>
+            <input type="password" id="apiKey" placeholder="Enter your API key">
+        </div>
+
+        <div class="control-group">
+            <label for="fromStation">From Station:</label>
+            <select id="fromStation">
+                <option value="">Select station...</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="autoRefresh">Auto-refresh:</label>
+            <select id="autoRefresh">
+                <option value="0">Manual only</option>
+                <option value="1">Every minute</option>
+                <option value="2" selected>Every 2 minutes</option>
+                <option value="5">Every 5 minutes</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button id="planTrip" onclick="planTrip()">Plan Trip</button>
+        <button id="clearAll" onclick="clearAll()">Clear All</button>
+    </div>
+
+    <hr>
+
+    <div id="results"></div>
+
+    <div class="info-message" id="refreshInfo"></div>
+
+    <hr>
+    <p>
+        This tool helps plan trips from the New Bedford/Fall River line to Back Bay Station.
+        It shows the next departure, optimal connections at South Station, and return options.
+        Get your free API key at <a href="https://api-v3.mbta.com" target="_blank">api-v3.mbta.com</a>.
+    </p>
+
+    <script>
+        // MBTA API
+        const API_BASE = 'https://api-v3.mbta.com';
+        const KEY_STORAGE = 'mbta_api_key';
+        const HTTP_FORBIDDEN = 403;
+        const HTTP_TOO_MANY_REQUESTS = 429;
+        const HTTP_ERROR_HINTS = {
+            [HTTP_FORBIDDEN]: 'API key rejected',
+            [HTTP_TOO_MANY_REQUESTS]: 'Rate limit hit, retry in a minute'
+        };
+
+        // Direction ids shared by all South Station commuter lines
+        const OUTBOUND = 0;
+        const INBOUND = 1;
+
+        const HOME_ROUTE = 'CR-NewBedford';
+        const SOUTH_STATION = 'place-sstat';
+        const BACK_BAY = 'place-bbsta';
+
+        // Junction where branch shuttles meet through trains
+        const EAST_TAUNTON = 'place-NBM-0374';
+
+        // Lines that call at Back Bay right after South Station
+        const BACK_BAY_ROUTES = ['CR-Worcester', 'CR-Franklin', 'CR-Needham', 'CR-Providence'];
+
+        const ROUTE_NAMES = {
+            'CR-NewBedford': 'Fall River/New Bedford',
+            'CR-Worcester': 'Worcester',
+            'CR-Franklin': 'Franklin',
+            'CR-Needham': 'Needham',
+            'CR-Providence': 'Providence'
+        };
+
+        // South Coast stations, the first one is the default
+        const HOME_STATIONS = {
+            'place-NBM-0546': 'New Bedford',
+            'place-NBM-0523': 'Church Street',
+            [EAST_TAUNTON]: 'East Taunton',
+            'place-FRS-0109': 'Fall River Depot',
+            'place-FRS-0054': 'Freetown',
+            'place-MBS-0350': 'Middleborough'
+        };
+
+        const STOP_NAMES = {
+            ...HOME_STATIONS,
+            [SOUTH_STATION]: 'South Station',
+            [BACK_BAY]: 'Back Bay'
+        };
+
+        const TIME_ZONE = 'America/New_York';
+        const MS_PER_MIN = 60 * 1000;
+        const MS_PER_HOUR = 60 * MS_PER_MIN;
+        const MS_PER_DAY = 24 * MS_PER_HOUR;
+
+        // MBTA service days run 3 AM to 3 AM
+        const SERVICE_DAY_START_HOUR = 3;
+        const DAYS_FETCHED = 2;
+
+        // South Station transfers shorter than MIN are shown as tight, shorter than TIGHT are dropped
+        const MIN_TRANSFER_MIN = 5;
+        const TIGHT_TRANSFER_MIN = 1;
+        const MAX_CHANGE_WAIT_MIN = 30;
+        const MAX_ITINERARIES = 5;
+        const MAX_ALTERNATIVES = 3;
+
+        // Role of a Back Bay train next to a tight transfer
+        const ROW = { TIGHT: 'tight', FALLBACK: 'fallback', SAFE: 'safe' };
+        const ROW_LABELS = {
+            [ROW.TIGHT]: 'Tight',
+            [ROW.FALLBACK]: 'Fallback',
+            [ROW.SAFE]: 'Safe'
+        };
+        const CANCELLED_STATES = ['CANCELLED', 'SKIPPED'];
+
+        const TIME_FORMAT = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, hour: 'numeric', minute: '2-digit' });
+        const DAY_FORMAT = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, weekday: 'short' });
+        const DATE_FORMAT = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE });
+
+        let refreshTimer = null;
+        let hasPlanned = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            loadStations();
+            setupAutoRefresh();
+
+            // Load saved API key if exists and plan right away
+            const savedKey = localStorage.getItem(KEY_STORAGE);
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+                planTrip();
+            }
+        });
+
+        function loadStations() {
+            const select = document.getElementById('fromStation');
+            select.innerHTML = '';
+
+            for (const [id, name] of Object.entries(HOME_STATIONS)) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = name;
+                select.appendChild(option);
+            }
+        }
+
+        function setupAutoRefresh() {
+            document.getElementById('autoRefresh').addEventListener('change', function () {
+                if (hasPlanned) scheduleRefresh();
+            });
+        }
+
+        // Restart the countdown so a manual plan does not double up with a timed one
+        function scheduleRefresh() {
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+
+            const minutes = parseInt(document.getElementById('autoRefresh').value);
+            if (minutes > 0) {
+                refreshTimer = setTimeout(planTrip, minutes * MS_PER_MIN);
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('apiKey').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('refreshInfo').textContent = '';
+            localStorage.removeItem(KEY_STORAGE);
+
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+            hasPlanned = false;
+        }
+
+        async function makeAPICall(endpoint, params) {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                throw new Error('Please enter your MBTA API key');
+            }
+
+            // Save API key for next time
+            localStorage.setItem(KEY_STORAGE, apiKey);
+
+            const url = new URL(`${API_BASE}${endpoint}`);
+            for (const [key, value] of Object.entries(params)) {
+                if (value !== null && value !== undefined) {
+                    url.searchParams.append(key, value);
+                }
+            }
+
+            const response = await fetch(url, {
+                headers: {
+                    'x-api-key': apiKey
+                }
+            });
+
+            if (!response.ok) {
+                const hint = HTTP_ERROR_HINTS[response.status] || 'API call failed';
+                throw new Error(`${hint} (${response.status})`);
+            }
+
+            return response.json();
+        }
+
+        // Service date N days ahead, e.g. 1 AM Tuesday still belongs to Monday
+        function serviceDate(dayOffset) {
+            const shift = dayOffset * MS_PER_DAY - SERVICE_DAY_START_HOUR * MS_PER_HOUR;
+            return DATE_FORMAT.format(new Date(Date.now() + shift));
+        }
+
+        // Lookup of side-loaded resources keyed like "trip:123"
+        function indexIncluded(included) {
+            const index = new Map();
+            for (const item of included || []) {
+                index.set(`${item.type}:${item.id}`, item);
+            }
+            return index;
+        }
+
+        // One stop of one train, live times win over the timetable
+        function toCall(schedule, included) {
+            const ref = schedule.relationships.prediction?.data;
+            const live = ref ? included.get(`prediction:${ref.id}`)?.attributes : null;
+            const timetable = schedule.attributes;
+
+            const schedArrive = timetable.arrival_time || timetable.departure_time;
+            const schedDepart = timetable.departure_time || timetable.arrival_time;
+
+            return {
+                sequence: timetable.stop_sequence,
+                arrive: new Date(live?.arrival_time || live?.departure_time || schedArrive),
+                depart: new Date(live?.departure_time || live?.arrival_time || schedDepart),
+                schedDepart: new Date(schedDepart),
+                status: live?.status || null,
+                cancelled: CANCELLED_STATES.includes(live?.schedule_relationship)
+            };
+        }
+
+        // Trains of one service date, each with its calls keyed by station id
+        async function fetchRuns(leg, date) {
+            const response = await makeAPICall('/schedules', {
+                'filter[route]': leg.routes.join(','),
+                'filter[stop]': [leg.from, leg.to, leg.via].filter(Boolean).join(','),
+                'filter[direction_id]': leg.direction,
+                'filter[date]': date,
+                'include': 'prediction,trip,stop',
+                'fields[trip]': 'name',
+                'fields[stop]': 'name',
+                'fields[prediction]': 'arrival_time,departure_time,status,schedule_relationship'
+            });
+
+            const included = indexIncluded(response.included);
+            const runs = new Map();
+
+            for (const schedule of response.data || []) {
+                const tripId = schedule.relationships.trip.data.id;
+
+                if (!runs.has(tripId)) {
+                    runs.set(tripId, {
+                        route: schedule.relationships.route.data.id,
+                        number: included.get(`trip:${tripId}`)?.attributes.name || '',
+                        calls: {}
+                    });
+                }
+
+                // Schedules reference platforms, e.g. NEC-2287, so resolve the parent station
+                const platform = included.get(`stop:${schedule.relationships.stop.data.id}`);
+                const station = platform?.relationships.parent_station.data?.id || schedule.relationships.stop.data.id;
+                runs.get(tripId).calls[station] = toCall(schedule, included);
+            }
+
+            return [...runs.values()];
+        }
+
+        // Trip on a single train, null when the train does not run from one stop to the other
+        function ride(run, from, to) {
+            const board = run.calls[from];
+            const alight = run.calls[to];
+            if (!board || !alight || board.sequence >= alight.sequence) return null;
+
+            return {
+                route: run.route,
+                number: run.number,
+                from,
+                to,
+                depart: board.depart,
+                arrive: alight.arrive,
+                delayMin: Math.round((board.depart - board.schedDepart) / MS_PER_MIN),
+                status: board.status,
+                cancelled: board.cancelled || alight.cancelled,
+                change: null
+            };
+        }
+
+        // Extend a trip with the first train that leaves its end station within the change window
+        function joinTrips(first, seconds) {
+            const latest = first.arrive.getTime() + MAX_CHANGE_WAIT_MIN * MS_PER_MIN;
+            const second = seconds.find(t => t.depart >= first.arrive && t.depart <= latest);
+            if (!second) return null;
+
+            return {
+                ...first,
+                to: second.to,
+                arrive: second.arrive,
+                number: `${first.number} + ${second.number}`,
+                cancelled: first.cancelled || second.cancelled,
+                change: first.to
+            };
+        }
+
+        // Direct trips plus those with one change at leg.via
+        function findTrips(runs, leg) {
+            const rides = (pool, from, to) => pool.map(run => ride(run, from, to)).filter(Boolean);
+            const direct = rides(runs, leg.from, leg.to);
+            if (!leg.via) return direct;
+
+            // Weekday shuttles meet a through train of the other branch, e.g. New Bedford to East Taunton, then on to Boston
+            const firsts = rides(runs.filter(run => !run.calls[leg.to]), leg.from, leg.via);
+            const seconds = rides(runs.filter(run => !run.calls[leg.from]), leg.via, leg.to)
+                .sort((a, b) => a.depart - b.depart);
+
+            return direct.concat(firsts.map(first => joinTrips(first, seconds)).filter(Boolean));
+        }
+
+        // Today plus tomorrow so late evening still shows the first morning trains
+        async function loadLeg(leg) {
+            const dates = Array.from({ length: DAYS_FETCHED }, (_, day) => serviceDate(day));
+            const perDay = await Promise.all(dates.map(date => fetchRuns(leg, date)));
+
+            return findTrips(perDay.flat(), leg).sort((a, b) => a.depart - b.depart);
+        }
+
+        // Pair a train into South Station with its Back Bay trains, e.g. a 3 min tight one and a 12 min fallback
+        function planOutbound(train, onward) {
+            if (train.cancelled) return { rows: [{ trip: train }], waitMin: null, alternatives: [] };
+
+            const arrival = train.arrive.getTime();
+            const usable = onward.filter(t => !t.cancelled && t.depart >= arrival + TIGHT_TRANSFER_MIN * MS_PER_MIN);
+            const isTight = t => t.depart < arrival + MIN_TRANSFER_MIN * MS_PER_MIN;
+
+            const tight = usable.filter(isTight);
+            const [safe, ...alternatives] = usable.filter(t => !isTight(t)).slice(0, MAX_ALTERNATIVES + 1);
+
+            // Rows in riding order, the comfortable train backs up any tight one
+            const rows = [{ trip: train }];
+            for (const trip of tight) {
+                rows.push({ trip, kind: ROW.TIGHT, waitMin: calculateWaitTime(train.arrive, trip.depart) });
+            }
+            if (safe) rows.push({ trip: safe, kind: tight.length > 0 ? ROW.FALLBACK : null });
+
+            return { rows, waitMin: safe ? calculateWaitTime(train.arrive, safe.depart) : null, alternatives };
+        }
+
+        // Pair a train home with the last Back Bay trains that reach it, later tight ones are flagged
+        function planReturn(train, feeders) {
+            if (train.cancelled) return { rows: [{ trip: train }], waitMin: null, alternatives: [] };
+
+            const departure = train.depart.getTime();
+            const usable = feeders
+                .filter(t => !t.cancelled && t.arrive <= departure - TIGHT_TRANSFER_MIN * MS_PER_MIN)
+                .sort((a, b) => b.arrive - a.arrive);
+            const isTight = t => t.arrive > departure - MIN_TRANSFER_MIN * MS_PER_MIN;
+
+            const tight = usable.filter(isTight).reverse();
+            const [safe, ...alternatives] = usable.filter(t => !isTight(t)).slice(0, MAX_ALTERNATIVES + 1);
+
+            // Missing a tight one here means missing the train home, so the earlier train is the safe pick
+            const rows = [];
+            if (safe) rows.push({ trip: safe, kind: tight.length > 0 ? ROW.SAFE : null });
+            for (const trip of tight) {
+                rows.push({ trip, kind: ROW.TIGHT, waitMin: calculateWaitTime(trip.arrive, train.depart) });
+            }
+            rows.push({ trip: train });
+
+            return { rows, waitMin: safe ? calculateWaitTime(safe.arrive, train.depart) : null, alternatives };
+        }
+
+        // Next itineraries in both directions for the chosen home station
+        async function buildPlan(home) {
+            const legs = [
+                { routes: [HOME_ROUTE], from: home, to: SOUTH_STATION, via: EAST_TAUNTON, direction: INBOUND },
+                { routes: BACK_BAY_ROUTES, from: SOUTH_STATION, to: BACK_BAY, direction: OUTBOUND },
+                { routes: BACK_BAY_ROUTES, from: BACK_BAY, to: SOUTH_STATION, direction: INBOUND },
+                { routes: [HOME_ROUTE], from: SOUTH_STATION, to: home, via: EAST_TAUNTON, direction: OUTBOUND }
+            ];
+            const [toHub, toBackBay, fromBackBay, toHome] = await Promise.all(legs.map(loadLeg));
+
+            const now = new Date();
+            const upcoming = trips => trips.filter(t => t.depart > now);
+            const feeders = upcoming(fromBackBay);
+
+            return {
+                outbound: upcoming(toHub).slice(0, MAX_ITINERARIES).map(t => planOutbound(t, toBackBay)),
+                inbound: upcoming(toHome).slice(0, MAX_ITINERARIES).map(t => planReturn(t, feeders))
+            };
+        }
+
+        function calculateWaitTime(arrivalTime, departureTime) {
+            const arrival = new Date(arrivalTime);
+            const departure = new Date(departureTime);
+            const diff = departure - arrival;
+            return Math.max(0, Math.floor(diff / 60000)); // Convert to minutes
+        }
+
+        // Times on another calendar day get a weekday prefix, e.g. "Mon 4:47 AM"
+        function formatTime(date) {
+            const time = TIME_FORMAT.format(date);
+            if (DATE_FORMAT.format(date) === DATE_FORMAT.format(new Date())) return time;
+
+            return `${DAY_FORMAT.format(date)} ${time}`;
+        }
+
+        function getWaitClass(minutes) {
+            if (minutes < 10) return 'short';
+            if (minutes < 30) return 'medium';
+            return 'long';
+        }
+
+        function getCardClass(minutes) {
+            if (minutes < 10) return 'good';
+            if (minutes < 30) return '';
+            return 'warning';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // One line per train, e.g. "New Bedford 8:20 AM → South Station 9:55 AM · train 8506 · On time"
+        function renderTrip(trip, tag = '') {
+            const notes = [`${ROUTE_NAMES[trip.route]} train ${trip.number}`];
+
+            if (trip.cancelled) {
+                notes.push('Cancelled');
+            } else {
+                if (trip.status) notes.push(trip.status);
+                if (trip.delayMin > 0) notes.push(`${trip.delayMin} min late`);
+                if (trip.change) notes.push(`change at ${STOP_NAMES[trip.change]}`);
+            }
+
+            const span = `${STOP_NAMES[trip.from]} ${formatTime(trip.depart)} → ${STOP_NAMES[trip.to]} ${formatTime(trip.arrive)}`;
+            return `<div class="route-name">${tag}${escapeHtml(`${span} · ${notes.join(' · ')}`)}</div>`;
+        }
+
+        // Badge in front of a train, e.g. "Tight 3 min" or "Fallback"
+        function renderTag(row) {
+            if (!row.kind) return '';
+
+            const wait = row.kind === ROW.TIGHT ? ` ${row.waitMin} min` : '';
+            return `<span class="tag ${row.kind}">${ROW_LABELS[row.kind]}${wait}</span>`;
+        }
+
+        function renderItinerary(itinerary) {
+            const first = itinerary.rows[0].trip;
+            const last = itinerary.rows[itinerary.rows.length - 1].trip;
+            const connected = itinerary.waitMin !== null;
+            const hasTight = itinerary.rows.some(row => row.kind === ROW.TIGHT);
+
+            let html = `<div class="trip-card ${connected ? getCardClass(itinerary.waitMin) : 'warning'}">`;
+            html += `<div class="time">${formatTime(first.depart)} → ${formatTime(last.arrive)}</div>`;
+            html += itinerary.rows.map(row => renderTrip(row.trip, renderTag(row))).join('');
+
+            if (connected) {
+                html += `<div class="wait-time ${getWaitClass(itinerary.waitMin)}">Wait at South Station: ${itinerary.waitMin} min</div>`;
+            } else if (hasTight) {
+                html += '<div class="wait-time long">Tight Back Bay connection only</div>';
+            } else if (!first.cancelled) {
+                html += '<div class="wait-time long">No Back Bay connection found</div>';
+            }
+
+            if (itinerary.alternatives.length > 0) {
+                html += '<details><summary>Other Back Bay trains</summary>';
+                html += itinerary.alternatives.map(trip => renderTrip(trip)).join('');
+                html += '</details>';
+            }
+
+            return html + '</div>';
+        }
+
+        function renderSection(title, itineraries) {
+            let html = `<div class="trip-section"><h2>${title}</h2>`;
+
+            if (itineraries.length === 0) {
+                html += '<div class="no-data">No upcoming trains found</div>';
+            } else {
+                html += itineraries.map(renderItinerary).join('');
+            }
+
+            return html + '</div>';
+        }
+
+        async function planTrip() {
+            const resultsDiv = document.getElementById('results');
+            const fromStation = document.getElementById('fromStation').value;
+
+            // Keep stale results on screen while a refresh is in flight
+            if (!hasPlanned) {
+                resultsDiv.innerHTML = '<div class="loading">Loading trip options...</div>';
+            }
+
+            try {
+                const plan = await buildPlan(fromStation);
+
+                resultsDiv.innerHTML =
+                    renderSection(`Outbound: ${STOP_NAMES[fromStation]} to Back Bay`, plan.outbound) +
+                    renderSection(`Return: Back Bay to ${STOP_NAMES[fromStation]}`, plan.inbound);
+
+                // Update refresh info
+                document.getElementById('refreshInfo').textContent =
+                    `Last updated: ${new Date().toLocaleTimeString()}`;
+
+                hasPlanned = true;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error-message">Error: ${escapeHtml(error.message)}</div>`;
+            }
+
+            // A failed refresh retries on the next tick
+            if (hasPlanned) scheduleRefresh();
+        }
+    </script>
+</body>
+
+</html>
