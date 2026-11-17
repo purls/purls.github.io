@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" href="../images/romero.ico" type="image/x-icon" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Angle Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../tools.css" />
+    <link rel="stylesheet" href="view.css" />
+</head>
+
+<body>
+    <div class="header-top">
+        <h1 style="margin: 0;">Photo Angle Guide</h1>
+        <a href="https://localhost.beer" class="home-link">← home</a>
+    </div>
+    <p style="margin: 0 0 15px 0;">
+        Shows where a photo was taken from. Place the camera around the subject, then export the picture to sit
+        next to the photo.
+    </p>
+
+    <div class="layout">
+        <!-- Stage -->
+        <div class="stage">
+            <canvas id="view" aria-label="Guide preview"></canvas>
+            <p class="readout" id="readout"></p>
+            <p class="hint">
+                Drag to orbit the guide. Click the subject to aim the camera at that spot. Drag inside the camera
+                view to move the camera. Scroll or pinch to zoom either one.
+            </p>
+        </div>
+
+        <!-- Controls -->
+        <div class="panel">
+            <section>
+                <h2>Subject</h2>
+                <div class="row">
+                    <label class="grow">Model <select id="model"></select></label>
+                    <label>Color <input type="color" id="color" /></label>
+                </div>
+                <div class="row" id="boxDims" hidden>
+                    <label>Length <input type="number" id="boxL" min="0.05" max="50" step="0.05" /></label>
+                    <label>Width <input type="number" id="boxW" min="0.05" max="50" step="0.05" /></label>
+                    <label>Height <input type="number" id="boxH" min="0.05" max="50" step="0.05" /></label>
+                </div>
+                <label class="slider">
+                    <span>Raise off the ground <output id="raiseOut"></output></span>
+                    <input type="range" id="raise" min="0" max="2" step="0.05" />
+                </label>
+            </section>
+
+            <section>
+                <h2>Camera</h2>
+                <div class="snap">
+                    <div class="compass" role="group" aria-label="Camera side">
+                        <button type="button" data-az="315" title="Front left">FL</button>
+                        <button type="button" data-az="0">Front</button>
+                        <button type="button" data-az="45" title="Front right">FR</button>
+                        <button type="button" data-az="270">Left</button>
+                        <div class="car-top" title="Subject seen from above, front at the top"></div>
+                        <button type="button" data-az="90">Right</button>
+                        <button type="button" data-az="225" title="Rear left">RL</button>
+                        <button type="button" data-az="180">Rear</button>
+                        <button type="button" data-az="135" title="Rear right">RR</button>
+                    </div>
+                    <div class="heights" role="group" aria-label="Camera height">
+                        <button type="button" data-el="90" title="Straight down from above">Top</button>
+                        <button type="button" data-el="40">High</button>
+                        <button type="button" data-el="0">Level</button>
+                        <button type="button" data-el="-25">Low</button>
+                        <button type="button" data-el="-90" title="Straight up from below">Under</button>
+                    </div>
+                </div>
+                <label class="slider">
+                    <span>Around <output id="azOut"></output></span>
+                    <input type="range" id="az" min="0" max="359" step="1" />
+                </label>
+                <label class="slider">
+                    <span>Up and down <output id="elOut"></output></span>
+                    <input type="range" id="el" min="-90" max="90" step="1" />
+                </label>
+                <label class="slider">
+                    <span>Distance <output id="distOut"></output></span>
+                    <input type="range" id="dist" min="0.1" max="15" step="0.05" />
+                </label>
+                <label class="slider">
+                    <span>Roll <output id="rollOut"></output></span>
+                    <input type="range" id="roll" min="-180" max="180" step="5" />
+                </label>
+                <div class="row">
+                    <label class="grow">Aim at <select id="aimName"></select></label>
+                </div>
+                <div class="row">
+                    <label class="grow">Lens
+                        <select id="lens">
+                            <option value="13">Ultra wide, 13mm</option>
+                            <option value="24">Phone main, 24mm</option>
+                            <option value="35">35mm</option>
+                            <option value="50">50mm</option>
+                            <option value="77">Telephoto, 77mm</option>
+                        </select>
+                    </label>
+                    <label>Photo
+                        <select id="shape">
+                            <option value="4:3">4:3</option>
+                            <option value="3:4">3:4</option>
+                            <option value="3:2">3:2</option>
+                            <option value="2:3">2:3</option>
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                            <option value="1:1">1:1</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section>
+                <h2>Guide</h2>
+                <div class="checks">
+                    <label><input type="checkbox" id="autoView" /> Auto frame</label>
+                    <label><input type="checkbox" id="inset" /> Camera view</label>
+                    <label><input type="checkbox" id="labels" /> Directions</label>
+                    <label><input type="checkbox" id="ground" /> Ground</label>
+                </div>
+                <label class="slider">
+                    <span>Subject opacity <output id="opacityOut"></output></span>
+                    <input type="range" id="opacity" min="15" max="100" step="5" />
+                </label>
+                <label class="slider">
+                    <span>Marker size <output id="markerSizeOut"></output></span>
+                    <input type="range" id="markerSize" min="0.4" max="2.5" step="0.1" />
+                </label>
+                <div class="row">
+                    <label class="grow">Background
+                        <select id="bg">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="none">Transparent</option>
+                        </select>
+                    </label>
+                    <label>Marker <input type="color" id="markerColor" /></label>
+                </div>
+                <div class="row">
+                    <label class="check"><input type="checkbox" id="labelOn" /> Caption</label>
+                    <input type="text" id="label" class="grow" aria-label="Caption text" />
+                </div>
+            </section>
+
+            <section>
+                <h2>Export</h2>
+                <div class="row">
+                    <label class="grow">Size
+                        <select id="size">
+                            <option value="800x600">800 × 600</option>
+                            <option value="1200x900">1200 × 900</option>
+                            <option value="1600x1200">1600 × 1200</option>
+                            <option value="1024x1024">1024 × 1024</option>
+                            <option value="1280x720">1280 × 720</option>
+                            <option value="900x1200">900 × 1200</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </label>
+                    <span id="customSize" class="row" hidden>
+                        <label>W <input type="number" id="customW" min="64" max="4096" step="1" /></label>
+                        <label>H <input type="number" id="customH" min="64" max="4096" step="1" /></label>
+                    </span>
+                </div>
+                <div class="btns">
+                    <button type="button" id="pngBtn">Download PNG</button>
+                    <button type="button" id="copyBtn">Copy image</button>
+                </div>
+            </section>
+
+            <section>
+                <h2>Shots <span id="shotCount"></span></h2>
+                <div class="btns">
+                    <button type="button" id="addShot">Add current</button>
+                    <select id="shotSet" aria-label="Preset set of angles"></select>
+                    <button type="button" id="addSet">Add set</button>
+                </div>
+                <ol class="shots" id="shotList"></ol>
+                <div class="btns">
+                    <button type="button" id="zipBtn">Export all as ZIP</button>
+                    <button type="button" id="sheetBtn">Export one sheet</button>
+                    <button type="button" id="clearShots">Clear</button>
+                </div>
+            </section>
+
+            <button type="button" id="resetBtn" class="quiet">Reset settings</button>
+        </div>
+    </div>
+
+    <hr />
+    <p>
+        <strong>Sides:</strong> left and right are the subject's own, as if sitting in it facing forward. The arrow
+        on the ground points to the front.
+    </p>
+    <p>
+        <strong>Camera:</strong> the marker orbits its aim point. Pick an aim from the list or click the subject,
+        then set the side, height and distance. The
+        cone shows which way it points, and the camera view shows roughly what it sees.
+    </p>
+    <p>
+        <strong>Underneath:</strong> Low and Under put the camera below the aim point. Raise the subject to show it
+        on stands or a lift. With auto frame on, the guide swings below the ground to look up at the camera. Turn
+        it off and lower the subject opacity to see through from above instead.
+    </p>
+    <p>
+        <strong>Shots:</strong> a list of saved camera positions. Export them together as a ZIP of PNGs or as one
+        labeled sheet. Each export uses the current subject, guide and size settings.
+    </p>
+
+    <script src="gl.js"></script>
+    <script src="models.js"></script>
+    <script src="view.js"></script>
+</body>
+
+</html>
